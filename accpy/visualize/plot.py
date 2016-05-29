@@ -87,25 +87,57 @@ def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
     return
 
 
-def plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp):
+def plotoptic(UC, optic, diagnostics, s, xtwiss, ytwiss, xdisp):
     fig = figure()
     ax = fig.add_subplot(1, 1, 1)
     data = concatenate((xtwiss[0, 0, :], ytwiss[0, 0, :], xdisp.flatten()))
     ymin = nanmin(data)
     ymax = nanmax(data)
-    drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
-    ax.plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
-    ax.plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
-    ax.plot([], [], '-g', label=r'$D_x$')
+    ymin2 = nanmin(xdisp.flatten())
+    ymax2 = nanmax(xdisp.flatten())
+    if optic == 'radial':
+        drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
+        ax.plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
+        ax.plot(s, xtwiss[0, 1, :], '-c', label=r'$\alpha_x$')
+        ax.plot([], [], '-m', label=r'$\gamma_x$')
+        ax.set_ylabel(r'betatron function $\beta_x$ / (m)')
+        ax2 = ax.twinx()
+        ax2.plot(s, xtwiss[1, 1, :], '-m')
+        ax2.set_ylabel(r'gamma function $\gamma_x$ / (m)', color='m')
+        ax2.tick_params(axis='y', colors='m')
+    if optic == 'axial':
+        drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
+        ax.plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
+        ax.plot(s, ytwiss[0, 1, :], '-c', label=r'$\alpha_y$')
+        ax.plot([], [], '-m', label=r'$\gamma_y$')
+        ax.set_ylabel(r'betatron function $\beta_y$ / (m)')
+        ax2 = ax.twinx()
+        ax2.plot(s, ytwiss[1, 1, :], '-m', label=r'$\gamma_y$')
+        ax2.set_ylabel(r'gamma function $\gamma_y$ / (m)', color='m')
+        ax2.tick_params(axis='y', colors='m')
+    if optic == 'dispersion':
+        drawlattice(ax, UC, diagnostics, ymin2, ymax2, 0)
+        ax.plot(s, xdisp[0, :], '-g', label=r'$D_x$')
+        ax.plot([], [], '-m', label=r'$D_x^\prime$')
+        ax.set_ylabel(r'dispersion function $D_x$ / (m)')
+        ax2 = ax.twinx()
+        ax2.plot(s, xdisp[1, :], '-m', label=r'$D_x^\prime$')
+        ax2.set_ylabel(r'derived dispersion function $D_x^\prime$ / (m)', color='m')
+        ax2.tick_params(axis='y', colors='m')
+    if optic == 'overview':
+        drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
+        ax.plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
+        ax.plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
+        ax.plot([], [], '-g', label=r'$D_x$')
+        ax.set_ylabel(r'betatron function $\beta_{x,y}$ / (m)')
+        ax2 = ax.twinx()
+        ax2.plot(s, xdisp[0, :], '-g', label=r'$D_x$')
+        ax2.set_ylabel(r'dispersion function $D_x$ / (m)', color='g')
+        ax2.tick_params(axis='y', colors='g')
     ax.set_xlabel(r'orbit position s / (m)')
-    ax.set_ylabel(r'betatron function $\beta_{x,y}$ / (m)')
+    ax.set_xlim([0, nanmax(s)])
     leg = ax.legend(fancybox=True, loc='upper left')
     leg.get_frame().set_alpha(0.5)
-    ax = ax.twinx()
-    ax.plot(s, xdisp[0, :], '-g', label=r'$D_x$')
-    ax.set_ylabel(r'dispersion function $D_x$ / (m)', color='g')
-    ax.tick_params(axis='y', colors='g')
-    ax.set_xlim([0, nanmax(s)])
     return fig
 
 

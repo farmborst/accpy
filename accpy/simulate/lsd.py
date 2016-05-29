@@ -5,21 +5,17 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 from numpy import eye, dot,  trapz, pi
-from matplotlib.pyplot import show
 from .slicing import cellslice
 from .rmatrices import rmatrix, UCS2R
 from .tracking import (initialtwiss, tracktwiss4)
 from .radiate import dipolering, synchroints
 from ..lattices import bessy2
-from ..visualize.figures import plotstandards, figsave
-from ..visualize.plot import (plotdisptraj, plotopticpars_closed,
+from ..visualize.plot import (plotopticpars_closed,
                               plotopticpars_open, plotoptic)
 
 
-def lsd(latt, slic=int(1e4), save=False, ft='pdf',
-        plotstandard='presentation_1920x1080', scale=[1, 1]):
+def lsd(latt, slic=int(1e4)):
 
-    plotstandards(plotstandard, scale)
     lattice = bessy2.lattice
     # get parameters and unit cell of lattice
     m, q, E0, E, I, gamma, UC, P_UC, diagnostics, closed, \
@@ -33,8 +29,6 @@ def lsd(latt, slic=int(1e4), save=False, ft='pdf',
             # R matrices of unsliced unit cell
             M = dot(rmatrix(UC[:, i], gamma), M)
         xtwiss, ytwiss, xdisp = initialtwiss(M)
-        # points in one turn
-        P_TOT = P_UC*N_UC
         # one turn R matrix of ring
         M1T = eye(6)
         for i in range(N_UC):
@@ -68,24 +62,18 @@ def lsd(latt, slic=int(1e4), save=False, ft='pdf',
             synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0,
                         I, q, m, ytwiss)
 
-    # plot beta, disp and lattice
-    fig0 = plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp)
+    fig_radial = plotoptic(UC, 'radial', diagnostics, s, xtwiss, ytwiss, xdisp)
+    fig_axial = plotoptic(UC, 'axial', diagnostics, s, xtwiss, ytwiss, xdisp)
+    fig_dispersion = plotoptic(UC, 'dispersion', diagnostics, s, xtwiss, ytwiss, xdisp)
+    fig_overview = plotoptic(UC, 'overview', diagnostics, s, xtwiss, ytwiss, xdisp)
+
     if closed:
-        fig1 = plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx,
+        fig_pars = plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx,
                                     emiteqx, tau_x, Qy, Xy, Jy, E, emiteqy,
                                     tau_y, alpha_mc, eta_mc, gamma_tr, Q_s, Js,
                                     sigma_E, sigma_tau, sigma_s, tau_s, U_rad,
                                     P_ges, E_c, lambda_c)
     else:
-        fig1 = plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E)
+        fig_pars = plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E)
 
-    # track and plot reference particle with energy offset
-    if not closed:
-        fig2 = plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics)
-
-
-    if save is True:
-        figsave(fig0, latt, filetype=ft)
-        figsave(fig1, ''.join((latt, 'parameters')), filetype=ft)
-        figsave(fig2, ''.join((latt, 'offset')), filetype=ft)
-    return fig0, fig1
+    return fig_radial, fig_axial, fig_dispersion, fig_overview, fig_pars

@@ -8,7 +8,7 @@ except:
     import tkinter as Tk
 from accpy.gui.mainwin import mainwindow
 
-version = 0.1
+version = 0.2
 root = Tk.Tk()  # create window
 mainwindow(root, version)   # load toplevel menu
 Tk.mainloop()   # start Tk mainloop
