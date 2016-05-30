@@ -16,7 +16,7 @@ def tabbar(root, names, w, h):
     tabs = [ttk.Frame(nb) for i in range(len(names))]  # 5 tabs
     [nb.add(tabs[i], text=name) for i, name in enumerate(names)]
     nb.pack(expand=True)
-    return tabs
+    return nb, tabs
 
 
 # create and set tkinter stringvar

@@ -5,7 +5,7 @@ author:
     Felix Kramer
 '''
 from ..simulate import const
-from numpy import array, zeros, append, pi, concatenate, sqrt, size
+from numpy import array, zeros, append, pi, concatenate, sqrt
 
 
 def lattice(latticename):
@@ -61,12 +61,9 @@ def lattice(latticename):
     if latticename == 'bessy2injectionline':
         '''===== general ====='''
         closed = False
-        m = const.me
-        q = const.qe
-        E0 = const.Ee/const.qe
+        particle = 'electron'
         E = 50e6
         I = 5e-3
-        gamma = E/E0+1
         '''===== starting twiss parameters ====='''
         beta_x = 10.101
         alph_x = 3.717
@@ -142,6 +139,8 @@ def lattice(latticename):
         DP6 = concatenate((edge, dipole, edge), 1)
         DP7 = DP6
         '''===== quadrupoles ====='''
+        q = const.qe
+        E0 = const.Ee/q
         pc = sqrt(E**2-E0**2)*q
         p = pc/const.cl
         R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
@@ -162,23 +161,19 @@ def lattice(latticename):
         Q12[[0, 1, 4]] = array([[3], [.2], [i2ks(53.3176)]])
         '''===== unit cell ====='''
         UC = concatenate((DP1, D01, F1T, D02, DP2, D03, F2T, D04, Q01, D05,
-                             Q02, D06, Q03, D07, F3T, D08, DP3, D09, F4T, D10,
-                             Q04, D11, Q05, D12, F5T, D13, Q07, D14, Q08, D15,
-                             Q09, D16, F6T, D17, DP4, D18, Q10, D19, Q11, D20,
-                             Q12, D21, F7T, D22, DP5, D23, F8T, D24, DP6, D25,
-                             DP7), 1)
-        P_UC = size(UC, 1)        # nr of elements in unit cell
+                          Q02, D06, Q03, D07, F3T, D08, DP3, D09, F4T, D10,
+                          Q04, D11, Q05, D12, F5T, D13, Q07, D14, Q08, D15,
+                          Q09, D16, F6T, D17, DP4, D18, Q10, D19, Q11, D20,
+                          Q12, D21, F7T, D22, DP5, D23, F8T, D24, DP6, D25,
+                          DP7), 1)
     elif latticename == 'bessy2booster':
         '''===== general ====='''
         closed = True
-        m = const.me
-        q = const.qe
-        E0 = const.Ee/const.qe
+        particle = 'electron'
         E = 1.72e9
         HF_f = 499.667e6
         HF_V = 750e3
         I = 5e-3
-        gamma = E/E0+1
         N_UC = 8        # number of unit cells
         '''===== drifts ====='''
         D1, D2, D3 = [zeros([6, 1]) for i in range(3)]
@@ -208,16 +203,12 @@ def lattice(latticename):
                             D3, QD, D2, B, D2, QF, D1,
                             D1, QD, D2, B, D2, QF, D3
                             ), 1)
-        P_UC = size(UC, 1)        # nr of elements in unit cell
     elif latticename == 'bessy2transfer':
         '''===== general ====='''
         closed = False
-        m = const.me
-        q = const.qe
-        E0 = const.Ee/const.qe
+        particle = 'electron'
         E = 1.72e9
         I = 5e-3
-        gamma = E/E0+1
         '''===== starting twiss parameters ====='''
         beta_x = 10.101
         alph_x = 3.717
@@ -293,6 +284,8 @@ def lattice(latticename):
         DP6 = concatenate((edge, dipole, edge), 1)
         DP7 = DP6
         '''===== quadrupoles ====='''
+        q = const.qe
+        E0 = const.Ee/q
         pc = sqrt(E**2-E0**2)*q
         p = pc/const.cl
         R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
@@ -313,28 +306,24 @@ def lattice(latticename):
         Q12[[0, 1, 4]] = array([[3], [.2], [i2ks(53.3176)]])
         '''===== unit cell ====='''   #00   01   02   03   04   05   06   07   08   09
         UC = concatenate((DP1, D01, F1T, D02, DP2, D03, F2T, D04, Q01, D05,
-                            #10   11   12   13   14   15   16   17   18   19
-                             Q02, D06, Q03, D07, F3T, D08, DP3, D09, F4T, D10,
-                            #20   21   22   23   24   25   26   27   28   29
-                             Q04, D11, Q05, D12, F5T, D13, Q07, D14, Q08, D15,
-                            #30   31   32   33   34   35   36   37   38   39
-                             Q09, D16, F6T, D17, DP4, D18, Q10, D19, Q11, D20,
-                            #40   41   42   43   44   45   46   47   48   49
-                             Q12, D21, F7T, D22, DP5, D23, F8T, D24, DP6, D25,
-                            #50
-                             DP7), 1)
-        P_UC = size(UC, 1)        # nr of elements in unit cell
+                         #10   11   12   13   14   15   16   17   18   19
+                          Q02, D06, Q03, D07, F3T, D08, DP3, D09, F4T, D10,
+                         #20   21   22   23   24   25   26   27   28   29
+                          Q04, D11, Q05, D12, F5T, D13, Q07, D14, Q08, D15,
+                         #30   31   32   33   34   35   36   37   38   39
+                          Q09, D16, F6T, D17, DP4, D18, Q10, D19, Q11, D20,
+                         #40   41   42   43   44   45   46   47   48   49
+                          Q12, D21, F7T, D22, DP5, D23, F8T, D24, DP6, D25,
+                         #50
+                         DP7), 1)
     elif latticename == 'bessy2ring':   # from BESSY II parameter list (1995)
         '''===== general ====='''
         closed = True
-        m = const.me
-        q = const.qe
-        E0 = const.Ee/const.qe
+        particle = 'electron'
         E = 1.72e9
         HF_f = 499.667e6
         HF_V = 750e3
         I = 300e-3
-        gamma = E/E0+1
         N_UC = 8        # number of unit cells
         '''===== drifts ====='''
         DD, DT, D1, D2, D3, D4, D5 = [zeros([6, 1]) for i in range(7)]
@@ -351,7 +340,7 @@ def lattice(latticename):
         LD = 0.855          # orbit length of dipole
         D_UC = 4            # dipoles per unit cell
         UD = N_UC*D_UC*LD   # total orbit length of all dipoles
-        rho = UD/2/pi    # bending radius
+        rho = UD/2/pi       # bending radius
         phi = LD/2/rho      # edge angle of dipole
         g = 30e-3           # dipoles gap
         K = 0.5             # ~0.7 for Rogowski pole
@@ -382,11 +371,10 @@ def lattice(latticename):
         LTRI = concatenate((D2, Q2T, D1, S6, D1, Q1T, D1, S5, D1, Q5T, DT), 1)
         HALF = concatenate((LDOU, ACHR, ACHR[:, ::-1], LTRI), 1)
         UC = concatenate((HALF, HALF[:, ::-1]), 1)
-        P_UC = size(UC, 1)        # nr of elements in unit cell
     if closed:
         xtwiss = ytwiss = xdisp = None
     else:
-        rho = UD = D_UC = N_UC = HF_f = HF_V = None
-    return m, q, E0, E, I, gamma, UC, P_UC, diagnostics, closed, \
-               rho, UD, D_UC, N_UC, \
-               xtwiss, ytwiss, xdisp, HF_f, HF_V
+        N_UC = HF_f = HF_V = None
+    return (closed, particle, E, I, UC, diagnostics,    # always
+            N_UC, HF_f, HF_V,                           # closed lattice
+            xtwiss, ytwiss, xdisp)                      # open lattice
