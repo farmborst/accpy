@@ -16,8 +16,10 @@ from .layout import tabbar, cs_str, cs_int, cs_lab
 from ..simulate.lsd import lsd
 from ..visualize.figures import plotstandards
 
+oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
-def twisstrack(root):
+
+def twisstrack(frame):
     mode = 'trackbeta'
 
     def _start():
@@ -29,11 +31,10 @@ def twisstrack(root):
         # start thread
         t_run.start()
 
-    root.wm_title("accpy gui - simulations")
     tablabels = ['Menu', 'Radial', 'Axial', 'Dispersion', 'Overview',
                  'Parameters']
-    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    nb, tabs = tabbar(root, tablabels, w, h)
+    w, h = frame.winfo_screenwidth(), frame.winfo_screenheight()
+    tabs = tabbar(frame, tablabels, w, h)
 
     lattices = {'bessy2injectionline': '1',
                 'bessy2booster': '2',
@@ -54,10 +55,10 @@ def twisstrack(root):
 
     button_start = Tk.Button(master=tabs[0], text='Start', command=_start)
     button_start.grid(row=2, column=1)
-    return nb
+    return
 
 
-def parttrack(root):
+def parttrack(frame):
     mode = 'trackpart'
 
     def _start():
@@ -72,11 +73,10 @@ def parttrack(root):
         # start thread
         t_run.start()
 
-    root.wm_title("accpy gui - simulations")
     tablabels = ['Menu', 'X', 'X\'', 'Y', 'Y\'', 'Z', 'Z\'',
                  'Overview', 'Transverse phase space']
-    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    nb, tabs = tabbar(root, tablabels, w, h)
+    w, h = frame.winfo_screenwidth(), frame.winfo_screenheight()
+    tabs = tabbar(frame, tablabels, w, h)
 
     lattices = {'bessy2injectionline': '1',
                 'bessy2booster': '2',
@@ -105,7 +105,7 @@ def parttrack(root):
 
     button_start = Tk.Button(master=tabs[0], text='Start', command=_start)
     button_start.grid(row=2, column=1)
-    return nb
+    return
 
 
 def runtrack(mode, latt, tabs, slices, particles=1, rounds=1):
@@ -120,3 +120,21 @@ def runtrack(mode, latt, tabs, slices, particles=1, rounds=1):
         canvas.get_tk_widget().pack()
         toolbar.pack()
         canvas.draw()
+
+
+def ebdynamics(frame):
+    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
+    txt.pack()
+    return
+
+
+def emitdynamics(frame):
+    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
+    txt.pack()
+    return
+
+
+def quadscansim(frame):
+    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
+    txt.pack()
+    return

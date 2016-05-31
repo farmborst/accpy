@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-''' accpy.gui.measure
+''' accpy.gui.optimize
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
@@ -11,25 +11,13 @@ except:
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 
-def tunes(frame):
+def emittex(frame):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def chromaticity(frame):
-    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
-    txt.pack()
-    return
-
-
-def quadscanmeas(frame):
-    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
-    txt.pack()
-    return
-
-
-def achroscan(frame):
+def twissmatch(frame):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return

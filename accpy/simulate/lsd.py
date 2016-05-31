@@ -4,7 +4,8 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
-from numpy import eye, dot, trapz, pi, nanmean
+from numpy import eye, dot, trapz, pi, nanmean, array, newaxis, hstack
+from numpy.random import random_sample
 from .slicing import cellslice
 from .rmatrices import rmatrix, UCS2R
 from .tracking import (initialtwiss, tracktwiss4)
@@ -19,7 +20,13 @@ def lsd(latt, slices, mode, particles, rounds):
 #    if mode == 'trackbeta':
 #        ...
 #    elif mode == 'trackpart':
-#        ...
+#        ideal = array([0, 0, 0, 0, 0, 0])     # (x, x', y, y', l, delta_p/p_0) in [mm,mrad,mm,mrad,mm,promille] ideal particle
+#        start = array([1, 1, 1, 1, 1, 0])     # (x, x', y, y', l, delta_p/p_0) 1 sigma particle
+#        distmean = 1e-3*ideal[newaxis, :].T   # Ideales Teilchen
+#        distsigma = 1e-3*start[newaxis, :].T  # Teilchen mit 1 sigma
+#        # start vectors of normally distributed ensemble up to 1 sigma particles
+#        X_S = (distsigma - distmean)*random_sample(6, particles-2) + distmean
+#        X_S = hstack([distmean, distsigma, X_S])
 
     # get parameters and unit cell of lattice
     (closed, particle, E, I, UC, diagnostics,    # always
