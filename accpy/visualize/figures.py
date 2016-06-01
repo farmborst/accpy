@@ -8,10 +8,11 @@ Author:
 from matplotlib import rcdefaults, rcParams
 from time import strftime
 
-def plotstandards(formattype, scale):
+def plotstandards(formattype, scale, w=1920, h=1080):
     '''set standards for matplotlib for given formattype
         possible formattypes:
         presentation_1920x1080
+        pcdisplay
         a4_portrait
         a4_landscape
         galaxytabs2(2048x1536)
@@ -52,6 +53,21 @@ def plotstandards(formattype, scale):
                   'savefig.pad_inches': 0,
                   'axes.grid': True,
                   'axes.formatter.limits': (-2, 3)}
+    elif formattype == 'pcdisplay':
+        params = {'figure.figsize': (w/1920*24, h/1080*13.5),
+                  'figure.dpi': 80,
+                  'figure.autolayout': True,
+                  'font.size': 28,
+                  'font.family': 'serif',
+                  'legend.fontsize': 28,
+                  'lines.markersize': 3,
+                  'lines.linewidth': 2,
+                  'savefig.dpi': 100,
+                  'savefig.pad_inches': 0,
+                  'savefig.format': 'svg',
+                  'text.usetex': True,
+                  'xtick.labelsize': 28,
+                  'ytick.labelsize': 28}
     elif formattype == 'a4_portrait':
         params = {'axes.labelsize': 10,  # fontsize for x and y labels
                   'axes.titlesize': 0,

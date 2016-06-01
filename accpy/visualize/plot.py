@@ -203,11 +203,11 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
          r'$E_{crit} = %g eV$''\n' % E_c,
          r'$\lambda_{crit} = %g m$' % lambda_c])
     ax.text(0.05, 0.9, radpars, horizontalalignment='left',
-            verticalalignment='top', transform=ax.transAxes, fontsize=12)
+            verticalalignment='top', transform=ax.transAxes)
     ax.text(0.35, 0.9, axipars, horizontalalignment='left',
-            verticalalignment='top', transform=ax.transAxes, fontsize=12)
+            verticalalignment='top', transform=ax.transAxes)
     ax.text(0.65, 0.9, lonpars, horizontalalignment='left',
-            verticalalignment='top', transform=ax.transAxes, fontsize=12)
+            verticalalignment='top', transform=ax.transAxes)
     return fig
 
 

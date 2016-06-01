@@ -24,7 +24,7 @@ def twisstrack(frame):
 
     def _start():
         # data plotting in new thread to keep gui (main thread&loop) responsive
-        t_run = Thread(target=runtrack(mode, lattice.get(), tabs[1:],
+        t_run = Thread(target=runtrack(w, h, mode, lattice.get(), tabs[1:],
                                        entry_slice.get()))
         # automatically let die with main thread -> no global stop required
         t_run.setDaemon(True)
@@ -63,11 +63,9 @@ def parttrack(frame):
 
     def _start():
         # data plotting in new thread to keep gui (main thread&loop) responsive
-        t_run = Thread(target=runtrack(mode, lattice.get(), tabs[1:],
+        t_run = Thread(target=runtrack(w, h, mode, lattice.get(), tabs[1:],
                                        entry_slice.get(), entry_part.get(),
                                        entry_rounds.get()))
-        t_run = Thread(target=runtrack(lattice.get(), tabs[1:], entry_slice.get(),
-                                  ))
         # automatically let die with main thread -> no global stop required
         t_run.setDaemon(True)
         # start thread
@@ -108,8 +106,8 @@ def parttrack(frame):
     return
 
 
-def runtrack(mode, latt, tabs, slices, particles=1, rounds=1):
-    plotstandards('presentation_1920x1080', [1, 1])
+def runtrack(w, h, mode, latt, tabs, slices, particles=1, rounds=1):
+    plotstandards('pcdisplay', [1, 1], w=w, h=h)
     figs = lsd(latt, int(slices), mode, particles=particles, rounds=rounds)
     for fig, tab in zip(figs, tabs):
         # destroy all widgets in fram/tab
