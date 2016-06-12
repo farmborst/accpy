@@ -9,8 +9,10 @@ version:
 '''
 from __future__ import division
 from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
-                   array)
-from matplotlib.pyplot import figure, cm
+                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos)
+from matplotlib.figure import Figure as figure
+from matplotlib.pyplot import cm
+from ..simulate import const
 from ..simulate.rmatrices import UCS2R
 from ..simulate.tracking import trackpart
 
@@ -142,9 +144,9 @@ def plotoptic(UC, optic, diagnostics, s, xtwiss, ytwiss, xdisp):
 
 
 def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
-                  tau_x, Qy, Xy, Jy, E, emiteqy, tau_y, alpha_mc, eta_mc,
-                  gamma_tr, Q_s, Js, sigma_E, sigma_tau, sigma_s, tau_s, U_rad,
-                  P_ges, E_c, lambda_c):
+                         tau_x, Qy, Xy, Jy, E, emiteqy, tau_y, alpha_mc,
+                         eta_mc, gamma_tr, Q_s, Js, sigma_E, sigma_tau,
+                         sigma_s, tau_s, U_rad, P_ges, E_c, lambda_c):
     fig = figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.get_xaxis().set_visible(False)
@@ -291,3 +293,96 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
     leg.get_frame().set_alpha(0.5)
     ax.set_xlim([0, nanmax(s)])
     return fig
+
+
+def plottrajs(s, X, N_UC, rounds):
+    figs = [figure() for i in range(7)]
+    ylabs = [r'$x$ radial displacement / (mm)',
+             r'$x^\prime$ radial direction deviation / (mrad)',
+             r'$y$ axial displacement / (mm)',
+             r'$y^\prime$ axial direction deviation / (mrad)',
+             r'$l$ longitudinal displacement / (mm)',
+             r'$\frac{\Delta P}{P_0}$ longitudinal momentum deviation']
+    y2labs = [r'$x$ / (mm)',
+             r'$x^\prime$ / (mrad)',
+             r'$y$ / (mm)',
+             r'$y^\prime$ / (mrad)',
+             r'$l$ / (mm)',
+             r'$\frac{\Delta P}{P_0}$ / \textperthousand']
+    color = iter(cm.rainbow(linspace(0, 1, 6)))
+    order = [1, 4, 2, 5, 3, 6]
+    for i in range(6):
+        c = next(color)
+        ax1 = figs[i].add_subplot(1, 1, 1)
+        ax2 = figs[6].add_subplot(2, 3, order[i])
+        ax1.set_xlabel(r'orbit position s / (m)')
+        ax1.set_ylabel(ylabs[i])
+        ax2.set_xlabel(r'orbit position s / (m)')
+        ax2.set_ylabel(y2labs[i])
+        for traj in X:
+            for j in range(rounds):
+                index = arange(len(s))+(len(s)-1)*j
+                ax1.plot(s, traj[i, index]*1e3, '-', c=c)
+                ax2.plot(s, traj[i, index]*1e3, '-', c=c)
+    return figs
+
+
+def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
+    fig = figure()
+    xlabels = [r'$x$ / (mm)',
+               r'$y$ / (mm)']
+    ylabels = [r'$x^\prime$ / (mrad)',
+               r'$y^\prime$ / (mrad)']
+    titles = [r'Radial phasespace',
+              r'Axial phasespace']
+    ax = []
+    axmax = []
+    def roundplot(traj, ax, linestyle, label=''):
+        for j in range(rounds):
+            index = (len(s)-1)*j
+            x = traj[i*2, index]*1e3
+            y = traj[i*2+1, index]*1e3
+            if j == 0:
+                ax.plot(x, y, linestyle, label=label)
+            else:
+                ax.plot(x, y, linestyle)
+            axmax.append(max(npabs([x, y])))
+
+    for i in range(2):
+        ax.append(fig.add_subplot(1, 2, i+1))
+        ax[i].set_xlabel(xlabels[i])
+        ax[i].set_ylabel(ylabels[i])
+        ax[i].set_title(titles[i])
+        for k in range(len(X)):
+            traj = X[k]
+            if k == 1:
+                roundplot(traj, ax[i], 'xr', label='1 sigma particle')
+            else:
+                roundplot(traj, ax[i], '.b')
+    axmax = max(axmax)
+    for i in range(2):
+        ax[i].set_xlim([-axmax, axmax])
+        ax[i].set_ylim([-axmax, axmax])
+    x, xp, y, yp = twissellipse(xtwiss[:, :, 0], emittx, ytwiss[:, :, 0], emitty)
+    ax[0].plot(x, xp, '-g', label='Twiss ellipsis')
+    ax[1].plot(y, yp, '-g')
+    leg = ax[0].legend(fancybox=True, loc='upper right')
+    leg.get_frame().set_alpha(0.5)
+    return fig
+
+
+def twissellipse(xtwiss, emittx, ytwiss, emitty):
+    def ellipse(emittance, beta, alpha, gamma):
+        phi = linspace(0, 2*const.pi, 1e3)
+        a = sqrt(emittance/2*(beta+gamma+sqrt((beta+gamma)**2-4)))
+        b = sqrt(emittance/2*(beta+gamma-sqrt((beta+gamma)**2-4)))
+        if alpha > 0:
+            PHI = acos(+sqrt((beta-b/a)*emittance/(a**2-b**2)))
+        else:
+            PHI = acos(-sqrt((beta-b/a)*emittance/(a**2-b**2)))
+        pos = a*cos(phi)*cos(PHI)+b*sin(phi)*sin(PHI)
+        mom = -a*cos(phi)*sin(PHI)+b*sin(phi)*cos(PHI)
+        return pos, mom
+    x, xp = ellipse(emittx, xtwiss[0, 0], -xtwiss[0, 1], xtwiss[1, 1])
+    y, yp = ellipse(emitty, ytwiss[0, 0], -ytwiss[0, 1], ytwiss[1, 1])
+    return x, xp, y, yp

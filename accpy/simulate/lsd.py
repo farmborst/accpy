@@ -4,34 +4,25 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
-from numpy import eye, dot, trapz, pi, nanmean, array, newaxis, hstack
-from numpy.random import random_sample
+from numpy import (eye, dot, trapz, pi, nanmean, array, newaxis, hstack,
+                   concatenate, empty, dstack)
+from numpy.random import standard_normal
+from numpy.linalg import inv
 from .slicing import cellslice
 from .rmatrices import rmatrix, UCS2R
-from .tracking import (initialtwiss, tracktwiss4)
+from .tracking import (initialtwiss, tracktwiss4, trackparts)
 from .radiate import dipolering, synchroints
 from .particles import part2mqey
 from ..lattices.bessy2 import lattice
-from ..visualize.plot import (plotopticpars_closed,
-                              plotopticpars_open, plotoptic)
+from ..visualize.plot import (plotopticpars_closed, plottrajs,
+                              plotopticpars_open, plotoptic, plotphasespace)
 
 
 def lsd(latt, slices, mode, particles, rounds):
-#    if mode == 'trackbeta':
-#        ...
-#    elif mode == 'trackpart':
-#        ideal = array([0, 0, 0, 0, 0, 0])     # (x, x', y, y', l, delta_p/p_0) in [mm,mrad,mm,mrad,mm,promille] ideal particle
-#        start = array([1, 1, 1, 1, 1, 0])     # (x, x', y, y', l, delta_p/p_0) 1 sigma particle
-#        distmean = 1e-3*ideal[newaxis, :].T   # Ideales Teilchen
-#        distsigma = 1e-3*start[newaxis, :].T  # Teilchen mit 1 sigma
-#        # start vectors of normally distributed ensemble up to 1 sigma particles
-#        X_S = (distsigma - distmean)*random_sample(6, particles-2) + distmean
-#        X_S = hstack([distmean, distsigma, X_S])
-
     # get parameters and unit cell of lattice
-    (closed, particle, E, I, UC, diagnostics,    # always
-     N_UC, HF_f, HF_V,                           # closed lattice
-     xtwiss, ytwiss, xdisp) = lattice(latt)      # open lattice
+    (closed, particle, E, I, UC, diagnostics, N_UC,     # always
+     HF_f, HF_V,                                        # closed lattice
+     xtwiss0, ytwiss0, xdisp0) = lattice(latt)             # open lattice
 
     m, q, E0, gamma, P_UC = part2mqey(E, UC, particle)
 
@@ -53,7 +44,7 @@ def lsd(latt, slices, mode, particles, rounds):
         LD = nanmean(LD)
         rho = nanmean(rho)
         UD = N_UC*D_UC*LD
-        xtwiss, ytwiss, xdisp = initialtwiss(M)
+        xtwiss0, ytwiss0, xdisp0 = initialtwiss(M)
         # one turn R matrix of ring
         M1T = eye(6)
         for i in range(N_UC):
@@ -66,8 +57,8 @@ def lsd(latt, slices, mode, particles, rounds):
     R = UCS2R(P_UCS, UCS, gamma)
 
     # track twiss and dispersion
-    xtwiss, ytwiss, xdisp, xytwiss = tracktwiss4(R, P_UCS, closed, xtwiss,
-                                                 ytwiss, xdisp)
+    xtwiss, ytwiss, xdisp, xytwiss = tracktwiss4(R, P_UCS, closed, xtwiss0,
+                                                 ytwiss0, xdisp0)
 
     if closed:
         # tune Q_u:=1/2pi*int(ds/beta_u(s))
@@ -87,18 +78,48 @@ def lsd(latt, slices, mode, particles, rounds):
             synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0,
                         I, q, m, ytwiss)
 
-    fig_radial = plotoptic(UC, 'radial', diagnostics, s, xtwiss, ytwiss, xdisp)
-    fig_axial = plotoptic(UC, 'axial', diagnostics, s, xtwiss, ytwiss, xdisp)
-    fig_dispersion = plotoptic(UC, 'dispersion', diagnostics, s, xtwiss, ytwiss, xdisp)
-    fig_overview = plotoptic(UC, 'overview', diagnostics, s, xtwiss, ytwiss, xdisp)
+    if mode == 'trackbeta':
+        figs = []
+        figs.append(plotoptic(UC, 'radial', diagnostics, s, xtwiss, ytwiss, xdisp))
+        figs.append(plotoptic(UC, 'axial', diagnostics, s, xtwiss, ytwiss, xdisp))
+        figs.append(plotoptic(UC, 'dispersion', diagnostics, s, xtwiss, ytwiss, xdisp))
+        figs.append(plotoptic(UC, 'overview', diagnostics, s, xtwiss, ytwiss, xdisp))
+        if closed:
+            figs.append(plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx,
+                                             Xx, Jx, emiteqx, tau_x, Qy, Xy,
+                                             Jy, E, emiteqy, tau_y, alpha_mc,
+                                             eta_mc, gamma_tr, Q_s, Js,
+                                             sigma_E, sigma_tau, sigma_s,
+                                             tau_s, U_rad, P_ges, E_c,
+                                             lambda_c))
+        else:
+            figs.append(plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E))
+    elif mode == 'trackpart':
+        # [x,  x',   y,  y',   l,  delta_p/p_0]
+        # [mm, mrad, mm, mrad, mm, promille]
+        ideal = array([0, 0, 0, 0, 0, 0])     # Ideal particle
+        start = array([1, 1, 1, 1, 1, 0])     # 1 sigma particle
+        # emmitanz des vorgegebenen 1-sigma teilchens (Wille 3.142)
+        emittx = dot(start[:2].T, dot(inv(xtwiss0), start[:2]))
+        emitty = dot(start[2:4].T, dot(inv(ytwiss0), start[2:4]))
 
-    if closed:
-        fig_pars = plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx,
-                                    emiteqx, tau_x, Qy, Xy, Jy, E, emiteqy,
-                                    tau_y, alpha_mc, eta_mc, gamma_tr, Q_s, Js,
-                                    sigma_E, sigma_tau, sigma_s, tau_s, U_rad,
-                                    P_ges, E_c, lambda_c)
-    else:
-        fig_pars = plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E)
+        # Envelope E(s)=sqrt(epsilon_i*beta_i(s))
+        #epsbeta     = bsxfun(@times,[eps_x;eps_y],squeeze([xtwiss(1,1,:);ytwiss(1,1,:)]));
+        #dispdelta   = power(([disper(1,:);zeros(1,P_UM)]*1E-3*distsigma(6)),2);
+        #envelope    = sqrt(bsxfun(@plus,dispdelta,epsbeta))
 
-    return fig_radial, fig_axial, fig_dispersion, fig_overview, fig_pars
+        distmean = 1e-3*ideal[newaxis, :].T
+        distsigma = 1e-3*start[newaxis, :].T
+        # start vectors of normally distributed ensemble up to 1 sigma particles
+        points = P_UCS*N_UC*rounds
+        X0 = (distsigma - distmean)*standard_normal([6, particles])
+        X0 = dstack([X0, empty([6, particles, points])])
+        X0[:, :2, 0] = hstack([distmean, distsigma])
+        X_S = [X0[:, i, :] for i in range(particles)]
+        X = trackparts(R, N_UC, X_S, rounds)
+        s0 = s
+        for i in range(1, N_UC):
+            s = concatenate([s, s0[1:]+s0[-1]*i])[:]
+        figs = plottrajs(s, X, N_UC, rounds)
+        figs.append(plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty))
+    return figs

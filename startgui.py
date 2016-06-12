@@ -7,8 +7,13 @@ try:
 except:
     import tkinter as Tk
 from accpy.gui.mainwin import mainwindow
+#from multiprocessing import Process
+import gc
 
-version = 0.2
-root = Tk.Tk()  # create window
-mainwindow(root, version)   # load toplevel menu
-Tk.mainloop()   # start Tk mainloop
+
+if __name__ == '__main__':
+    root = Tk.Tk()  # create window
+    version = 0.2
+    mainwindow(root, version)
+    gc.enable()
+    Tk.mainloop()   # start Tk mainloop

@@ -15,7 +15,7 @@ def tabbar(root, names, w, h):
     nb = ttk.Notebook(root, width=w, height=h)
     tabs = [ttk.Frame(nb) for i in range(len(names))]  # 5 tabs
     [nb.add(tabs[i], text=name) for i, name in enumerate(names)]
-    nb.pack(expand=True)
+    nb.pack()
     return tabs
 
 
@@ -35,5 +35,7 @@ def cs_int(value):
 
 # create, position and set tkinter label
 def cs_lab(root, name, r, c):
-    label = Tk.Label(master=root, textvariable=cs_str(name))
+    labelstr = cs_str(name)
+    label = Tk.Label(master=root, textvariable=labelstr)
     label.grid(row=r, column=c)
+    return labelstr

@@ -6,6 +6,8 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division
 from numpy import (array, empty, dstack, hstack, vstack, dot, zeros,
                    sqrt, sign, trace)
+from multiprocessing import cpu_count, Pool
+from functools import partial
 
 
 def initialtwiss(M):
@@ -75,7 +77,7 @@ def tracktwiss6(R, P_UCS, clos, xtwiss, ytwiss, disperx,
         return twiss
     xztwiss = twiss(disperx)
     yztwiss = twiss(dispery)
-    ztwiss = zeros((2, 2))  # definetely not!
+    ztwiss = zeros((2, 2))  # clearly not!
     beta1 = hstack((xtwiss, xytwiss, xztwiss))
     beta2 = hstack((xytwiss, ytwiss, yztwiss))
     beta3 = hstack((xztwiss, yztwiss, ztwiss))
@@ -91,8 +93,20 @@ def tracktwiss6(R, P_UCS, clos, xtwiss, ytwiss, disperx,
     return xtwiss, ytwiss, disper
 
 
-def trackpart(R, P_UCS, X0):
-    X = hstack((X0, empty([6, P_UCS])))
-    for i in range(P_UCS):
-        X[:, i+1] = dot(R[:, :, i], X[:, i])
+def trackpart(X, R, P_UCS, points):
+    for i in range(points):
+        X[:, i+1] = dot(R[:, :, i % P_UCS], X[:, i])
+    return X
+
+
+def trackparts(R_UCS, N_UC, X0, rounds):
+    P_UCS = R_UCS.shape[2]
+    points = P_UCS*N_UC*rounds
+    # parallelized computation over particles
+    Ncore = cpu_count()
+    trackpartN = partial(trackpart, R=R_UCS, P_UCS=P_UCS, points=points)
+    pool = Pool(Ncore)
+    X = pool.map(trackpartN, X0)
+    pool.close()
+#    pool.join()
     return X

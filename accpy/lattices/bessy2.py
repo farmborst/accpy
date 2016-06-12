@@ -374,7 +374,8 @@ def lattice(latticename):
     if closed:
         xtwiss = ytwiss = xdisp = None
     else:
-        N_UC = HF_f = HF_V = None
+        HF_f = HF_V = None
+        N_UC = 1
     return (closed, particle, E, I, UC, diagnostics,    # always
             N_UC, HF_f, HF_V,                           # closed lattice
             xtwiss, ytwiss, xdisp)                      # open lattice
