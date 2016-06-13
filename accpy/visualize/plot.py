@@ -9,7 +9,8 @@ version:
 '''
 from __future__ import division
 from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
-                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos)
+                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos,
+                   vstack)
 from matplotlib.figure import Figure as figure
 from matplotlib.pyplot import cm
 from ..simulate import const
@@ -295,8 +296,10 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
     return fig
 
 
-def plottrajs(s, X, N_UC, rounds):
+def plottrajs(s, X, N_UC, rounds, envelope):
     figs = [figure() for i in range(7)]
+    ax1 = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
+    ax2 = [figs[6].add_subplot(2, 3, i) for i in range(1, 7)]
     ylabs = [r'$x$ radial displacement / (mm)',
              r'$x^\prime$ radial direction deviation / (mrad)',
              r'$y$ axial displacement / (mm)',
@@ -304,26 +307,64 @@ def plottrajs(s, X, N_UC, rounds):
              r'$l$ longitudinal displacement / (mm)',
              r'$\frac{\Delta P}{P_0}$ longitudinal momentum deviation']
     y2labs = [r'$x$ / (mm)',
-             r'$x^\prime$ / (mrad)',
-             r'$y$ / (mm)',
-             r'$y^\prime$ / (mrad)',
-             r'$l$ / (mm)',
-             r'$\frac{\Delta P}{P_0}$ / \textperthousand']
+              r'$x^\prime$ / (mrad)',
+              r'$y$ / (mm)',
+              r'$y^\prime$ / (mrad)',
+              r'$l$ / (mm)',
+              r'$\frac{\Delta P}{P_0}$ / \textperthousand']
+    for i in range(6):
+        ax1[i].set_xlabel(r'orbit position s / (m)')
+        ax1[i].set_ylabel(ylabs[i])
+        ax2[i].set_xlabel(r'orbit position s / (m)')
+        ax2[i].set_ylabel(y2labs[i])
+
     color = iter(cm.rainbow(linspace(0, 1, 6)))
-    order = [1, 4, 2, 5, 3, 6]
+    order = [0, 3, 1, 4, 2, 5]
+    labs = ['Ideal particle',
+            '1 sigma particle',
+            r'Envelope $E_{x,y}(s)=\sqrt{\epsilon_{x,y}\beta_{x,y}(s)+(\delta_ED_{x,y}(s))^2)}$',
+            r'Envelope $E_{x}(s)=\sqrt{\epsilon_{x}\beta_{x}+(\delta_ED_{x}(s))^2}$',
+            r'Envelope $E_{y}(s)=\sqrt{\epsilon_{y}\beta_{y}}$',
+            'ensemble']
     for i in range(6):
         c = next(color)
-        ax1 = figs[i].add_subplot(1, 1, 1)
-        ax2 = figs[6].add_subplot(2, 3, order[i])
-        ax1.set_xlabel(r'orbit position s / (m)')
-        ax1.set_ylabel(ylabs[i])
-        ax2.set_xlabel(r'orbit position s / (m)')
-        ax2.set_ylabel(y2labs[i])
-        for traj in X:
-            for j in range(rounds):
-                index = arange(len(s))+(len(s)-1)*j
-                ax1.plot(s, traj[i, index]*1e3, '-', c=c)
-                ax2.plot(s, traj[i, index]*1e3, '-', c=c)
+        y = []
+        y_ideal = []
+        y_sigma = []
+        for j, traj in enumerate(X):
+            for k in range(rounds):
+                index = arange(len(s))+(len(s)-1)*k
+                if j > 1:
+                    y.append(traj[i, index]*1e3)
+                elif j == 1:
+                    y_sigma.append(traj[i, index]*1e3)
+                else:
+                    y_ideal.append(traj[i, index]*1e3)
+        # ensemble trajectories
+        [ax1[i].plot(s, y[l], '-', c=c) for l in range(len(y))]
+        [ax2[order[i]].plot(s, y[l], '-', c=c) for l in range(len(y))]
+        ax1[i].plot([], [], '-', c=c, label=labs[5])
+        ax2[order[i]].plot([], [], '-', c=c, label=labs[5])
+        # 1-sigma particle trajectories
+        ax1[i].plot(s, y_sigma[0], '-b', label=labs[1])
+        l2 = ax2[order[i]].plot(s, y_sigma[0], '-b')
+        [ax1[i].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
+        [ax2[order[i]].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
+        # ideal particle trajectories
+        ax1[i].plot(s, y_ideal[0], '-k', label=labs[0])
+        if i == 0:
+            ax1[i].plot([], [], '-r', label=labs[3])
+        elif i == 2:
+            ax1[i].plot([], [], '-r', label=labs[4])
+        l1 = ax2[order[i]].plot(s, y_ideal[0], '-k')
+        leg = ax1[i].legend(fancybox=True, loc='upper right')
+        leg.get_frame().set_alpha(0.5)
+    ax1[0].plot(s, envelope[0, :], '-r', s, -envelope[0, :], '-r')
+    ax1[2].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
+    l3 = ax2[0].plot(s, envelope[0, :], '-r')
+    ax2[0].plot(s, -envelope[0, :], '-r')
+    ax2[1].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
+    leg = figs[6].legend((l1, l2, l3), (labs[2], labs[0], labs[1]))
     return figs
 
 

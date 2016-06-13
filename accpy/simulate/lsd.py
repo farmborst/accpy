@@ -5,7 +5,7 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 from numpy import (eye, dot, trapz, pi, nanmean, array, newaxis, hstack,
-                   concatenate, empty, dstack)
+                   concatenate, empty, dstack, sqrt, zeros, vstack)
 from numpy.random import standard_normal
 from numpy.linalg import inv
 from .slicing import cellslice
@@ -98,18 +98,20 @@ def lsd(latt, slices, mode, particles, rounds):
         # [x,  x',   y,  y',   l,  delta_p/p_0]
         # [mm, mrad, mm, mrad, mm, promille]
         ideal = array([0, 0, 0, 0, 0, 0])     # Ideal particle
-        start = array([1, 1, 1, 1, 1, 0])     # 1 sigma particle
+        start = array([1, 1, 1, 1, 0, 0])     # 1 sigma particle
+        distmean = 1e-3*ideal[newaxis, :].T
+        distsigma = 1e-3*start[newaxis, :].T
+
         # emmitanz des vorgegebenen 1-sigma teilchens (Wille 3.142)
         emittx = dot(start[:2].T, dot(inv(xtwiss0), start[:2]))
         emitty = dot(start[2:4].T, dot(inv(ytwiss0), start[2:4]))
 
         # Envelope E(s)=sqrt(epsilon_i*beta_i(s))
-        #epsbeta     = bsxfun(@times,[eps_x;eps_y],squeeze([xtwiss(1,1,:);ytwiss(1,1,:)]));
-        #dispdelta   = power(([disper(1,:);zeros(1,P_UM)]*1E-3*distsigma(6)),2);
-        #envelope    = sqrt(bsxfun(@plus,dispdelta,epsbeta))
+        ydisp = zeros([1, P_UCS+1])
+        emit_x_beta = array([emittx*xtwiss[0, 0, :], emitty*ytwiss[0, 0, :]])
+        dispdelta = (vstack([xdisp[0, :], ydisp[0, :]])*1E-3*distsigma[5])**2
+        envelope = sqrt(dispdelta + emit_x_beta)
 
-        distmean = 1e-3*ideal[newaxis, :].T
-        distsigma = 1e-3*start[newaxis, :].T
         # start vectors of normally distributed ensemble up to 1 sigma particles
         points = P_UCS*N_UC*rounds
         X0 = (distsigma - distmean)*standard_normal([6, particles])
@@ -118,8 +120,10 @@ def lsd(latt, slices, mode, particles, rounds):
         X_S = [X0[:, i, :] for i in range(particles)]
         X = trackparts(R, N_UC, X_S, rounds)
         s0 = s
+        envelope0 = envelope
         for i in range(1, N_UC):
             s = concatenate([s, s0[1:]+s0[-1]*i])[:]
-        figs = plottrajs(s, X, N_UC, rounds)
+            envelope = hstack([envelope, envelope0[:, 1:]])
+        figs = plottrajs(s, X, N_UC, rounds, envelope)
         figs.append(plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty))
     return figs

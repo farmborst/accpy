@@ -136,16 +136,36 @@ def runtrack(status, w, h, mode, latt, tabs, slices, particles=1, rounds=1):
         toolbar.pack()
         canvas.draw()
     t1 = time() - t0
-    hh = t1//3600
-    tt = t1 % 3600
-    mm = tt//60
-    tt = tt % 60
-    ss = tt//1
-    ms = (tt % 1*1e3)//1
-    timestring = '%02i:%02i:%02i.%03i' % (hh, mm, ss, ms)
+#    hh = t1//3600
+#    tt = t1 % 3600
+#    mm = tt//60
+#    tt = tt % 60
+#    ss = tt//1
+#    ms = (tt % 1*1e3)//1
+#    timestring = '%02i:%02i:%02i.%03i' % (hh, mm, ss, ms)
+    timestring = time2str(t1)
     status.set('finished, elapsed time: '+timestring)
 
 
+def time2str(t):
+    dd = t//86400
+    t %= 86400
+    hh = t//3600
+    t %= 3600
+    mm = t//60
+    t %= 60
+    ss = t//1
+    t %= 1
+    ms = (t*1e3)//1
+    if dd > 0:
+        timestring = '%g days %g hours %g minutes %g.%g seconds' % (dd, hh, mm, ss, ms)
+    elif hh > 0:
+        timestring = '%g hours %g minutes %g.%g seconds' % (hh, mm, ss, ms)
+    elif mm > 0:
+        timestring = '%g minutes %g.%g seconds' % (mm, ss, ms)
+    elif ss > 0:
+        timestring = '%g.%g seconds' % (ss, ms)
+    return timestring
 
 def ebdynamics(frame):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
