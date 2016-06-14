@@ -197,7 +197,7 @@ def lattice(latticename):
         '''===== quadrupoles ====='''
         QF, QD = [zeros([6, 1]) for i in range(2)]
         QF[[0, 1, 4]] = array([[3], [.3], [2.1082]])
-        QD[[0, 1, 4]] = array([[4], [.3], [-1.57808028]])    # -1.4658
+        QD[[0, 1, 4]] = array([[4], [.3], [-1.4658]])    # -1.57808028
         '''===== unit cell ====='''
         UC = concatenate((
                             D3, QD, D2, B, D2, QF, D1,

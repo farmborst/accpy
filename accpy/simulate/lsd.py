@@ -6,6 +6,7 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division
 from numpy import (eye, dot, trapz, pi, nanmean, array, newaxis, hstack,
                    concatenate, empty, dstack, sqrt, zeros, vstack)
+import numpy as np
 from numpy.random import standard_normal
 from numpy.linalg import inv
 from .slicing import cellslice
@@ -98,13 +99,14 @@ def lsd(latt, slices, mode, particles, rounds):
         # [x,  x',   y,  y',   l,  delta_p/p_0]
         # [mm, mrad, mm, mrad, mm, promille]
         ideal = array([0, 0, 0, 0, 0, 0])     # Ideal particle
-        start = array([1, 1, 1, 1, 0, 0])     # 1 sigma particle
+        start = array([1, 1, 1, 1, 1, 0])     # 1 sigma particle
         distmean = 1e-3*ideal[newaxis, :].T
         distsigma = 1e-3*start[newaxis, :].T
 
         # emmitanz des vorgegebenen 1-sigma teilchens (Wille 3.142)
-        emittx = dot(start[:2].T, dot(inv(xtwiss0), start[:2]))
-        emitty = dot(start[2:4].T, dot(inv(ytwiss0), start[2:4]))
+        emittx = dot(start[:2], dot(inv(xtwiss0), start[:2]))
+        emitty = dot(start[2:4], dot(inv(ytwiss0), start[2:4]))
+
 
         # Envelope E(s)=sqrt(epsilon_i*beta_i(s))
         ydisp = zeros([1, P_UCS+1])
@@ -127,3 +129,8 @@ def lsd(latt, slices, mode, particles, rounds):
         figs = plottrajs(s, X, N_UC, rounds, envelope)
         figs.append(plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty))
     return figs
+
+
+#np.set_printoptions(precision=4)
+#np.set_printoptions(suppress=True)
+#print np.matrix(Rtmp)

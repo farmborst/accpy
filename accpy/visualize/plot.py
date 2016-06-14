@@ -9,10 +9,10 @@ version:
 '''
 from __future__ import division
 from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
-                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos,
-                   vstack)
+                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos)
 from matplotlib.figure import Figure as figure
 from matplotlib.pyplot import cm
+from matplotlib.gridspec import GridSpec
 from ..simulate import const
 from ..simulate.rmatrices import UCS2R
 from ..simulate.tracking import trackpart
@@ -299,7 +299,8 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
 def plottrajs(s, X, N_UC, rounds, envelope):
     figs = [figure() for i in range(7)]
     ax1 = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
-    ax2 = [figs[6].add_subplot(2, 3, i) for i in range(1, 7)]
+    ax2 = [figs[6].add_subplot(3, 3, i) for i in [1, 7, 2, 8, 3, 9]]
+    ax3 = figs[6].add_subplot(3, 3, 5)
     ylabs = [r'$x$ radial displacement / (mm)',
              r'$x^\prime$ radial direction deviation / (mrad)',
              r'$y$ axial displacement / (mm)',
@@ -319,13 +320,12 @@ def plottrajs(s, X, N_UC, rounds, envelope):
         ax2[i].set_ylabel(y2labs[i])
 
     color = iter(cm.rainbow(linspace(0, 1, 6)))
-    order = [0, 3, 1, 4, 2, 5]
     labs = ['Ideal particle',
             '1 sigma particle',
             r'Envelope $E_{x,y}(s)=\sqrt{\epsilon_{x,y}\beta_{x,y}(s)+(\delta_ED_{x,y}(s))^2)}$',
             r'Envelope $E_{x}(s)=\sqrt{\epsilon_{x}\beta_{x}+(\delta_ED_{x}(s))^2}$',
             r'Envelope $E_{y}(s)=\sqrt{\epsilon_{y}\beta_{y}}$',
-            'ensemble']
+            'Ensemble']
     for i in range(6):
         c = next(color)
         y = []
@@ -342,29 +342,34 @@ def plottrajs(s, X, N_UC, rounds, envelope):
                     y_ideal.append(traj[i, index]*1e3)
         # ensemble trajectories
         [ax1[i].plot(s, y[l], '-', c=c) for l in range(len(y))]
-        [ax2[order[i]].plot(s, y[l], '-', c=c) for l in range(len(y))]
+        [ax2[i].plot(s, y[l], '-', c=c) for l in range(len(y))]
         ax1[i].plot([], [], '-', c=c, label=labs[5])
-        ax2[order[i]].plot([], [], '-', c=c, label=labs[5])
+        ax2[i].plot([], [], '-', c=c, label=labs[5])
         # 1-sigma particle trajectories
         ax1[i].plot(s, y_sigma[0], '-b', label=labs[1])
-        l2 = ax2[order[i]].plot(s, y_sigma[0], '-b')
+        ax2[i].plot(s, y_sigma[0], '-b')
         [ax1[i].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
-        [ax2[order[i]].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
+        [ax2[i].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
         # ideal particle trajectories
         ax1[i].plot(s, y_ideal[0], '-k', label=labs[0])
         if i == 0:
             ax1[i].plot([], [], '-r', label=labs[3])
         elif i == 2:
             ax1[i].plot([], [], '-r', label=labs[4])
-        l1 = ax2[order[i]].plot(s, y_ideal[0], '-k')
+        ax2[i].plot(s, y_ideal[0], '-k')
         leg = ax1[i].legend(fancybox=True, loc='upper right')
         leg.get_frame().set_alpha(0.5)
     ax1[0].plot(s, envelope[0, :], '-r', s, -envelope[0, :], '-r')
     ax1[2].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
-    l3 = ax2[0].plot(s, envelope[0, :], '-r')
-    ax2[0].plot(s, -envelope[0, :], '-r')
-    ax2[1].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
-    leg = figs[6].legend((l1, l2, l3), (labs[2], labs[0], labs[1]))
+    ax2[0].plot(s, envelope[0, :], '-r', s, -envelope[0, :], '-r')
+    ax2[2].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
+    ax3.plot([], [], '-k', label=labs[0])
+    ax3.plot([], [], '-b', label=labs[1])
+    ax3.plot([], [], '-r', label=labs[2])
+    ax3.get_xaxis().set_visible(False)
+    ax3.get_yaxis().set_visible(False)
+    ax3.axis('off')
+    leg = ax3.legend(fancybox=True, loc='center')
     return figs
 
 
@@ -376,7 +381,6 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
                r'$y^\prime$ / (mrad)']
     titles = [r'Radial phasespace',
               r'Axial phasespace']
-    ax = []
     axmax = []
     def roundplot(traj, ax, linestyle, label=''):
         for j in range(rounds):
@@ -389,15 +393,22 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
                 ax.plot(x, y, linestyle)
             axmax.append(max(npabs([x, y])))
 
+    GS = GridSpec(1, 5)
+    ax = []
+    ax.append(fig.add_subplot(GS[0, :2]))
+    ax.append(fig.add_subplot(GS[0, -2:]))
+    ax2 = fig.add_subplot(GS[0, 2])
+
     for i in range(2):
-        ax.append(fig.add_subplot(1, 2, i+1))
         ax[i].set_xlabel(xlabels[i])
         ax[i].set_ylabel(ylabels[i])
         ax[i].set_title(titles[i])
         for k in range(len(X)):
             traj = X[k]
             if k == 1:
-                roundplot(traj, ax[i], 'xr', label='1 sigma particle')
+                roundplot(traj, ax[i], 'xr')
+            elif k == 2:
+                roundplot(traj, ax[i], '.b')
             else:
                 roundplot(traj, ax[i], '.b')
     axmax = max(axmax)
@@ -405,10 +416,13 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
         ax[i].set_xlim([-axmax, axmax])
         ax[i].set_ylim([-axmax, axmax])
     x, xp, y, yp = twissellipse(xtwiss[:, :, 0], emittx, ytwiss[:, :, 0], emitty)
-    ax[0].plot(x, xp, '-g', label='Twiss ellipsis')
+    ax[0].plot(x, xp, '-g')
     ax[1].plot(y, yp, '-g')
-    leg = ax[0].legend(fancybox=True, loc='upper right')
-    leg.get_frame().set_alpha(0.5)
+    ax2.plot([], [], '.b', label='Ensemble')
+    ax2.plot([], [], '-g', label='Twiss ellipsis')
+    ax2.plot([], [], 'xr', label='1 sigma particle')
+    ax2.axis('off')
+    ax2.legend(loc='center')
     return fig
 
 
