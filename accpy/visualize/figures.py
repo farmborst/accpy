@@ -59,6 +59,7 @@ def plotstandards(formattype, scale, w=1920, h=1080):
                   'figure.autolayout': True,
                   'font.size': 28,
                   'font.family': 'serif',
+                  'axes.formatter.limits': (-3, 4),
                   'legend.fontsize': 28,
                   'lines.markersize': 3,
                   'lines.linewidth': 2,

@@ -7,15 +7,31 @@ from numpy import size
 from . import const
 
 
-def part2mqey(E, UC, particle):
-    cl = const.cl
+def part2mq(particle):
     if particle == 'electron':
         m = const.me
         q = const.qe
     elif particle == 'proton':
         m = const.mp
         q = const.qe
-    E0 = m*cl**2/q
+    return m, q
+
+
+def part2mqey(E, UC, particle):
+    m, q = part2mq(particle)
+    E0 = m*const.cl**2/q
     gamma = E/E0+1
     P_UC = size(UC, 1)        # nr of elements in unit cell
     return m, q, E0, gamma, P_UC
+
+
+def part2E0(particle):
+    m, q = part2mq(particle)
+    E0 = m*const.cl**2/q
+    return E0
+
+
+def part2mqE0(particle):
+    m, q = part2mq(particle)
+    E0 = m*const.cl**2/q
+    return m, q, E0

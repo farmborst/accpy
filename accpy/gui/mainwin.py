@@ -11,10 +11,10 @@ except:
     import tkinter as Tk
     import tkinter.ttk as ttk
     from tkinter.messagebox import showinfo
-from .simulate import (twisstrack, parttrack, ebdynamics, emitdynamics,
-                       quadscansim)
+from .simulate import (twisstrack, parttrack, ramp, quadscansim)
 from .measure import tunes, chromaticity, quadscanmeas, achroscan
 from .optimize import emittex, twissmatch
+from ..visualize.figures import plotstandards
 
 
 def mainwindow(root, version):
@@ -36,12 +36,12 @@ def menubar(root, version):
 
     # FILE MENU
     FM = Tk.Menu(bar, tearoff=0)
-    FML = ['Save Figure',
+    FML = ['New lattice',
            'Quit']
 
-    def File_savefig():
+    def File_newlat():
         showinfo('Ooops!', 'Sorry, but this feature is not ready yet...')
-    FM.add_command(label=FML[0], command=File_savefig)
+    FM.add_command(label=FML[0], command=File_newlat)
 
     def File_quit():
         root.quit()     # stops mainloop
@@ -53,39 +53,32 @@ def menubar(root, version):
     SM = Tk.Menu(bar, tearoff=0)
     SML = ['Betamatrix and dispersion tracking',
            'Particle tracking',
-           'Dynamic energy and magnetic Flux',
-           'Dynamic emittances',
+           'Ramp',
            'Quadrupole scan']
 
     def Simu_twisstrack():
         root.wm_title("accpy gui - simulations: {}".format(SML[0]))
         clear(frame)
-        twisstrack(frame)
+        twisstrack(frame, w, h)
     SM.add_command(label=SML[0], command=Simu_twisstrack)
 
     def Simu_parttrack():
         root.wm_title("accpy gui - simulations: {}".format(SML[1]))
         clear(frame)
-        parttrack(frame)
+        parttrack(frame, w, h)
     SM.add_command(label=SML[1], command=Simu_parttrack)
 
-    def Simu_EBdynamics():
+    def Simu_hframp():
         root.wm_title("accpy gui - simulations: {}".format(SML[2]))
         clear(frame)
-        ebdynamics(frame)
-    SM.add_command(label=SML[2], command=Simu_EBdynamics)
+        ramp(frame, w, h)
+    SM.add_command(label=SML[2], command=Simu_hframp)
 
-    def Simu_EmitDynamics():
-        root.wm_title("accpy gui - simulations: {}".format(SML[3]))
+    def Simu_quadscan():
+        root.wm_title("accpy gui - simulations: {}".format(SML[2]))
         clear(frame)
-        emitdynamics(frame)
-    SM.add_command(label=SML[3], command=Simu_EmitDynamics)
-
-    def Simu_QuadScan():
-        root.wm_title("accpy gui - simulations: {}".format(SML[4]))
-        clear(frame)
-        quadscansim(frame)
-    SM.add_command(label=SML[4], command=Simu_QuadScan)
+        quadscansim(frame, w, h)
+    SM.add_command(label=SML[3], command=Simu_quadscan)
     bar.add_cascade(label="Simulation", menu=SM)
 
     # MEASUREMENT MENU
@@ -98,25 +91,25 @@ def menubar(root, version):
     def Meas_tunes():
         root.wm_title("accpy gui - measurements: {}".format(MML[0]))
         clear(frame)
-        tunes(frame)
+        tunes(frame, w, h)
     MM.add_command(label=MML[0], command=Meas_tunes)
 
     def Meas_chrom():
         root.wm_title("accpy gui - measurements: {}".format(MML[1]))
         clear(frame)
-        chromaticity(frame)
+        chromaticity(frame, w, h)
     MM.add_command(label=MML[1], command=Meas_chrom)
 
     def Meas_QuadScan():
         root.wm_title("accpy gui - measurements: {}".format(MML[2]))
         clear(frame)
-        quadscanmeas(frame)
+        quadscanmeas(frame, w, h)
     MM.add_command(label=MML[2], command=Meas_QuadScan)
 
     def Meas_AchroScan():
         root.wm_title("accpy gui - measurements: {}".format(MML[3]))
         clear(frame)
-        achroscan(frame)
+        achroscan(frame, w, h)
     MM.add_command(label=MML[3], command=Meas_AchroScan)
     bar.add_cascade(label='Measurement', menu=MM)
 
@@ -128,13 +121,13 @@ def menubar(root, version):
     def Opti_emittex():
         root.wm_title("accpy gui - optimizations: {}".format(OML[0]))
         clear(frame)
-        emittex(frame)
+        emittex(frame, w, h)
     OM.add_command(label=OML[0], command=Opti_emittex)
 
     def Opti_twissmatch():
         root.wm_title("accpy gui - measurements: {}".format(OML[1]))
         clear(frame)
-        twissmatch(frame)
+        twissmatch(frame, w, h)
     OM.add_command(label=OML[1], command=Opti_twissmatch)
     bar.add_cascade(label="Optimization", menu=OM)
 
@@ -161,4 +154,6 @@ def menubar(root, version):
 
     frame = ttk.Frame(root)
     frame.pack(expand=True)
+    w, h = frame.winfo_screenwidth(), frame.winfo_screenheight()
+    plotstandards('pcdisplay', [1, 1], w=w, h=h)
     return bar, frame

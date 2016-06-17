@@ -6,7 +6,6 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division
 from numpy import (eye, dot, trapz, pi, nanmean, array, newaxis, hstack,
                    concatenate, empty, dstack, sqrt, zeros, vstack)
-import numpy as np
 from numpy.random import standard_normal
 from numpy.linalg import inv
 from .slicing import cellslice
@@ -23,7 +22,7 @@ def lsd(latt, slices, mode, particles, rounds):
     # get parameters and unit cell of lattice
     (closed, particle, E, I, UC, diagnostics, N_UC,     # always
      HF_f, HF_V,                                        # closed lattice
-     xtwiss0, ytwiss0, xdisp0) = lattice(latt)             # open lattice
+     xtwiss0, ytwiss0, xdisp0) = lattice(latt)          # open lattice
 
     m, q, E0, gamma, P_UC = part2mqey(E, UC, particle)
 
@@ -107,14 +106,13 @@ def lsd(latt, slices, mode, particles, rounds):
         emittx = dot(start[:2], dot(inv(xtwiss0), start[:2]))
         emitty = dot(start[2:4], dot(inv(ytwiss0), start[2:4]))
 
-
         # Envelope E(s)=sqrt(epsilon_i*beta_i(s))
         ydisp = zeros([1, P_UCS+1])
         emit_x_beta = array([emittx*xtwiss[0, 0, :], emitty*ytwiss[0, 0, :]])
         dispdelta = (vstack([xdisp[0, :], ydisp[0, :]])*1E-3*distsigma[5])**2
         envelope = sqrt(dispdelta + emit_x_beta)
 
-        # start vectors of normally distributed ensemble up to 1 sigma particles
+        # start vectors of normally distributed ensemble
         points = P_UCS*N_UC*rounds
         X0 = (distsigma - distmean)*standard_normal([6, particles])
         X0 = dstack([X0, empty([6, particles, points])])

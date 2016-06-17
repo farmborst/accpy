@@ -9,24 +9,11 @@ from numpy import (hstack, dstack, zeros, linspace, sqrt, trapz, pi, sin,
 
 
 def radiationloss(energy, q, E0, rho):
-    '''synchrotronradiation(energy, rho)
-    input:
-        particle energy
-        particle charge
-        particle rest energy
-        bending radius
-    return:
-        energyloss per round due to synchrotron radiation at given energy and
-        bending radius / eV
-    notice:
-        for electrons
+    ''' energyloss per turn per elektron
     '''
-    # energyloss per turn per elektron
-    e = const.qe
     e0 = const.e0
-    restenergy = const.Ee/e
-    energy = q*energy**4/rho/3/e0/(E0**4)
-    return energy
+    loss = q*energy**4/rho/3/e0/(E0**4)
+    return loss
 
 
 def dipolering(s, N_UC, UD, P_UCS, UCS, xdisp, xtwiss, ytwiss, slic, D_UC):

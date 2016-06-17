@@ -16,135 +16,12 @@ from functools import partial
 from threading import Thread
 from multiprocessing import cpu_count
 from time import time
-from .layout import tabbar, cs_str, cs_int, cs_lab
+from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
+                     cs_dropd)
 from ..simulate.lsd import lsd
-from ..visualize.figures import plotstandards
+from ..simulate.ramp import energy
 
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
-
-
-def twisstrack(frame):
-    mode = 'trackbeta'
-
-    def _start():
-        latt = lattice.get()
-        slic = int(entry_slice.get())
-        go = partial(runtrack, *(status, w, h, mode, latt, tabs[1:], slic))
-        # data plotting in new thread to keep gui (main thread&loop) responsive
-        t_run = Thread(target=go)
-        # automatically let die with main thread -> no global stop required
-        t_run.setDaemon(True)
-        # start thread
-        t_run.start()
-
-    tablabels = ['Menu', 'Radial', 'Axial', 'Dispersion', 'Overview',
-                 'Parameters']
-    w, h = frame.winfo_screenwidth(), frame.winfo_screenheight()
-    tabs = tabbar(frame, tablabels, w, h)
-
-    lattices = {'bessy2injectionline': '1',
-                'bessy2booster': '2',
-                'bessy2transfer': '3',
-                'bessy2transfer': '4',
-                'bessy2ring': '5',
-                'bessy2bigsmallbooster': '6'}
-    lattice = cs_str('bessy2booster')
-
-    cs_lab(tabs[0], 'Lattice', 1, 2)
-    cs_lab(tabs[0], 'Nr. of slices', 1, 3)
-
-    dropdown_lat = Tk.OptionMenu(tabs[0], lattice, *lattices)
-    dropdown_lat.grid(row=2, column=2)
-
-    entry_slice = Tk.Entry(tabs[0], textvariable=cs_int(1e3))
-    entry_slice.grid(row=2, column=3)
-
-    button_start = Tk.Button(master=tabs[0], text='Start', command=_start)
-    button_start.grid(row=2, column=1)
-
-    status = cs_lab(tabs[0], '', 3, 1)
-    return
-
-
-def parttrack(frame):
-    mode = 'trackpart'
-
-    def _start():
-        latt = lattice.get()
-        slic = int(entry_slice.get())
-        prts = int(entry_part.get())
-        rnds = int(entry_rounds.get())
-        go = partial(runtrack, *(status, w, h, mode, latt, tabs[1:], slic, prts, rnds))
-        # data plotting in new thread to keep gui (main thread&loop) responsive
-        t_run = Thread(target=go)
-        # automatically let die with main thread -> no global stop required
-        t_run.setDaemon(True)
-        # start thread
-        t_run.start()
-
-    tablabels = [' Menu ', ' X ', ' X\' ', ' Y ', ' Y\' ', ' Z ', ' Z\' ',
-                 ' Overview ', ' Transverse phase space ']
-    w, h = frame.winfo_screenwidth(), frame.winfo_screenheight()
-    tabs = tabbar(frame, tablabels, w, h)
-
-    lattices = {'bessy2injectionline': '1',
-                'bessy2booster': '2',
-                'bessy2transfer': '3',
-                'bessy2transfer': '4',
-                'bessy2ring': '5',
-                'bessy2bigsmallbooster': '6'}
-    lattice = cs_str('bessy2booster')
-
-    cs_lab(tabs[0], 'Lattice', 1, 2)
-    cs_lab(tabs[0], 'Nr. of slices', 1, 3)
-    cs_lab(tabs[0], 'Nr. of particles (parallelized)', 1, 4)
-    cs_lab(tabs[0], 'Nr. of rounds', 1, 5)
-
-    dropdown_lat = Tk.OptionMenu(tabs[0], lattice, *lattices)
-    dropdown_lat.grid(row=2, column=2)
-
-    entry_slice = Tk.Entry(tabs[0], textvariable=cs_int(100))
-    entry_slice.grid(row=2, column=3)
-
-    entry_part = Tk.Entry(tabs[0], textvariable=cs_int(cpu_count()))
-    entry_part.grid(row=2, column=4)
-
-    entry_rounds = Tk.Entry(tabs[0], textvariable=cs_int(100))
-    entry_rounds.grid(row=2, column=5)
-
-    button_start = Tk.Button(master=tabs[0], text='Start', command=_start)
-    button_start.grid(row=2, column=1)
-
-    status = cs_lab(tabs[0], '', 3, 1)
-    return
-
-
-def runtrack(status, w, h, mode, latt, tabs, slices, particles=1, rounds=1):
-    t0 = time()
-    status.set('running...')
-    plotstandards('pcdisplay', [1, 1], w=w, h=h)
-    close('all')
-    figs = lsd(latt, int(slices), mode, particles=int(particles),
-               rounds=int(rounds))
-    for fig, tab in zip(figs, tabs):
-        # destroy all widgets in fram/tab and close all figures
-        for widget in tab.winfo_children():
-            widget.destroy()
-        canvas = FigureCanvasTkAgg(fig, master=tab)
-        toolbar = NavigationToolbar2TkAgg(canvas, tab)
-        canvas.get_tk_widget().pack()
-        toolbar.pack()
-        canvas.draw()
-    t1 = time() - t0
-#    hh = t1//3600
-#    tt = t1 % 3600
-#    mm = tt//60
-#    tt = tt % 60
-#    ss = tt//1
-#    ms = (tt % 1*1e3)//1
-#    timestring = '%02i:%02i:%02i.%03i' % (hh, mm, ss, ms)
-    timestring = time2str(t1)
-    status.set('finished, elapsed time: '+timestring)
 
 
 def time2str(t):
@@ -165,21 +42,152 @@ def time2str(t):
         timestring = '%g minutes %g.%g seconds' % (mm, ss, ms)
     elif ss > 0:
         timestring = '%g.%g seconds' % (ss, ms)
+    else:
+        timestring = '%g milliseconds' % (ms)
     return timestring
 
-def ebdynamics(frame):
-    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
-    txt.pack()
+
+def runthread(go):
+    # data plotting in new thread to keep gui (main thread&loop) responsive
+    t_run = Thread(target=go)
+    # automatically let die with main thread -> no global stop required
+    t_run.setDaemon(True)
+    # start thread
+    t_run.start()
+
+
+def showfigs(t0, status, figs, tabs):
+    close('all')
+    for fig, tab in zip(figs, tabs):
+        # destroy all widgets in fram/tab and close all figures
+        for widget in tab.winfo_children():
+            widget.destroy()
+        canvas = FigureCanvasTkAgg(fig, master=tab)
+        toolbar = NavigationToolbar2TkAgg(canvas, tab)
+        canvas.get_tk_widget().pack()
+        toolbar.pack()
+        canvas.draw()
+    timestring = time2str(time() - t0)
+    status.set('finished, elapsed time: ' + timestring)
+
+
+def twisstrack(frame, w, h):
+    mode = 'trackbeta'
+
+    def _start():
+        latt = lattice.get()
+        slic = int(entry_slice.get())
+        go = partial(runtrack, *(status, mode, latt, tabs[1:], slic))
+        runthread(go)
+
+    tabs = cs_tabbar(frame, w, h, ['Menu', 'Radial', 'Axial', 'Dispersion',
+                                   'Overview', 'Parameters'])
+
+    cs_label(tabs[0], 1, 1, 'Lattice')
+    cs_label(tabs[0], 1, 2, 'Nr. of slices')
+    lattice = cs_dropd(tabs[0], 2, 1, ['bessy2injectionline',
+                                       'bessy2booster',
+                                       'bessy2transfer',
+                                       'bessy2ring'])
+    entry_slice = cs_Intentry(tabs[0], 2, 2, 1e3)
+
+    cs_button(tabs[0], 3, 3, 'Start', _start)
+    status = cs_label(tabs[0], 3, 4, '')
     return
 
 
-def emitdynamics(frame):
-    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
-    txt.pack()
+def parttrack(frame, w, h):
+    mode = 'trackpart'
+
+    def _start():
+        latt = lattice.get()
+        slic = int(entry_slice.get())
+        prts = int(entry_parts.get())
+        rnds = int(entry_round.get())
+        go = partial(runtrack, *(status, mode, latt, tabs[1:], slic, prts, rnds))
+        runthread(go)
+
+    tabs = cs_tabbar(frame, w, h, [' Menu ', ' X ', ' X\' ', ' Y ', ' Y\' ',
+                                   ' Z ', ' Z\' ', ' Overview ',
+                                   ' Transverse phase space '])
+
+    cs_label(tabs[0], 1, 1, 'Lattice')
+    cs_label(tabs[0], 1, 2, 'Nr. of slices')
+    cs_label(tabs[0], 1, 3, 'Nr. of particles (parallelized)')
+    cs_label(tabs[0], 1, 4, 'Nr. of rounds')
+    lattice = cs_dropd(tabs[0], 2, 1, ['bessy2injectionline',
+                                       'bessy2booster',
+                                       'bessy2transfer',
+                                       'bessy2ring'])
+    entry_slice = cs_Intentry(tabs[0], 2, 2, 100)
+    entry_parts = cs_Intentry(tabs[0], 2, 3, cpu_count())
+    entry_round = cs_Intentry(tabs[0], 2, 4, 100)
+
+    cs_button(tabs[0], 3, 5, 'Start', _start)
+    status = cs_label(tabs[0], 3, 6, '')
     return
 
 
-def quadscansim(frame):
+def runtrack(status, mode, latt, tabs, slices, particles=1, rounds=1):
+    t0 = time()
+    status.set('running...')
+    figs = lsd(latt, int(slices), mode, particles=int(particles),
+               rounds=int(rounds))
+    showfigs(t0, status, figs, tabs)
+
+
+def ramp(frame, w, h):
+    def _start():
+        def run(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD):
+            t0 = time()
+            status.set('running...')
+            figs = energy(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD)
+            showfigs(t0, status, figs, tabs[1:])
+        T_per = float(entry_Tper.get())
+        t_inj = float(entry_tinj.get())
+        t_ext = float(entry_text.get())
+        text2 = float(entry_tex2.get())
+        E_inj = float(entry_Einj.get())
+        E_ext = float(entry_Eext.get())
+        part = particle.get()
+        ND = int(entry_ND.get())
+        LD = float(entry_LD.get())
+        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, part, ND, LD))
+        runthread(go)
+
+    tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
+                                   'Energy loss', 'Acceleration voltage',
+                                   'Transverse Emittance',
+                                   'Longitudinal Emittance'])
+
+    cs_label(tabs[0], 1, 1, 'Period / s')
+    cs_label(tabs[0], 1, 2, 'Injection time / s')
+    cs_label(tabs[0], 1, 3, 'Extraction time 1 / s')
+    cs_label(tabs[0], 1, 4, 'Extraction time 2 / s')
+    entry_Tper = cs_Dblentry(tabs[0], 2, 1, 1e-1)
+    entry_tinj = cs_Dblentry(tabs[0], 2, 2, 5518.944e-6)
+    entry_text = cs_Dblentry(tabs[0], 2, 3, 38377.114e-6)
+    entry_tex2 = cs_Dblentry(tabs[0], 2, 4, 57076.1e-6)
+
+    cs_label(tabs[0], 3, 1, 'Particles')
+    cs_label(tabs[0], 3, 2, 'Injection energy / eV')
+    cs_label(tabs[0], 3, 3, 'Extraction energy / eV')
+    particle = cs_dropd(tabs[0], 4, 1, ['electron',
+                                        'proton'])
+    entry_Einj = cs_Dblentry(tabs[0], 4, 2, 52.3e6)
+    entry_Eext = cs_Dblentry(tabs[0], 4, 3, 1.72e9)
+
+    cs_label(tabs[0], 5, 1, 'Nr of dipoles')
+    cs_label(tabs[0], 5, 2, 'Dipole orbit length')
+    entry_ND = cs_Intentry(tabs[0], 6, 1, 16)
+    entry_LD = cs_Dblentry(tabs[0], 6, 2, 2.6193)
+
+    cs_button(tabs[0], 7, 5, 'Start', _start)
+    status = cs_label(tabs[0], 7, 6, '')
+    return
+
+
+def quadscansim(frame, w, h):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return

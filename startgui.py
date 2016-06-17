@@ -3,17 +3,16 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 try:
-    import Tkinter as Tk
+    from Tkinter import Tk, mainloop
 except:
-    import tkinter as Tk
+    from tkinter import Tk, mainloop
 from accpy.gui.mainwin import mainwindow
-#from multiprocessing import Process
 import gc
 
 
 if __name__ == '__main__':
-    root = Tk.Tk()  # create window
-    version = 0.2
+    root = Tk()  # create window
+    version = 0.3
     mainwindow(root, version)
     gc.enable()
-    Tk.mainloop()   # start Tk mainloop
+    mainloop()   # start Tk mainloop

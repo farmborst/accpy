@@ -9,13 +9,32 @@ version:
 '''
 from __future__ import division
 from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
-                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos)
-from matplotlib.figure import Figure as figure
+                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos,
+                   where)
+from matplotlib.figure import Figure
 from matplotlib.pyplot import cm
 from matplotlib.gridspec import GridSpec
+from .stringformat import SI, SId
 from ..simulate import const
 from ..simulate.rmatrices import UCS2R
 from ..simulate.tracking import trackpart
+
+
+def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False):
+    xprefix, mx = SId(max(x))
+    yprefix, my = SId(max(y))
+    x = x/mx  # carefull! numpy.ndarrays are mutable!!!
+    y = y/my
+    if col is False:
+        ax.plot(x, y, ls, label=label)
+    else:
+        ax.plot(x, y, ls, color=col, label=label)
+    ax.set_xlabel(xlabel+' / ('+xprefix+xunit+')')
+    ax.set_ylabel(ylabel+' / ('+yprefix+yunit+')')
+    epsy = (max(y)-min(y))*0.1
+    ax.set_xlim([min(x), max(x)])
+    ax.set_ylim([min(y)-epsy, max(y)+epsy])
+    return x, y
 
 
 def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
@@ -91,7 +110,7 @@ def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
 
 
 def plotoptic(UC, optic, diagnostics, s, xtwiss, ytwiss, xdisp):
-    fig = figure()
+    fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
     data = concatenate((xtwiss[0, 0, :], ytwiss[0, 0, :], xdisp.flatten()))
     ymin = nanmin(data)
@@ -148,7 +167,7 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
                          tau_x, Qy, Xy, Jy, E, emiteqy, tau_y, alpha_mc,
                          eta_mc, gamma_tr, Q_s, Js, sigma_E, sigma_tau,
                          sigma_s, tau_s, U_rad, P_ges, E_c, lambda_c):
-    fig = figure()
+    fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -215,7 +234,7 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
 
 
 def plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E):
-    fig = figure()
+    fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -276,7 +295,7 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
         X[:, :, i] = trackpart(R, P_UCS, X0)
     ymin = nanmin(X.flatten())
     ymax = nanmax(X.flatten())
-    fig = figure()
+    fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
     drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
     ax.set_xlabel(r'orbit position s / (m)')
@@ -297,7 +316,7 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
 
 
 def plottrajs(s, X, N_UC, rounds, envelope):
-    figs = [figure() for i in range(7)]
+    figs = [Figure() for i in range(7)]
     ax1 = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
     ax2 = [figs[6].add_subplot(3, 3, i) for i in [1, 7, 2, 8, 3, 9]]
     ax3 = figs[6].add_subplot(3, 3, 5)
@@ -374,7 +393,7 @@ def plottrajs(s, X, N_UC, rounds, envelope):
 
 
 def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
-    fig = figure()
+    fig = Figure()
     xlabels = [r'$x$ / (mm)',
                r'$y$ / (mm)']
     ylabels = [r'$x^\prime$ / (mrad)',
@@ -382,6 +401,7 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
     titles = [r'Radial phasespace',
               r'Axial phasespace']
     axmax = []
+
     def roundplot(traj, ax, linestyle, label=''):
         for j in range(rounds):
             index = (len(s)-1)*j
@@ -415,7 +435,8 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
     for i in range(2):
         ax[i].set_xlim([-axmax, axmax])
         ax[i].set_ylim([-axmax, axmax])
-    x, xp, y, yp = twissellipse(xtwiss[:, :, 0], emittx, ytwiss[:, :, 0], emitty)
+    x, xp, y, yp = twissellipse(xtwiss[:, :, 0], emittx,
+                                ytwiss[:, :, 0], emitty)
     ax[0].plot(x, xp, '-g')
     ax[1].plot(y, yp, '-g')
     ax2.plot([], [], '.b', label='Ensemble')
@@ -441,3 +462,67 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
     x, xp = ellipse(emittx, xtwiss[0, 0], -xtwiss[0, 1], xtwiss[1, 1])
     y, yp = ellipse(emitty, ytwiss[0, 0], -ytwiss[0, 1], ytwiss[1, 1])
     return x, xp, y, yp
+
+
+def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss):
+    i1 = where(t > t_inj)[0][0]
+    i2 = where(t > t_ext)[0][0]
+    i4 = where(t < t_ext2)[0][-1:]
+    t_max = (t_ext+t_ext2)/2    # Peak time
+    i3 = where(t > t_max)[0][0]
+    tt = array([t_inj, t_ext, t_max, t_ext2])
+    EE = array([E[i1], E[i2], E[i3], E[i4]])
+    BB = array([B[i1], B[i2], B[i3], B[i4]])
+    LL = array([loss[i1], loss[i2], loss[i3], loss[i4]])
+    epsT = 1
+
+    def annotate(ax, x, y, s, eps):
+        ax.text(x[0]+eps, y[0], s[0], horizontalalignment='left',
+                verticalalignment='top')
+        ax.text(x[1]-eps, y[1], s[1], horizontalalignment='right',
+                verticalalignment='bottom')
+        ax.text(x[2], y[2], s[2], horizontalalignment='center',
+                verticalalignment='bottom')
+        ax.text(x[3]+eps, y[3], s[3], horizontalalignment='left',
+                verticalalignment='bottom')
+
+    s = [r'Injection''\n(',
+          r'Extraction''\n(',
+          r'Maximum energy''\n(',
+          r'Alternative extraction''\n(']
+    s1 = [s[0]+SI(tt[0])+'s, '+SI(EE[0]) + 'eV)',
+          s[1]+SI(tt[1])+'s, '+SI(EE[1]) + 'eV)',
+          s[2]+SI(tt[2])+'s, '+SI(EE[2]) + 'eV)',
+          s[3]+SI(tt[3])+'s, '+SI(EE[3]) + 'eV)']
+    s2 = [s[0]+SI(tt[0])+'s, '+SI(BB[0]) + 'T)',
+          s[1]+SI(tt[1])+'s, '+SI(BB[1]) + 'T)',
+          s[2]+SI(tt[2])+'s, '+SI(BB[2]) + 'T)',
+          s[3]+SI(tt[3])+'s, '+SI(BB[3]) + 'T)']
+    s3 = [s[0]+SI(tt[0])+'s, '+SI(LL[0]) + 'eV)',
+          s[1]+SI(tt[1])+'s, '+SI(LL[1]) + 'eV)',
+          s[2]+SI(tt[2])+'s, '+SI(LL[2]) + 'eV)',
+          s[3]+SI(tt[3])+'s, '+SI(LL[3]) + 'eV)']
+
+    Nfigs = 3
+    legs = []
+    figs = [Figure() for i in range(Nfigs)]
+    ax = [figs[i].add_subplot(1, 1, 1) for i in range(Nfigs)]
+    [ax[i].grid() for i in range(Nfigs)]
+
+    ttn, EEn = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
+    plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
+    legs.append(ax[0].legend(fancybox=True, loc='lower center'))
+    annotate(ax[0], ttn, EEn, s1, epsT)
+
+
+    ttn, BBn = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
+    plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
+    legs.append(ax[1].legend(fancybox=True, loc='lower center'))
+    annotate(ax[1], ttn, BBn, s2, epsT)
+
+    ttn, LLn = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
+    plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
+    annotate(ax[2], ttn, LLn, s3, epsT)
+
+    [leg.get_frame().set_alpha(0.5) for leg in legs]
+    return figs
