@@ -19,7 +19,7 @@ from time import time
 from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
                      cs_dropd)
 from ..simulate.lsd import lsd
-from ..simulate.ramp import energy
+from ..simulate.ramp import simulate_ramp
 
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
@@ -71,7 +71,14 @@ def showfigs(t0, status, figs, tabs):
     status.set('finished, elapsed time: ' + timestring)
 
 
-def twisstrack(frame, w, h):
+def runtrack(status, mode, latt, tabs, slices, particles=1, rounds=1):
+    t0 = time()
+    status.set('running...')
+    figs = lsd(latt, slices, mode, particles=particles, rounds=rounds)
+    showfigs(t0, status, figs, tabs)
+
+
+def gui_twisstrack(frame, w, h):
     mode = 'trackbeta'
 
     def _start():
@@ -96,7 +103,7 @@ def twisstrack(frame, w, h):
     return
 
 
-def parttrack(frame, w, h):
+def gui_parttrack(frame, w, h):
     mode = 'trackpart'
 
     def _start():
@@ -128,21 +135,14 @@ def parttrack(frame, w, h):
     return
 
 
-def runtrack(status, mode, latt, tabs, slices, particles=1, rounds=1):
-    t0 = time()
-    status.set('running...')
-    figs = lsd(latt, int(slices), mode, particles=int(particles),
-               rounds=int(rounds))
-    showfigs(t0, status, figs, tabs)
-
-
-def ramp(frame, w, h):
+def gui_ramp(frame, w, h):
     def _start():
-        def run(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD):
+        def run(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD, U, points):
             t0 = time()
             status.set('running...')
-            figs = energy(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD)
+            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD, U, points)
             showfigs(t0, status, figs, tabs[1:])
+        points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
         t_inj = float(entry_tinj.get())
         t_ext = float(entry_text.get())
@@ -150,9 +150,10 @@ def ramp(frame, w, h):
         E_inj = float(entry_Einj.get())
         E_ext = float(entry_Eext.get())
         part = particle.get()
+        U = float(entry_U.get())
         ND = int(entry_ND.get())
         LD = float(entry_LD.get())
-        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, part, ND, LD))
+        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, part, ND, LD, U, points))
         runthread(go)
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
@@ -160,14 +161,16 @@ def ramp(frame, w, h):
                                    'Transverse Emittance',
                                    'Longitudinal Emittance'])
 
-    cs_label(tabs[0], 1, 1, 'Period / s')
-    cs_label(tabs[0], 1, 2, 'Injection time / s')
-    cs_label(tabs[0], 1, 3, 'Extraction time 1 / s')
-    cs_label(tabs[0], 1, 4, 'Extraction time 2 / s')
-    entry_Tper = cs_Dblentry(tabs[0], 2, 1, 1e-1)
-    entry_tinj = cs_Dblentry(tabs[0], 2, 2, 5518.944e-6)
-    entry_text = cs_Dblentry(tabs[0], 2, 3, 38377.114e-6)
-    entry_tex2 = cs_Dblentry(tabs[0], 2, 4, 57076.1e-6)
+    cs_label(tabs[0], 1, 1, 'Calculation points')
+    cs_label(tabs[0], 1, 2, 'Period / s')
+    cs_label(tabs[0], 1, 3, 'Injection time / s')
+    cs_label(tabs[0], 1, 4, 'Extraction time 1 / s')
+    cs_label(tabs[0], 1, 5, 'Extraction time 2 / s')
+    entry_pnts = cs_Intentry(tabs[0], 2, 1, 1e3)
+    entry_Tper = cs_Dblentry(tabs[0], 2, 2, 1e-1)
+    entry_tinj = cs_Dblentry(tabs[0], 2, 3, 5518.944e-6)
+    entry_text = cs_Dblentry(tabs[0], 2, 4, 38377.114e-6)
+    entry_tex2 = cs_Dblentry(tabs[0], 2, 5, 57076.1e-6)
 
     cs_label(tabs[0], 3, 1, 'Particles')
     cs_label(tabs[0], 3, 2, 'Injection energy / eV')
@@ -177,17 +180,19 @@ def ramp(frame, w, h):
     entry_Einj = cs_Dblentry(tabs[0], 4, 2, 52.3e6)
     entry_Eext = cs_Dblentry(tabs[0], 4, 3, 1.72e9)
 
-    cs_label(tabs[0], 5, 1, 'Nr of dipoles')
-    cs_label(tabs[0], 5, 2, 'Dipole orbit length')
-    entry_ND = cs_Intentry(tabs[0], 6, 1, 16)
-    entry_LD = cs_Dblentry(tabs[0], 6, 2, 2.6193)
+    cs_label(tabs[0], 5, 1, 'Total orbit length / m')
+    cs_label(tabs[0], 5, 2, 'Nr of dipoles')
+    cs_label(tabs[0], 5, 3, 'Dipole orbit length')
+    entry_U = cs_Dblentry(tabs[0], 6, 1, 96)
+    entry_ND = cs_Intentry(tabs[0], 6, 2, 16)
+    entry_LD = cs_Dblentry(tabs[0], 6, 3, 2.6193)
 
-    cs_button(tabs[0], 7, 5, 'Start', _start)
-    status = cs_label(tabs[0], 7, 6, '')
+    cs_button(tabs[0], 7, 6, 'Start', _start)
+    status = cs_label(tabs[0], 7, 7, '')
     return
 
 
-def quadscansim(frame, w, h):
+def gui_quadscansim(frame, w, h):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return

@@ -11,7 +11,8 @@ except:
     import tkinter as Tk
     import tkinter.ttk as ttk
     from tkinter.messagebox import showinfo
-from .simulate import (twisstrack, parttrack, ramp, quadscansim)
+from .simulate import (gui_twisstrack, gui_parttrack, gui_ramp,
+                       gui_quadscansim)
 from .measure import tunes, chromaticity, quadscanmeas, achroscan
 from .optimize import emittex, twissmatch
 from ..visualize.figures import plotstandards
@@ -59,25 +60,25 @@ def menubar(root, version):
     def Simu_twisstrack():
         root.wm_title("accpy gui - simulations: {}".format(SML[0]))
         clear(frame)
-        twisstrack(frame, w, h)
+        gui_twisstrack(frame, w, h)
     SM.add_command(label=SML[0], command=Simu_twisstrack)
 
     def Simu_parttrack():
         root.wm_title("accpy gui - simulations: {}".format(SML[1]))
         clear(frame)
-        parttrack(frame, w, h)
+        gui_parttrack(frame, w, h)
     SM.add_command(label=SML[1], command=Simu_parttrack)
 
     def Simu_hframp():
         root.wm_title("accpy gui - simulations: {}".format(SML[2]))
         clear(frame)
-        ramp(frame, w, h)
+        gui_ramp(frame, w, h)
     SM.add_command(label=SML[2], command=Simu_hframp)
 
     def Simu_quadscan():
         root.wm_title("accpy gui - simulations: {}".format(SML[2]))
         clear(frame)
-        quadscansim(frame, w, h)
+        gui_quadscansim(frame, w, h)
     SM.add_command(label=SML[3], command=Simu_quadscan)
     bar.add_cascade(label="Simulation", menu=SM)
 

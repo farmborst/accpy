@@ -127,8 +127,3 @@ def lsd(latt, slices, mode, particles, rounds):
         figs = plottrajs(s, X, N_UC, rounds, envelope)
         figs.append(plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty))
     return figs
-
-
-#np.set_printoptions(precision=4)
-#np.set_printoptions(suppress=True)
-#print np.matrix(Rtmp)

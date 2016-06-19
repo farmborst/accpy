@@ -464,32 +464,36 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
     return x, xp, y, yp
 
 
-def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss):
+def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt):
     i1 = where(t > t_inj)[0][0]
     i2 = where(t > t_ext)[0][0]
     i4 = where(t < t_ext2)[0][-1:]
     t_max = (t_ext+t_ext2)/2    # Peak time
     i3 = where(t > t_max)[0][0]
-    tt = array([t_inj, t_ext, t_max, t_ext2])
+    i5 = where(volt < 0)[0][0]
+    i6 = where(volt == max(volt))[0][0]
+    tt = array([t[i1], t[i2], t[i3], t[i4]])
+    tt2 = array([t[i1], t[i2], t[i3], t[i4], t[i5], t[i6]])
     EE = array([E[i1], E[i2], E[i3], E[i4]])
     BB = array([B[i1], B[i2], B[i3], B[i4]])
     LL = array([loss[i1], loss[i2], loss[i3], loss[i4]])
-    epsT = 1
+    VV = array([volt[i1], volt[i2], volt[i3], volt[i4], volt[i5], volt[i6]])
 
-    def annotate(ax, x, y, s, eps):
-        ax.text(x[0]+eps, y[0], s[0], horizontalalignment='left',
-                verticalalignment='top')
-        ax.text(x[1]-eps, y[1], s[1], horizontalalignment='right',
-                verticalalignment='bottom')
-        ax.text(x[2], y[2], s[2], horizontalalignment='center',
-                verticalalignment='bottom')
-        ax.text(x[3]+eps, y[3], s[3], horizontalalignment='left',
-                verticalalignment='bottom')
+    def annotate(ax, xs, ys, ss, epss, hs, vs):
+        for x, y, s, h, v, eps in zip(xs, ys, ss, hs, vs, epss):
+            ax.text(x+eps, y, s, horizontalalignment=h, verticalalignment=v)
 
+    Nfigs = 4
+    legs = []
+    figs = [Figure() for i in range(Nfigs)]
+    ax = [figs[i].add_subplot(1, 1, 1) for i in range(Nfigs)]
+    [ax[i].grid() for i in range(Nfigs)]
     s = [r'Injection''\n(',
-          r'Extraction''\n(',
-          r'Maximum energy''\n(',
-          r'Alternative extraction''\n(']
+         r'Extraction''\n(',
+         r'Maximum energy''\n(',
+         r'Alternative extraction''\n(',
+         r'Zero Voltage''\n(',
+         r'Maximum Voltage''\n(']
     s1 = [s[0]+SI(tt[0])+'s, '+SI(EE[0]) + 'eV)',
           s[1]+SI(tt[1])+'s, '+SI(EE[1]) + 'eV)',
           s[2]+SI(tt[2])+'s, '+SI(EE[2]) + 'eV)',
@@ -502,27 +506,42 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss):
           s[1]+SI(tt[1])+'s, '+SI(LL[1]) + 'eV)',
           s[2]+SI(tt[2])+'s, '+SI(LL[2]) + 'eV)',
           s[3]+SI(tt[3])+'s, '+SI(LL[3]) + 'eV)']
+    s4 = [s[0]+SI(tt2[0])+'s, '+SI(VV[0]) + 'V)',
+          s[1]+SI(tt2[1])+'s, '+SI(VV[1]) + 'V)',
+          s[2]+SI(tt2[2])+'s, '+SI(VV[2]) + 'V)',
+          s[3]+SI(tt2[3])+'s, '+SI(VV[3]) + 'V)',
+          s[4]+SI(tt2[4])+'s, '+SI(VV[4]) + 'V)',
+          s[5]+SI(tt2[5])+'s, '+SI(VV[5]) + 'V)']
 
-    Nfigs = 3
-    legs = []
-    figs = [Figure() for i in range(Nfigs)]
-    ax = [figs[i].add_subplot(1, 1, 1) for i in range(Nfigs)]
-    [ax[i].grid() for i in range(Nfigs)]
+    epsT = array([1, -1, 0, 1])*.02*T
+    ha = ['left', 'right', 'center', 'left']
+    va = ['top', 'bottom', 'bottom', 'bottom']
 
     ttn, EEn = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
     plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
     legs.append(ax[0].legend(fancybox=True, loc='lower center'))
-    annotate(ax[0], ttn, EEn, s1, epsT)
-
+    annotate(ax[0], ttn, EEn, s1, epsT, ha, va)
 
     ttn, BBn = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
     plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
     legs.append(ax[1].legend(fancybox=True, loc='lower center'))
-    annotate(ax[1], ttn, BBn, s2, epsT)
+    annotate(ax[1], ttn, BBn, s2, epsT, ha, va)
+
+    epsT = array([1, -1, 0, 1])*.02*T
+    ha = ['left', 'right', 'center', 'left']
+    va = ['top', 'bottom', 'bottom', 'bottom']
 
     ttn, LLn = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
     plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
-    annotate(ax[2], ttn, LLn, s3, epsT)
+    annotate(ax[2], ttn, LLn, s3, epsT, ha, va)
+
+    epsT = array([1, -1, 1, 1, 1, -1])*.02*T
+    ha = ['left', 'right', 'left', 'left', 'left', 'right']
+    va = ['top', 'bottom', 'bottom', 'bottom', 'bottom', 'bottom']
+
+    ttn, VVn = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
+    plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
+    annotate(ax[3], ttn, VVn, s4, epsT, ha, va)
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]
     return figs

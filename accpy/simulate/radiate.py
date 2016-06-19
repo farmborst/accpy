@@ -8,14 +8,6 @@ from numpy import (hstack, dstack, zeros, linspace, sqrt, trapz, pi, sin,
                    nanmean)
 
 
-def radiationloss(energy, q, E0, rho):
-    ''' energyloss per turn per elektron
-    '''
-    e0 = const.e0
-    loss = q*energy**4/rho/3/e0/(E0**4)
-    return loss
-
-
 def dipolering(s, N_UC, UD, P_UCS, UCS, xdisp, xtwiss, ytwiss, slic, D_UC):
     UCS1T = hstack(UCS for i in range(N_UC))
     xdisp_t = hstack(xdisp for i in range(N_UC))
