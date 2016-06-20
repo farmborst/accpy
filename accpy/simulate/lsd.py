@@ -49,24 +49,21 @@ def lsd(latt, slices, mode, particles, rounds):
         M1T = eye(6)
         for i in range(N_UC):
             M1T = dot(M, M1T)
-
-    # get sliced unit cell for finer tracking (also get average rho)
+    # get sliced unit cell for finer tracking
     s, UCS, P_UCS = cellslice(UC, P_UC, slices)
-
     # calculate according sliced R matrix
     R = UCS2R(P_UCS, UCS, gamma)
 
     # track twiss and dispersion
     xtwiss, ytwiss, xdisp, xytwiss = tracktwiss4(R, P_UCS, closed, xtwiss0,
                                                  ytwiss0, xdisp0)
-
     if closed:
         # tune Q_u:=1/2pi*int(ds/beta_u(s))
         Qx = N_UC*trapz(1./xtwiss[0, 0, :], s)/2/pi
         Qy = N_UC*trapz(1./ytwiss[0, 0, :], s)/2/pi
         # nat chromaticity xi_u:=1/4pi*int(k_u(s)*beta_u(s)) with k_y = - k_x
-        Xx = N_UC*trapz(-UCS[4, :]*xtwiss[0, 0, :], s)/4/pi
-        Xy = N_UC*trapz(UCS[4, :]*ytwiss[0, 0, :], s)/4/pi
+        Xx = N_UC*trapz(-UCS[4, :]*xtwiss[0, 0, 1:], s[1:])/4/pi
+        Xy = N_UC*trapz(UCS[4, :]*ytwiss[0, 0, 1:], s[1:])/4/pi
         # calculate according ring of dipoles
         sdip, disperdip, xtwissdip, ytwissdip = \
             dipolering(s, N_UC, UD, P_UCS, UCS, xdisp, xtwiss, ytwiss, slices,
@@ -124,6 +121,6 @@ def lsd(latt, slices, mode, particles, rounds):
         for i in range(1, N_UC):
             s = concatenate([s, s0[1:]+s0[-1]*i])[:]
             envelope = hstack([envelope, envelope0[:, 1:]])
-        figs = plottrajs(s, X, N_UC, rounds, envelope)
+        figs = plottrajs(s, X, rounds, envelope)
         figs.append(plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty))
     return figs

@@ -108,5 +108,5 @@ def trackparts(R_UCS, N_UC, X0, rounds):
     pool = Pool(Ncore)
     X = pool.map(trackpartN, X0)
     pool.close()
-#    pool.join()
+    pool.join()
     return X

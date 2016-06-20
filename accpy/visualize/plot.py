@@ -315,7 +315,7 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
     return fig
 
 
-def plottrajs(s, X, N_UC, rounds, envelope):
+def plottrajs(s, X, rounds, envelope):
     figs = [Figure() for i in range(7)]
     ax1 = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
     ax2 = [figs[6].add_subplot(3, 3, i) for i in [1, 7, 2, 8, 3, 9]]
@@ -339,25 +339,25 @@ def plottrajs(s, X, N_UC, rounds, envelope):
         ax2[i].set_ylabel(y2labs[i])
 
     color = iter(cm.rainbow(linspace(0, 1, 6)))
-    labs = ['Ideal particle',
-            '1 sigma particle',
+    labs = [r'Ideal particle',
+            r'1 sigma particle',
             r'Envelope $E_{x,y}(s)=\sqrt{\epsilon_{x,y}\beta_{x,y}(s)+(\delta_ED_{x,y}(s))^2)}$',
             r'Envelope $E_{x}(s)=\sqrt{\epsilon_{x}\beta_{x}+(\delta_ED_{x}(s))^2}$',
             r'Envelope $E_{y}(s)=\sqrt{\epsilon_{y}\beta_{y}}$',
-            'Ensemble']
+            r'Ensemble']
     for i in range(6):
         c = next(color)
         y = []
         y_ideal = []
         y_sigma = []
-        for j, traj in enumerate(X):
+        for partN, traj in enumerate(X):
             for k in range(rounds):
                 index = arange(len(s))+(len(s)-1)*k
-                if j > 1:
+                if partN > 1:
                     y.append(traj[i, index]*1e3)
-                elif j == 1:
+                elif partN == 1:
                     y_sigma.append(traj[i, index]*1e3)
-                else:
+                elif partN == 0:
                     y_ideal.append(traj[i, index]*1e3)
         # ensemble trajectories
         [ax1[i].plot(s, y[l], '-', c=c) for l in range(len(y))]
