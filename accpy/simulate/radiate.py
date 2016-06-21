@@ -100,3 +100,7 @@ def synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0, I,
     return (Jx, emiteqx, tau_x, Jy, E, emiteqy, tau_y, alpha_mc, eta_mc,
             gamma_tr, Q_s, Js, sigma_E, sigma_tau, sigma_s, tau_s, U_rad,
             P_ges, E_c, lambda_c)
+
+    def equilibriumemittance():
+
+        return  emitx_equi, emity_limi, sigmaEbyE_equi

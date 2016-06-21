@@ -20,7 +20,8 @@ from ..simulate.rmatrices import UCS2R
 from ..simulate.tracking import trackpart
 
 
-def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False):
+def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
+         setlim=True):
     xprefix, mx = SId(max(x))
     yprefix, my = SId(max(y))
     x = x/mx  # carefull! numpy.ndarrays are mutable!!!
@@ -31,9 +32,18 @@ def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False):
         ax.plot(x, y, ls, color=col, label=label)
     ax.set_xlabel(xlabel+' / ('+xprefix+xunit+')')
     ax.set_ylabel(ylabel+' / ('+yprefix+yunit+')')
-    epsy = (max(y)-min(y))*0.1
-    ax.set_xlim([min(x), max(x)])
-    ax.set_ylim([min(y)-epsy, max(y)+epsy])
+    if setlim:
+        epsy = (max(y)-min(y))*0.1
+        ax.set_xlim([min(x), max(x)])
+        ax.set_ylim([min(y)-epsy, max(y)+epsy])
+    return x, y
+
+def plot2(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col):
+    xprefix, mx = SId(max(x))
+    x = x/mx  # carefull! numpy.ndarrays are mutable!!!
+    ax.plot(x, y, ls, color=col, label=label)
+    ax.set_xlabel(xlabel+' / ('+xprefix+xunit+')')
+    ax.set_ylabel(ylabel+' / ('+yunit+')')
     return x, y
 
 
@@ -464,7 +474,7 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
     return x, xp, y, yp
 
 
-def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt):
+def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs):
     i1 = where(t > t_inj)[0][0]
     i2 = where(t > t_ext)[0][0]
     i4 = where(t < t_ext2)[0][-1:]
@@ -483,7 +493,7 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt):
         for x, y, s, h, v, eps in zip(xs, ys, ss, hs, vs, epss):
             ax.text(x+eps, y, s, horizontalalignment=h, verticalalignment=v)
 
-    Nfigs = 4
+    Nfigs = 6
     legs = []
     figs = [Figure() for i in range(Nfigs)]
     ax = [figs[i].add_subplot(1, 1, 1) for i in range(Nfigs)]
@@ -542,6 +552,18 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt):
     ttn, VVn = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
     plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
     annotate(ax[3], ttn, VVn, s4, epsT, ha, va)
+
+    color = iter(cm.rainbow(linspace(0, 1, len(phases))))
+    lab = ['ideal cavity', 'overvoltage factor 2', 'overvoltage factor 5',
+           'overvoltage factor 20']
+    [plot2(ax[4], t, phase, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
+           lab[i], next(color)) for i, phase in enumerate(phases)]
+    legs.append(ax[4].legend(fancybox=True, loc='center right'))
+
+    color = iter(cm.rainbow(linspace(0, 1, len(freqs))))
+    [plot2(ax[5], t, freq*1e-3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
+          lab[i], next(color)) for i, freq in enumerate(freqs)]
+    legs.append(ax[5].legend(fancybox=True, loc='center right'))
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]
     return figs

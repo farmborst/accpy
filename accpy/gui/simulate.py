@@ -137,10 +137,10 @@ def gui_parttrack(frame, w, h):
 
 def gui_ramp(frame, w, h):
     def _start():
-        def run(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD, U, points):
+        def run(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD, U, points, f_HF, slipf):
             t0 = time()
             status.set('running...')
-            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD, U, points)
+            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, particle, ND, LD, U, points, f_HF, slipf)
             showfigs(t0, status, figs, tabs[1:])
         points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
@@ -153,16 +153,20 @@ def gui_ramp(frame, w, h):
         U = float(entry_U.get())
         ND = int(entry_ND.get())
         LD = float(entry_LD.get())
-        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, part, ND, LD, U, points))
+        f_HF = float(entry_f_HF.get())
+        slipf = float(entry_slipf.get())
+        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, part, ND, LD, U, points, f_HF, slipf))
         runthread(go)
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
                                    'Energy loss', 'Acceleration voltage',
+                                   'Synchronous phase',
+                                   'Synchrotron frequency', 'Bunch length',
                                    'Transverse Emittance',
                                    'Longitudinal Emittance'])
 
     cs_label(tabs[0], 1, 1, 'Calculation points')
-    cs_label(tabs[0], 1, 2, 'Period / s')
+    cs_label(tabs[0], 1, 2, 'Acceleration Period / s')
     cs_label(tabs[0], 1, 3, 'Injection time / s')
     cs_label(tabs[0], 1, 4, 'Extraction time 1 / s')
     cs_label(tabs[0], 1, 5, 'Extraction time 2 / s')
@@ -173,19 +177,23 @@ def gui_ramp(frame, w, h):
     entry_tex2 = cs_Dblentry(tabs[0], 2, 5, 57076.1e-6)
 
     cs_label(tabs[0], 3, 1, 'Particles')
-    cs_label(tabs[0], 3, 2, 'Injection energy / eV')
-    cs_label(tabs[0], 3, 3, 'Extraction energy / eV')
+    cs_label(tabs[0], 3, 2, 'Cavity frequency')
+    cs_label(tabs[0], 3, 3, 'Injection energy / eV')
+    cs_label(tabs[0], 3, 4, 'Extraction energy / eV')
     particle = cs_dropd(tabs[0], 4, 1, ['electron',
                                         'proton'])
-    entry_Einj = cs_Dblentry(tabs[0], 4, 2, 52.3e6)
-    entry_Eext = cs_Dblentry(tabs[0], 4, 3, 1.72e9)
+    entry_f_HF = cs_Dblentry(tabs[0], 4, 2, 499.667e6)
+    entry_Einj = cs_Dblentry(tabs[0], 4, 3, 52.3e6)
+    entry_Eext = cs_Dblentry(tabs[0], 4, 4, 1.72e9)
 
     cs_label(tabs[0], 5, 1, 'Total orbit length / m')
     cs_label(tabs[0], 5, 2, 'Nr of dipoles')
     cs_label(tabs[0], 5, 3, 'Dipole orbit length')
+    cs_label(tabs[0], 5, 4, 'Slip factor')
     entry_U = cs_Dblentry(tabs[0], 6, 1, 96)
     entry_ND = cs_Intentry(tabs[0], 6, 2, 16)
     entry_LD = cs_Dblentry(tabs[0], 6, 3, 2.6193)
+    entry_slipf = cs_Dblentry(tabs[0], 6, 4, 0.0330473)
 
     cs_button(tabs[0], 7, 6, 'Start', _start)
     status = cs_label(tabs[0], 7, 7, '')

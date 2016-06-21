@@ -1,8 +1,8 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""
-Felix Kramer
-accpy.simulate.specialfuns
-"""
+''' accpy.math.specialfuns
+author:     felix.kramer(at)physik.hu-berlin.de
+'''
 from numpy import exp, sqrt, pi
 
 
