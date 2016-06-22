@@ -18,6 +18,42 @@ from ..visualize.plot import (plotopticpars_closed, plottrajs,
                               plotopticpars_open, plotoptic, plotphasespace)
 
 
+def oneturn(UC, P_UC, N_UC, gamma):
+    M = eye(6)
+    rho = []
+    LD = []
+    D_UC = 0
+    for i in range(P_UC):
+        UC_tmp = UC[:, i]
+        # R matrices of unsliced unit cell
+        M = dot(rmatrix(UC_tmp, gamma), M)
+        if UC_tmp[0] == 1:
+            LD.append(UC_tmp[1])
+            rho.append(UC_tmp[2])
+            D_UC += 1
+    UC_tmp = None
+    LD = nanmean(LD)
+    rho = nanmean(rho)
+    UD = N_UC*D_UC*LD
+    xtwiss0, ytwiss0, xdisp0 = initialtwiss(M)
+    # one turn R matrix of ring
+    M1T = eye(6)
+    for i in range(N_UC):
+        M1T = dot(M, M1T)
+    return xtwiss0, ytwiss0, xdisp0, rho, D_UC, UD, LD
+
+
+def gettunes(s, xtwiss, ytwiss, N_UC):
+    Qx = N_UC*trapz(1./xtwiss[0, 0, :], s)/2/pi
+    Qy = N_UC*trapz(1./ytwiss[0, 0, :], s)/2/pi
+    return Qx, Qy
+
+def getchromaticity(s, xtwiss, ytwiss, N_UC, UCS):
+    Xx = N_UC*trapz(-UCS[4, :]*xtwiss[0, 0, 1:], s[1:])/4/pi
+    Xy = N_UC*trapz(UCS[4, :]*ytwiss[0, 0, 1:], s[1:])/4/pi
+    return Xx, Xy
+
+
 def lsd(latt, slices, mode, particles, rounds):
     # get parameters and unit cell of lattice
     (closed, particle, E, I, UC, diagnostics, N_UC,     # always
@@ -27,28 +63,8 @@ def lsd(latt, slices, mode, particles, rounds):
     m, q, E0, gamma, P_UC = part2mqey(E, UC, particle)
 
     if closed:
-        # one turn R matrix of unit cell
-        M = eye(6)
-        rho = []
-        LD = []
-        D_UC = 0
-        for i in range(P_UC):
-            UC_tmp = UC[:, i]
-            # R matrices of unsliced unit cell
-            M = dot(rmatrix(UC_tmp, gamma), M)
-            if UC_tmp[0] == 1:
-                LD.append(UC_tmp[1])
-                rho.append(UC_tmp[2])
-                D_UC += 1
-        UC_tmp = None
-        LD = nanmean(LD)
-        rho = nanmean(rho)
-        UD = N_UC*D_UC*LD
-        xtwiss0, ytwiss0, xdisp0 = initialtwiss(M)
-        # one turn R matrix of ring
-        M1T = eye(6)
-        for i in range(N_UC):
-            M1T = dot(M, M1T)
+        xtwiss0, ytwiss0, xdisp0, rho, D_UC, UD, LD = oneturn(UC, P_UC, N_UC, gamma)
+
     # get sliced unit cell for finer tracking
     s, UCS, P_UCS = cellslice(UC, P_UC, slices)
     # calculate according sliced R matrix
@@ -59,19 +75,17 @@ def lsd(latt, slices, mode, particles, rounds):
                                                  ytwiss0, xdisp0)
     if closed:
         # tune Q_u:=1/2pi*int(ds/beta_u(s))
-        Qx = N_UC*trapz(1./xtwiss[0, 0, :], s)/2/pi
-        Qy = N_UC*trapz(1./ytwiss[0, 0, :], s)/2/pi
+        Qx, Qy = gettunes(s, xtwiss, ytwiss, N_UC)
         # nat chromaticity xi_u:=1/4pi*int(k_u(s)*beta_u(s)) with k_y = - k_x
-        Xx = N_UC*trapz(-UCS[4, :]*xtwiss[0, 0, 1:], s[1:])/4/pi
-        Xy = N_UC*trapz(UCS[4, :]*ytwiss[0, 0, 1:], s[1:])/4/pi
+        Xx, Xy = getchromaticity(s, xtwiss, ytwiss, N_UC, UCS)
         # calculate according ring of dipoles
         sdip, disperdip, xtwissdip, ytwissdip = \
             dipolering(s, N_UC, UD, P_UCS, UCS, xdisp, xtwiss, ytwiss, slices,
                        D_UC)
         # synchrotron integrals
-        (Jx, emiteqx, tau_x, Jy, E, emiteqy, tau_y, alpha_mc, eta_mc, gamma_tr,
-         Q_s, Js, sigma_E, sigma_tau, sigma_s, tau_s, U_rad, P_ges, E_c,
-         lambda_c) = \
+        (Cq, Jx, emiteqx, tau_x, Jy, E, emiteqy, tau_y, alpha_mc, eta_mc,
+         gamma_tr, Q_s, Js, sigma_E, sigma_tau, sigma_s, tau_s, U_rad, P_ges,
+         E_c, lambda_c) = \
             synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0,
                         I, q, m, ytwiss)
 

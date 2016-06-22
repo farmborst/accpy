@@ -1,0 +1,96 @@
+### general ###
+closed = False
+particle = 'electron'
+E = 1.72e9
+I = 5e-3
+### starting twiss parameters ###
+beta_x = 10.101
+alph_x = 3.717
+gamm_x = (1+alph_x**2)/beta_x
+beta_y = 2.717
+alph_y = -1.115
+gamm_y = (1+alph_y**2)/beta_y
+disp_x = .847
+dipr_x = -.208
+xtwiss = array([[beta_x, -alph_x], [-alph_x, gamm_x]])
+ytwiss = array([[beta_y, -alph_y], [-alph_y, gamm_y]])
+xdisp = array([[disp_x], [dipr_x], [1]])
+### drifts ###
+D01 = drift(.075)
+D02 = drift(.075)
+D03 = drift(.257672)
+D04 = drift(.065 + .955675 + .12 + .093 + .258)
+D05 = drift(.3)
+D06 = drift(.3)
+D07 = drift(.205625)
+D08 = drift(.09 + .111875 + .1225 + .275)
+D09 = drift(.288478)
+D10 = drift(.07 + .211522 - .07)
+D11 = drift(.08 + .12 + .1)
+D12 = drift(3.1415138 + .123 + 1.676 + .123 + .201)
+D13 = drift(.07 + .141)
+D14 = drift(.3)
+D15 = drift(.3)
+D16 = drift(.637 + .123 + .125 + .125)
+D17 = drift(.06 + .23)
+D18 = drift(.25)
+D19 = drift(.08 + .12)
+D20 = drift(.085 + .115)
+D21 = drift(.095 + .10185)
+D22 = drift(.12)
+D23 = drift(.275 + .325 + .22004)
+D24 = drift(.15082)
+D25 = drift(.09)
+### diagnostics ###
+diagnos = append([[7]], zeros([5, 1]), 0)
+F1T = F2T = F3T = F4T = F5T = F6T = F7T = F8T = diagnos
+diagnostics = ['FOMZ1T', 'FOMZ2T', 'FOMZ3T = Halo Colimator',
+               'FOMZ4T = Collimator 1', 'FOMZ5T = Collimator 2',
+               'FOMZ6T', 'FOMZ7T', 'FOMZ8T']
+### dipoles ###
+# pole shoe form factor K (close to rectangular)
+# dipoles gap g
+LD = .7; rho = -LD/2/pi*360/6.13; phi = LD/2/rho; g = 15e-3; K = 0.5
+DP1 = uniformdipole(LD, rho, phi, K*g)
+LD = .7; rho = -LD/2/pi*360/4.38; phi = LD/2/rho; g = 15e-3; K = 0.5
+DP2 = uniformdipole(LD, rho, phi, K*g)
+LD = 1.777792; rho = LD/2/pi*360/22; phi = LD/2/rho; g = 30e-3; K = 0.5
+DP3 = uniformdipole(LD, rho, phi, K*g)
+DP4 = uniformdipole(LD, rho, phi, K*g)
+LD = 1.020001; rho = LD/2/pi*360/7.66; phi = LD/2/rho; g = 15e-3; K = 0.5
+DP5 = uniformdipole(LD, rho, phi, K*g)
+LD = .555; rho = LD/2/pi*360/3.8; phi = LD/2/rho; g = 15e-3; K = 0.5
+DP6 = uniformdipole(LD, rho, phi, K*g)
+DP7 = uniformdipole(LD, rho, phi, K*g)
+### quadrupoles ###
+q = const.qe
+E0 = const.Ee/q
+pc = sqrt(E**2-E0**2)*q
+p = pc/const.cl
+R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
+i2kl = lambda i: (.265410*i-.765828e-6*i**3-.239385)/R
+i2ks = lambda i: (.266015*i-.829333e-6*i**3-.233316)/R
+Q01 = afquad(.25, -i2kl(41.3949))
+Q02 = afquad(.25, -0)
+Q03 = rfquad(.25, i2kl(37.5109))
+Q04 = rfquad(.25, i2kl(23.4929))
+Q05 = afquad(.25, -i2kl(30.4454))
+Q07 = afquad(.25, -0)
+Q08 = rfquad(.25, i2kl(68.0279))
+Q09 = afquad(.25, -i2kl(55.5348))
+Q10 = afquad(.2, -i2ks(43.1419))
+Q11 = afquad(.2, -0)
+Q12 = rfquad(.2, i2ks(53.3176))
+### unit cell ###
+        # 00   01   02   03   04   05   06   07   08   09
+UC = line(DP1, D01, F1T, D02, DP2, D03, F2T, D04, Q01, D05,
+        # 10   11   12   13   14   15   16   17   18   19
+          Q02, D06, Q03, D07, F3T, D08, DP3, D09, F4T, D10,
+        # 20   21   22   23   24   25   26   27   28   29
+          Q04, D11, Q05, D12, F5T, D13, Q07, D14, Q08, D15,
+        # 30   31   32   33   34   35   36   37   38   39
+          Q09, D16, F6T, D17, DP4, D18, Q10, D19, Q11, D20,
+        # 40   41   42   43   44   45   46   47   48   49
+          Q12, D21, F7T, D22, DP5, D23, F8T, D24, DP6, D25,
+        # 50
+          DP7)

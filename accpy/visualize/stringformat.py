@@ -10,7 +10,7 @@ from math import log10
 
 def SI(d, significantfigures=4):
     # Unit prefixes
-    prefixes = ['a', 'f', 'p', 'n', r'$\mµ$', 'm', '',
+    prefixes = ['a', 'f', 'p', 'n', r'$\mu$', 'm', '',
                 'k', 'M', 'G', 'T', 'P', 'E']
     exp10 = log10(abs(d))
     i = int((exp10) // 3)
@@ -22,7 +22,7 @@ def SI(d, significantfigures=4):
 
 def SId(d, significantfigures=4):
     # Unit prefixes
-    prefixes = ['a', 'f', 'p', 'n', r'$\mµ$', 'm', '',
+    prefixes = ['a', 'f', 'p', 'n', r'$\mu$', 'm', '',
                 'k', 'M', 'G', 'T', 'P', 'E']
     exp10 = log10(abs(d))
     i = int((exp10) // 3)

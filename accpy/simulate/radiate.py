@@ -83,24 +83,12 @@ def synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0, I,
     # longitudinal (synchrotron motion)
     sigma_E = sqrt(Cq*gamma**2/(Js*rho))  # equilibrium energy spread
     tau_s = T_rev*E/(U_rad*Js)
-#    vs = HF_f
-#    ws = HF_f*2*pi
-#    h = T_rev*HF_f
-#    ns = eta_mc
-#    ps = E
-#    phi_s
-#    omega_syn = ws*sqrt(h*ns/2/pi/ps/vs*q*HF_V*np.cos(phi_s))
-#    Q_syn = omega_syn/ws
-#    print omega_syn
-    v_s = 50e3              # synchrotron frequency
+
+    v_s = 50e3 # synchrotron frequency
     omega_s = v_s*2*pi
     sigma_tau = sigma_E*abs(eta_mc)/(omega_s)
     sigma_s = sigma_tau*beta*c
     Q_s = omega_s*T_rev/2/pi
-    return (Jx, emiteqx, tau_x, Jy, E, emiteqy, tau_y, alpha_mc, eta_mc,
+    return (Cq, Jx, emiteqx, tau_x, Jy, E, emiteqy, tau_y, alpha_mc, eta_mc,
             gamma_tr, Q_s, Js, sigma_E, sigma_tau, sigma_s, tau_s, U_rad,
             P_ges, E_c, lambda_c)
-
-    def equilibriumemittance():
-
-        return  emitx_equi, emity_limi, sigmaEbyE_equi
