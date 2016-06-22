@@ -17,7 +17,7 @@ from threading import Thread
 from multiprocessing import cpu_count
 from time import time
 from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
-                     cs_dropd)
+                     cs_dropd, cs_Strentry)
 from ..simulate.lsd import lsd
 from ..simulate.ramp import simulate_ramp
 
@@ -137,10 +137,10 @@ def gui_parttrack(frame, w, h):
 
 def gui_ramp(frame, w, h):
     def _start():
-        def run(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF):
+        def run(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF, V_HFs):
             t0 = time()
             status.set('running...')
-            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF)
+            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF, V_HFs)
             showfigs(t0, status, figs, tabs[1:])
         points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
@@ -151,7 +151,8 @@ def gui_ramp(frame, w, h):
         E_ext = float(entry_Eext.get())*1e6
         latt = lattice.get()
         f_HF = float(entry_f_HF.get())*1e6
-        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF))
+        V_HFs = [float(x)*1e3 for x in entry_V_HF.get().split()]
+        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF, V_HFs))
         runthread(go)
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
@@ -160,27 +161,29 @@ def gui_ramp(frame, w, h):
                                    'Synchrotron frequency', 'Bunch length',
                                    'Radial Emittance', 'Axial Emittance',
                                    'Longitudinal Emittance'])
-
-    cs_label(tabs[0], 1, 1, 'Calculation points')
+    cs_label(tabs[0], 1, 1, 'Lattice')
     cs_label(tabs[0], 1, 2, 'Acceleration Period / s')
     cs_label(tabs[0], 1, 3, 'Injection time / s')
     cs_label(tabs[0], 1, 4, 'Extraction time 1 / s')
     cs_label(tabs[0], 1, 5, 'Extraction time 2 / s')
-    entry_pnts = cs_Intentry(tabs[0], 2, 1, 1e3)
+    lattice = cs_dropd(tabs[0], 2, 1, ['bessy2booster',
+                                        'bessy2ring'])
     entry_Tper = cs_Dblentry(tabs[0], 2, 2, 1e-1)
     entry_tinj = cs_Dblentry(tabs[0], 2, 3, 5518.944e-6)
     entry_text = cs_Dblentry(tabs[0], 2, 4, 38377.114e-6)
     entry_tex2 = cs_Dblentry(tabs[0], 2, 5, 57076.1e-6)
 
-    cs_label(tabs[0], 3, 1, 'Lattice')
+    cs_label(tabs[0], 3, 1, 'Calculation points')
     cs_label(tabs[0], 3, 2, 'Cavity frequency / MHz')
     cs_label(tabs[0], 3, 3, 'Injection energy / MeV')
     cs_label(tabs[0], 3, 4, 'Extraction energy / MeV')
-    lattice = cs_dropd(tabs[0], 4, 1, ['bessy2booster',
-                                        'bessy2ring'])
+    entry_pnts = cs_Intentry(tabs[0], 4, 1, 1e3)
     entry_f_HF = cs_Dblentry(tabs[0], 4, 2, 499.667)
     entry_Einj = cs_Dblentry(tabs[0], 4, 3, 52.3)
     entry_Eext = cs_Dblentry(tabs[0], 4, 4, 1720)
+
+    cs_label(tabs[0], 5, 1, 'Cavity peak Voltages / kV')
+    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '200 500 2000')
 
     cs_button(tabs[0], 7, 6, 'Start', _start)
     status = cs_label(tabs[0], 7, 7, '')

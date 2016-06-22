@@ -64,6 +64,14 @@ def cs_Dblentry(root, r, c, value):
     return entry
 
 
+# create, position and set StringVar label
+def cs_Strentry(root, r, c, value):
+    entrystr = cs_str(value)
+    entry = Tk.Entry(root, textvariable=entrystr)
+    entry.grid(row=r, column=c)
+    return entry
+
+
 # create, position and set button
 def cs_button(root, r, c, label, action):
     button = Tk.Button(master=root, text=label, command=action)

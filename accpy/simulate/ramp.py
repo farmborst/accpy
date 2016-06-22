@@ -4,7 +4,7 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
-from numpy import sin, cos, arcsin, linspace, sqrt, mean, trapz
+from numpy import sin, cos, arcsin, linspace, sqrt, mean, trapz, array
 from .const import pi, cl, e0, re, hb, qe
 from .particles import part2mqey
 from ..visualize.plot import plotramp
@@ -189,7 +189,7 @@ def Semittancedot(E, Edot, emitz, Cq, Js, alphas, lorentzgamma, rho):
     return emitdot
 
 
-def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf):
+def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf, V_HFs):
     # get parameters and unit cell of lattice
     (closed, particle, E, I, UC, diagnostics, N_UC,     # always
      HF_f, HF_V,                                        # closed lattice
@@ -226,9 +226,11 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf):
     B = Bfluxdensity(E, lorentzbeta, rho)
     loss = radiationloss(E, q, rho, E0)
     Trev = lambda t: C/(lorentzbeta(t)*cl)
-    volt = requiredvoltage(E, loss, mean(Trev(t)))
-    cavityvoltages = [overvoltage(OV, volt) for OV in [1, 2, 5, 10]]
-    particlephases = [synchrophase(volt, cav) for cav in cavityvoltages]
+    f_volt = requiredvoltage(E, loss, mean(Trev(t)))
+    volt = f_volt(t)
+    overvoltagefactors = array(V_HFs)/max(volt)
+    cavityvoltages = [overvoltage(OV, f_volt) for OV in overvoltagefactors]
+    particlephases = [synchrophase(f_volt, cav) for cav in cavityvoltages]
     fsyns = [synchrofrequency(E, cav, phase, Trev, E0, f_hf, slipfactor) for phase, cav in zip(particlephases, cavityvoltages)]
 
     Xemitequi = Xequilibriumemittance(Cq, lorentzgamma, SYNIN2, SYNIN5x, Jx)
@@ -241,7 +243,7 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf):
     phases = [phase(t) for phase in particlephases]
     freqs = [fsyn(t) for fsyn in fsyns]
 
-    figs = plotramp(T, t, E(t), B(t), t_inj, t_ext, t_ext2, loss(t), volt(t),
+    figs = plotramp(T, t, E(t), B(t), t_inj, t_ext, t_ext2, loss(t), volt,
                     phases, freqs, Xemitequi, Yemitequi, Semitequi,
-                    bdurequi, blenequi, lorentzbetagamma)
+                    bdurequi, blenequi, lorentzbetagamma, V_HFs)
     return figs

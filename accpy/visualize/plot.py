@@ -500,7 +500,7 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
 
 def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
              f_Xemitequi, Yemitequi, f_Semitequi, f_bdurequi, f_blenequi,
-             f_lorentzbetagamma):
+             f_lorentzbetagamma, V_HFs):
     i1 = where(t > t_inj)[0][0]
     i2 = where(t > t_ext)[0][0]
     i4 = where(t < t_ext2)[0][-1:]
@@ -538,6 +538,7 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
     ax.append([figs[6].add_subplot(2, 1, i) for i in range(1, 3)])
     [ax.append([figs[j].add_subplot(2, 2, i) for i in range(1, 5)]) for j in range(7, 9)]
     ax.append([figs[9].add_subplot(1, 2, i) for i in range(1, 3)])
+    [[ax[i][j].grid() for j in range(len(ax[i]))] for i in range(6, 10)]
     s = [r'Injection''\n(',
          r'Extraction''\n(',
          r'Maximum energy''\n(',
@@ -596,8 +597,7 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
 
     # Synchronous phase
     color = iter(cm.rainbow(linspace(0, 1, len(phases))))
-    lab = ['ideal cavity', 'overvoltage factor 2', 'overvoltage factor 5',
-           'overvoltage factor 10']
+    lab = ['Cavity peak voltage {} kV'.format(V_HF/1e3) for V_HF in V_HFs]
     [plot2(ax[4], t, phase, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
            lab[i], next(color)) for i, phase in enumerate(phases)]
     legs.append(ax[4].legend(fancybox=True, loc='center right'))
@@ -609,7 +609,7 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
     legs.append(ax[5].legend(fancybox=True, loc='center right'))
 
     # Bunchlength and duration
-    plot(ax[6][0], tEgZ, bdurequi, '-.b', 'Time', 's', 'Bunch length', 's', 'Equilibrium', setlim=False)
+    plot(ax[6][0], tEgZ, bdurequi, '-.b', '', '', 'Bunch length', 's', 'Equilibrium, ', setlim=False)
     legs.append(ax[6][0].legend(fancybox=True, loc=2))
     plot(ax[6][1], tEgZ, blenequi, '-.b', 'Time', 's', 'Bunch length', 'm', '', setlim=False)
 
