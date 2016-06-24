@@ -22,7 +22,7 @@ version:
 from __future__ import division
 from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
                    array, arange, abs as npabs, sqrt, sin, cos, arccos as acos,
-                   where, nanmean, repeat)
+                   nanmean)
 from matplotlib.figure import Figure
 from matplotlib.pyplot import cm
 from matplotlib.gridspec import GridSpec
@@ -33,17 +33,24 @@ from ..simulate.tracking import trackpart
 
 
 def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
-         setlim=True):
-    xprefix, mx = SId(nanmean(x))
-    yprefix, my = SId(nanmean(y))
-    x = x/mx  # carefull! numpy.ndarrays are mutable!!!
-    y = y/my
-
-    if xunit != '':
-        xunit = ' / ('+xprefix+xunit+')'
-    if yunit != '':
-        yunit = ' / ('+yprefix+yunit+')'
-
+         setlim=True, rescaleX=True, rescaleY=True, xprefix=None, mx=None,
+         yprefix=None, my=None):
+    if xprefix is None:
+        xprefix, mx = SId(nanmean(x))
+    if yprefix is None:
+        yprefix, my = SId(nanmean(y))
+    if rescaleX:
+        x = x/mx  # carefull! numpy.ndarrays are mutable!!!
+        if xunit != '':
+            xunit = ' / ('+xprefix+xunit+')'
+    elif xunit != '':
+            xunit = ' / ('+xunit+')'
+    if rescaleY:
+        y = y/my
+        if yunit != '':
+            yunit = ' / ('+yprefix+yunit+')'
+    elif yunit != '':
+            yunit = ' / ('+yunit+')'
     if col is False:
         ax.plot(x, y, ls, label=label)
     else:
@@ -56,19 +63,11 @@ def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
         epsy = (max(y)-min(y))*0.1
         ax.set_xlim([min(x), max(x)])
         ax.set_ylim([min(y)-epsy, max(y)+epsy])
-    return x, y
+    return x, y, xprefix, mx, yprefix, my
 
 
-def plot2(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col):
-    xprefix, mx = SId(max(x))
-    x = x/mx  # carefull! numpy.ndarrays are mutable!!!
-    if col is None:
-        ax.plot(x, y, ls, label=label)
-    else:
-        ax.plot(x, y, ls, color=col, label=label)
-    ax.set_xlabel(xlabel+' / ('+xprefix+xunit+')')
-    ax.set_ylabel(ylabel+' / ('+yunit+')')
-    return x, y
+def getcolors(number):
+    return list(cm.rainbow(linspace(0, 1, number)))
 
 
 def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
@@ -498,34 +497,10 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
     return x, xp, y, yp
 
 
-def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
-             f_Xemitequi, Yemitequi, f_Semitequi, f_bdurequi, f_blenequi,
-             f_lorentzbetagamma, V_HFs):
-    i1 = where(t > t_inj)[0][0]
-    i2 = where(t > t_ext)[0][0]
-    i4 = where(t < t_ext2)[0][-1:]
-    t_max = (t_ext+t_ext2)/2    # Peak time
-    i3 = where(t > t_max)[0][0]
-    i5 = where(volt < 0)[0][0]
-    i6 = where(volt == max(volt))[0][0]
-    tt = array([t[i1], t[i2], t[i3], t[i4]])
-    tt2 = array([t[i1], t[i2], t[i3], t[i4], t[i5], t[i6]])
-    EE = array([E[i1], E[i2], E[i3], E[i4]])
-    BB = array([B[i1], B[i2], B[i3], B[i4]])
-    LL = array([loss[i1], loss[i2], loss[i3], loss[i4]])
-    VV = array([volt[i1], volt[i2], volt[i3], volt[i4], volt[i5], volt[i6]])
-    # time where energy > 0
-    tEgZ = t[where(E > 0)[0][0]:where(E > 0)[0][-1]]
-    EEgZ = E[where(E > 0)[0][0]:where(E > 0)[0][-1]]
-    # calculate functions of tEgZ
-    bdurequi = f_bdurequi(tEgZ)
-    blenequi = f_blenequi(tEgZ)
-    lorentzbetagamma = f_lorentzbetagamma(tEgZ)
-    Xemitequi = f_Xemitequi(tEgZ)
-    Yemitequi = repeat(Yemitequi, len(tEgZ))
-    Semitequi = f_Semitequi(tEgZ)
-
-
+def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
+             VV, phases, freqs, Xemitequi, Yemitequi, Semitequi, bdurequis,
+             blenequis, lorentzbetagamma, V_HFs, Xemits, Yemits, Semits,
+             lorentzbetagammaAI):
     def annotate(ax, xs, ys, ss, epss, hs, vs):
         for x, y, s, h, v, eps in zip(xs, ys, ss, hs, vs, epss):
             ax.text(x+eps, y, s, horizontalalignment=h, verticalalignment=v)
@@ -568,13 +543,13 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
     epsT = array([1, -1, 0, 1])*.02*T
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
-    ttn, EEn = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
+    ttn, EEn, _, _, _, _ = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
     plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
     legs.append(ax[0].legend(fancybox=True, loc='lower center'))
     annotate(ax[0], ttn, EEn, s1, epsT, ha, va)
 
     # Magnetic flux
-    ttn, BBn = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
+    ttn, BBn, _, _, _, _ = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
     plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
     legs.append(ax[1].legend(fancybox=True, loc='lower center'))
     annotate(ax[1], ttn, BBn, s2, epsT, ha, va)
@@ -583,7 +558,7 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
     epsT = array([1, -1, 0, 1])*.02*T
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
-    ttn, LLn = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
+    ttn, LLn, _, _, _, _ = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
     plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
     annotate(ax[2], ttn, LLn, s3, epsT, ha, va)
 
@@ -591,45 +566,78 @@ def plotramp(T, t, E, B, t_inj, t_ext, t_ext2, loss, volt, phases, freqs,
     epsT = array([1, -1, 1, 1, 1, -1])*.02*T
     ha = ['left', 'right', 'left', 'left', 'left', 'right']
     va = ['top', 'bottom', 'bottom', 'bottom', 'bottom', 'bottom']
-    ttn, VVn = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
+    ttn, VVn, _, _, _, _ = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
     plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
     annotate(ax[3], ttn, VVn, s4, epsT, ha, va)
 
     # Synchronous phase
+    labs = ['Cavity @ {} kV'.format(V_HF/1e3) for V_HF in V_HFs]
     color = iter(cm.rainbow(linspace(0, 1, len(phases))))
-    lab = ['Cavity peak voltage {} kV'.format(V_HF/1e3) for V_HF in V_HFs]
-    [plot2(ax[4], t, phase, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
-           lab[i], next(color)) for i, phase in enumerate(phases)]
+    [plot(ax[4], t, y, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
+          l, col=next(color), setlim=False) for l, y in zip(labs, phases)]
     legs.append(ax[4].legend(fancybox=True, loc='center right'))
 
     # Synchrotron frequency
-    color = iter(cm.rainbow(linspace(0, 1, len(freqs))))
-    [plot2(ax[5], t, freq*1e-3, '-', 'Time', 's', 'Synchrotron frequency',
-           r'kHz', lab[i], next(color)) for i, freq in enumerate(freqs)]
+    colors = getcolors(len(freqs))
+    [plot(ax[5], t, y*1e-3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
+          l, col=c, setlim=False) for l, y, c in zip(labs, freqs, colors)]
     legs.append(ax[5].legend(fancybox=True, loc='center right'))
 
     # Bunchlength and duration
-    plot(ax[6][0], tEgZ, bdurequi, '-.b', '', '', 'Bunch length', 's', 'Equilibrium, ', setlim=False)
+    colors = getcolors(len(blenequis))
+    labs = ['Equilibrium, Cavity @ {} kV'.format(V_HF/1e3) for V_HF in V_HFs]
+    [plot(ax[6][0], tEgZ, y, '-.', '', '', 'Bunch length', 's',
+          l, col=c, setlim=False) for l, y, c in zip(labs, bdurequis, colors)]
     legs.append(ax[6][0].legend(fancybox=True, loc=2))
-    plot(ax[6][1], tEgZ, blenequi, '-.b', 'Time', 's', 'Bunch length', 'm', '', setlim=False)
+    [plot(ax[6][1], tEgZ, blenequi, '-.b', 'Time', 's', 'Bunch length', 'm',
+          '', col=c, setlim=False) for blenequi, c in zip(blenequis, colors)]
 
     # Radial Emittance
+    labs = [r'$\epsilon_0=$ {} nm rad'.format(y[0]*1e9) for y in Xemits]
+    colors = getcolors(len(Xemits))
     plot(ax[7][0], tEgZ, Xemitequi, '-.b', '', '', r'$\epsilon_x$', r'm $\pi$ rad', 'Equilibrium')
+    [plot(ax[7][0], tAI, y, '-', '', '', r'$\epsilon_x$', r'm $\pi$ rad',
+          l, col=c) for l, y, c in zip(labs, Xemits, colors)]
     plot(ax[7][1], EEgZ, Xemitequi, '-.b', '', '', '', '', '')
+    [plot(ax[7][1], EAI, y, '-', '', '', '', '', '',
+          col=c) for y, c in zip(Xemits, colors)]
     plot(ax[7][2], tEgZ, Xemitequi*lorentzbetagamma, '-.b', 'Time', 's', r'$\epsilon_x^*$', r'm $\pi$ rad', '')
+    [plot(ax[7][2], tAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
+          col=c) for y, c in zip(Xemits, colors)]
     plot(ax[7][3], EEgZ, Xemitequi*lorentzbetagamma, '-.b', 'Energy', 'eV', '', '', '')
-    legs.append(ax[7][0].legend(fancybox=True, loc=1))
+    [plot(ax[7][3], EAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
+          col=c) for y, c in zip(Xemits, colors)]
+    legs.append(ax[7][0].legend(fancybox=True, loc=2))
 
     # Axial Emittance
-    plot(ax[8][0], tEgZ, Yemitequi, '-.b', '', '', r'$\epsilon_y$', r'm $\pi$ rad', 'Limit', setlim=False)
-    plot(ax[8][1], EEgZ, Yemitequi, '-.b', '', '', '', '', '', setlim=False)
-    plot(ax[8][2], tEgZ, Yemitequi*lorentzbetagamma, '-.b', 'Time', 's', r'$\epsilon_y^*$', r'm $\pi$ rad', '', setlim=False)
-    plot(ax[8][3], EEgZ, Yemitequi*lorentzbetagamma, '-.b', 'Energy', 'eV', '', '', '', setlim=False)
+    labs = [r'$\epsilon_0=$ {} nm rad'.format(y[0]*1e9) for y in Yemits]
+    colors = getcolors(len(Yemits))
+    _, _, xprefix, mx, yprefix, my = plot(ax[8][0], tAI, Yemitequi, '-.b', '', '', r'$\epsilon_y$', r'm $\pi$ rad', 'Limit', setlim=False)
+    [plot(ax[8][0], tAI, y, '-', '', '', r'$\epsilon_y$', r'm $\pi$ rad',
+          l, col=c, xprefix=xprefix, mx=mx, yprefix=yprefix, my=my) for l, y, c in zip(labs, Yemits, colors)]
+    plot(ax[8][1], EAI, Yemitequi, '-.b', '', '', '', '', '', setlim=False)
+    [plot(ax[8][1], EAI, y, '-', '', '', '', '', '',
+          col=c, rescaleY=False) for y, c in zip(Yemits, colors)]
+    plot(ax[8][2], tAI, Yemitequi*lorentzbetagammaAI, '-.b', 'Time', 's', r'$\epsilon_y^*$', r'm $\pi$ rad', '', setlim=False)
+    [plot(ax[8][2], tAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
+          col=c, rescaleY=False) for y, c in zip(Yemits, colors)]
+    plot(ax[8][3], EAI, Yemitequi*lorentzbetagammaAI, '-.b', 'Energy', 'eV', '', '', '', setlim=False)
+    [plot(ax[8][3], EAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
+          col=c, rescaleY=False) for y, c in zip(Yemits, colors)]
     legs.append(ax[8][0].legend(fancybox=True, loc=1))
 
     # Longitudinal Emittance
-    plot(ax[9][0], tEgZ, Semitequi*1e3, '-.b', 'Time', 's', r'Energyspread $\delta_E=\frac{\sigma_E}{E_0}$', '', 'Equilibrium')
-    plot(ax[9][1], EEgZ, Semitequi*1e3, '-.b', 'Energy', 'eV', '', '', '')
+    labs = [r'$\epsilon_0=$ {} \textperthousand'.format(y[0]*1e3) for y in Semits]
+    colors = getcolors(len(Semits))
+    plot(ax[9][0], tEgZ, Semitequi*1e3, '-.b', 'Time', 's',
+         r'Energyspread $\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand ', 'Equilibrium',
+         rescaleY=False)
+    [plot(ax[9][0], tAI, y*1e3, '-', '', '', r'Energyspread $\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand ',
+          l, col=c, rescaleY=False) for l, y, c in zip(labs, Semits, colors)]
+    plot(ax[9][1], EEgZ, Semitequi*1e3, '-.b', 'Energy', 'eV', '', '', '',
+         rescaleY=False)
+    [plot(ax[9][1], EAI, y*1e3, '-', '', '', '', '', '',
+          col=c, rescaleY=False) for y, c in zip(Semits, colors)]
     legs.append(ax[9][0].legend(fancybox=True, loc=1))
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]

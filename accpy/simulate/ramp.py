@@ -4,16 +4,18 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
-from numpy import sin, cos, arcsin, linspace, sqrt, mean, trapz, array
+from numpy import (sin, cos, arcsin, linspace, sqrt, mean, trapz, array, where,
+                   repeat)
 from .const import pi, cl, e0, re, hb, qe
 from .particles import part2mqey
+from .tracking import tracktwiss4
+from .lsd import oneturn
+from .radiate import dipolering
+from .slicing import cellslice
+from .rmatrices import UCS2R
 from ..visualize.plot import plotramp
 from ..lattices.bessy2 import lattice
-from ..simulate.tracking import tracktwiss4
-from ..simulate.lsd import oneturn
-from ..simulate.radiate import dipolering
-from ..simulate.slicing import cellslice
-from ..simulate.rmatrices import UCS2R
+from ..math.ode import odeint
 
 
 def energy(amp, w, t_0, off):
@@ -101,7 +103,7 @@ def synchroints(sdip, xtwissdip, disperdip, rho, E0):
     Jx = 1 - SYNIN4x/SYNIN2
     Jy = 1 - SYNIN4y/SYNIN2
     Js = 2 + (SYNIN4x+SYNIN4y)/SYNIN2
-    return SYNIN1, SYNIN2, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq
+    return SYNIN1, SYNIN2, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq, Ca
 
 
 def momentumdynamics(sdip, disperdip, lorentzgamma, C, rho):
@@ -111,17 +113,22 @@ def momentumdynamics(sdip, disperdip, lorentzgamma, C, rho):
     eta_mc = lambda t: 1/gamma_tr**2-1/lorentzgamma(t)**2   # slip factor
     return eta_mc, gamma_tr, alpha_mc
 
-def dampingdecrements(Ca, C, E, SYNIN2, Jx, Jy, Js):
-    alphax = lambda t: Ca/C*E(t)**3*SYNIN2*Jx
-    alphay = lambda t: Ca/C*E(t)**3*SYNIN2*Jy
-    alphas = lambda t: Ca/C*E(t)**3*SYNIN2*Js
+
+def dampingdecrements(Ca, Cdip, E, SYNIN2, Jx, Jy, Js):
+    alphax = lambda t: Ca/Cdip*E(t)**3*SYNIN2*Jx
+    alphay = lambda t: Ca/Cdip*E(t)**3*SYNIN2*Jy
+    alphas = lambda t: Ca/Cdip*E(t)**3*SYNIN2*Js
     return alphax, alphay, alphas
 
 
-def bunchlength(fsyn, energyspread, lorentzbeta, slipfactor):
-    bdur = lambda t: energyspread(t)*abs(slipfactor(t))/(fsyn(t)*2*pi)
+def bunchlength(lorentzbeta, slipfactor, bdur):
     blen = lambda t: bdur(t)*lorentzbeta(t)*cl
-    return bdur, blen
+    return blen
+
+
+def bunchduration(fsyn, energyspread, slipfactor):
+    bdur = lambda t: energyspread(t)*abs(slipfactor(t))/(fsyn(t)*2*pi)
+    return bdur
 
 
 def quantumexcitation(Cq, Ca, lorentzgamma, E, SYNIN5x, SYNIN2, rho):
@@ -143,7 +150,7 @@ def Xequilibriumemittance(Cq, lorentzgamma, SYNIN2, SYNIN5x, Jx):
     return emit
 
 
-def Xemittancedot(E, Edot, emitx, quantex, alphax):
+def Xemittancedot(E, Edot, quantex, alphax):
     def emitdot(t, emitx):
         # adiabatic damping: -emitx*Edot(t)/E(t)
         # radiation damping: -2*emitx*alphax(t)
@@ -160,7 +167,7 @@ def Yequilibriumemittance(Cq, ytwiss, rho, Jy):
     return emit
 
 
-def Yemittancedot(E, Edot, emity, alphay):
+def Yemittancedot(E, Edot, alphay):
     def emitdot(t, emity):
         # adiabatic damping: -emity*Edot(t)/E(t)
         # radiation damping: -2*emity*alphay(t)
@@ -178,18 +185,19 @@ def Sequilibriumemittance(Cq, lorentzgamma, Js, rho):
     return emit
 
 
-def Semittancedot(E, Edot, emitz, Cq, Js, alphas, lorentzgamma, rho):
-    def emitdot(t, emitz):
+def Semittancedot(E, Edot, Cq, Js, alphas, lorentzgamma, rho):
+    def emitdot(t, emits):
         # adiabatic damping: none
         # radiation damping: -2*emit*alphax(t)
         # quantumexcitation: quantex(t)/2
-        # y = quantes(t)-(Edot(t)/E(t)+2*alphas(t))*emitz
-        y = (Edot(t)/E(t)+2*alphas(t))*sqrt(Cq*lorentzgamma(t)**2/(Js*rho))-(Edot(t)/E(t)+2*alphas(t))*emitz
+        # y = quantes(t)-(Edot(t)/E(t)+2*alphas(t))*emits
+        y = (Edot(t)/E(t)+2*alphas(t))*sqrt(Cq*lorentzgamma(t)**2/(Js*rho))-(Edot(t)/E(t)+2*alphas(t))*emits
         return y
     return emitdot
 
 
-def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf, V_HFs):
+def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
+                  V_HFs, emitxs, emitys, emitss):
     # get parameters and unit cell of lattice
     (closed, particle, E, I, UC, diagnostics, N_UC,     # always
      HF_f, HF_V,                                        # closed lattice
@@ -201,7 +209,7 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf, V_H
     # energy ramp
     t = linspace(0, T, points)
     f = 1/T                     # frequency of booster ramp
-    w = 2*pi*f            # angular frequency of booster ramp
+    w = 2*pi*f                  # angular frequency of booster ramp
     t_max = (t_ext+t_ext2)/2    # peak time
     # analytic calculations show for y = A*sin(2*pi*f(t+B))+C = A*sin(w(t+B))+C
     t_0 = 1/(4*f)-t_max         # max(y) = A*sin(w(tmax+B))+C = A + C -> B
@@ -215,35 +223,81 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf, V_H
     xtwiss, ytwiss, xdisp, xytwiss = tracktwiss4(R, P_UCS, closed, xtwiss0, ytwiss0, xdisp0)
     # calculate according ring of dipoles
     sdip, disperdip, xtwissdip, ytwissdip = dipolering(s, N_UC, UD, P_UCS, UCS, xdisp, xtwiss, ytwiss, points, D_UC)
+    Cdip = sdip[-1]
     # synchrotron integrals
-    SYNIN1, SYNIN2, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq = synchroints(sdip, xtwissdip, disperdip, rho, E0)
+    SYNIN1, SYNIN2, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq, Ca = synchroints(sdip, xtwissdip, disperdip, rho, E0)
 
     # funtions of time
-    E, Edot = energy(amp, w, t_0, off)
-    lorentzgamma, lorentzbeta = lorentz(E, E0)
-    lorentzbetagamma = lambda t: lorentzbeta(t)*lorentzgamma(t)
-    slipfactor, gamma_tr, alpha_mc = momentumdynamics(sdip, disperdip, lorentzgamma, C, rho)
-    B = Bfluxdensity(E, lorentzbeta, rho)
-    loss = radiationloss(E, q, rho, E0)
-    Trev = lambda t: C/(lorentzbeta(t)*cl)
-    f_volt = requiredvoltage(E, loss, mean(Trev(t)))
+    f_E, f_Edot = energy(amp, w, t_0, off)
+    f_lorentzgamma, f_lorentzbeta = lorentz(f_E, E0)
+    lorentzbetagamma = lambda t: lorentzbeta(t)*f_lorentzgamma(t)
+    slipfactor, gamma_tr, alpha_mc = momentumdynamics(sdip, disperdip, f_lorentzgamma, C, rho)
+    f_B = Bfluxdensity(f_E, f_lorentzbeta, rho)
+    f_loss = radiationloss(f_E, q, rho, E0)
+    Trev = lambda t: C/(f_lorentzbeta(t)*cl)
+    f_volt = requiredvoltage(f_E, f_loss, mean(Trev(t)))
     volt = f_volt(t)
     overvoltagefactors = array(V_HFs)/max(volt)
     cavityvoltages = [overvoltage(OV, f_volt) for OV in overvoltagefactors]
     particlephases = [synchrophase(f_volt, cav) for cav in cavityvoltages]
-    fsyns = [synchrofrequency(E, cav, phase, Trev, E0, f_hf, slipfactor) for phase, cav in zip(particlephases, cavityvoltages)]
+    fsyns = [synchrofrequency(f_E, cav, phase, Trev, E0, f_hf, slipfactor) for phase, cav in zip(particlephases, cavityvoltages)]
 
-    Xemitequi = Xequilibriumemittance(Cq, lorentzgamma, SYNIN2, SYNIN5x, Jx)
+    f_Xemitequi = Xequilibriumemittance(Cq, f_lorentzgamma, SYNIN2, SYNIN5x, Jx)
     Yemitequi = Yequilibriumemittance(Cq, ytwiss, rho, Jy)
-    Semitequi = Sequilibriumemittance(Cq, lorentzgamma, Js, rho)
+    f_Semitequi = Sequilibriumemittance(Cq, f_lorentzgamma, Js, rho)
 
-    bdurequi, blenequi = bunchlength(fsyns[0], Semitequi, lorentzbeta, slipfactor)
+    # funtions of time and initial value (odes)
+    alphax, alphay, alphas = dampingdecrements(Ca, Cdip, f_E, SYNIN2, Jx, Jy, Js)
+    f_quantex, f_quantes = quantumexcitation(Cq, Ca, f_lorentzgamma, f_E, SYNIN5x, SYNIN2, rho)
+    f_Xemitdot = Xemittancedot(f_E, f_Edot, f_quantex, alphax)
+    f_Yemitdot = Yemittancedot(f_E, f_Edot, alphay)
+    f_Semitdot = Semittancedot(f_E, f_Edot, Cq, Js, alphas, f_lorentzgamma, rho)
+    f_bdurequis = [bunchduration(x, f_Semitequi, slipfactor) for x in fsyns]
+    f_blenequis = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurequis]
 
-
+    # get data from functions of t for plots
+    E = f_E(t)
+    B = f_B(t)
+    loss = f_loss(t)
     phases = [phase(t) for phase in particlephases]
     freqs = [fsyn(t) for fsyn in fsyns]
 
-    figs = plotramp(T, t, E(t), B(t), t_inj, t_ext, t_ext2, loss(t), volt,
-                    phases, freqs, Xemitequi, Yemitequi, Semitequi,
-                    bdurequi, blenequi, lorentzbetagamma, V_HFs)
+    # prepare data for plots
+    i1 = where(t > t_inj)[0][0]
+    i2 = where(t > t_ext)[0][0]
+    i4 = where(t < t_ext2)[0][-1:]
+    t_max = (t_ext+t_ext2)/2
+    i3 = where(t > t_max)[0][0]
+    i5 = where(volt < 0)[0][0]
+    i6 = where(volt == max(volt))[0][0]
+    tt = array([t[i1], t[i2], t[i3], t[i4]])
+    tt2 = array([t[i1], t[i2], t[i3], t[i4], t[i5], t[i6]])
+    EE = array([E[i1], E[i2], E[i3], E[i4]])
+    BB = array([B[i1], B[i2], B[i3], B[i4]])
+    LL = array([loss[i1], loss[i2], loss[i3], loss[i4]])
+    VV = array([volt[i1], volt[i2], volt[i3], volt[i4], volt[i5], volt[i6]])
+    tEgZ = t[where(E > 0)[0][0]:where(E > 0)[0][-1]]  # time where energy > 0
+    EEgZ = E[where(E > 0)[0][0]:where(E > 0)[0][-1]]
+    tAI = t[i1:where(E > E[i1])[0][-1]]  # time after injection where energy > 0
+    EAI = E[i1:where(E > E[i1])[0][-1]]
+
+    # get data from functions of tEgZ for plots
+    bdurequis = [f_bdurequi(tEgZ) for f_bdurequi in f_bdurequis]
+    blenequis = [f_blenequi(tEgZ) for f_blenequi in f_blenequis]
+    lorentzbetagamma = f_lorentzgamma(tEgZ)*f_lorentzbeta(tEgZ)
+    Xemitequi = f_Xemitequi(tEgZ)
+    Yemitequi = repeat(Yemitequi, len(tAI))
+    Semitequi = f_Semitequi(tEgZ)
+
+    # get data from functions of tAI for plots
+    Xemits = [odeint(f_Xemitdot, tAI, ex) for ex in emitxs]
+    Yemits = [odeint(f_Yemitdot, tAI, ey, atol=1e-18)+Yemitequi for ey in emitys]
+    Semits = [odeint(f_Semitdot, tAI, es) for es in emitss]
+    lorentzbetagammaAI = f_lorentzgamma(tAI)*f_lorentzbeta(tAI)
+
+    figs = plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss,
+                    LL, volt, VV, phases, freqs, Xemitequi, Yemitequi,
+                    Semitequi, bdurequis, blenequis, lorentzbetagamma, V_HFs,
+                    Xemits, Yemits, Semits, lorentzbetagammaAI)
+
     return figs

@@ -137,10 +137,12 @@ def gui_parttrack(frame, w, h):
 
 def gui_ramp(frame, w, h):
     def _start():
-        def run(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF, V_HFs):
+        def run(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF,
+                V_HFs, emitxs, emitys, emitss):
             t0 = time()
             status.set('running...')
-            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF, V_HFs)
+            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, latt,
+                                 points, f_HF, V_HFs, emitxs, emitys, emitss)
             showfigs(t0, status, figs, tabs[1:])
         points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
@@ -152,7 +154,11 @@ def gui_ramp(frame, w, h):
         latt = lattice.get()
         f_HF = float(entry_f_HF.get())*1e6
         V_HFs = [float(x)*1e3 for x in entry_V_HF.get().split()]
-        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF, V_HFs))
+        emitxs = [float(x)*1e-9 for x in entry_emitx.get().split()]
+        emitys = [float(x)*1e-9 for x in entry_emity.get().split()]
+        emitss = [float(x)*1e-3 for x in entry_emits.get().split()]
+        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, latt,
+                            points, f_HF, V_HFs, emitxs, emitys, emitss))
         runthread(go)
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
@@ -182,11 +188,24 @@ def gui_ramp(frame, w, h):
     entry_Einj = cs_Dblentry(tabs[0], 4, 3, 52.3)
     entry_Eext = cs_Dblentry(tabs[0], 4, 4, 1720)
 
-    cs_label(tabs[0], 5, 1, 'Cavity peak Voltages / kV')
-    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '200 500 2000')
+    pi = u'\u03c0'
+    ppt = u'\u2030'
 
-    cs_button(tabs[0], 7, 6, 'Start', _start)
-    status = cs_label(tabs[0], 7, 7, '')
+    cs_label(tabs[0], 5, 1, 'Cavity peak Voltages / kV')
+    cs_label(tabs[0], 5, 3, 'Emittance @ injection')
+    cs_label(tabs[0], 6, 2, 'Radial')
+    cs_label(tabs[0], 7, 2, 'Axial')
+    cs_label(tabs[0], 8, 2, 'Longitudinal')
+    cs_label(tabs[0], 6, 4, 'nm '+pi+' rad')
+    cs_label(tabs[0], 7, 4, 'nm '+pi+' rad')
+    cs_label(tabs[0], 8, 4, ppt)
+    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '200 500 2000')
+    entry_emitx = cs_Strentry(tabs[0], 6, 3, '100 200 300')
+    entry_emity = cs_Strentry(tabs[0], 7, 3, '100 200 300')
+    entry_emits = cs_Strentry(tabs[0], 8, 3, '.5 1 1.5')
+
+    cs_button(tabs[0], 9, 6, 'Start', _start)
+    status = cs_label(tabs[0], 9, 7, '')
     return
 
 
