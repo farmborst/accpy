@@ -12,7 +12,7 @@ import gc
 
 if __name__ == '__main__':
     root = Tk()  # create window
-    version = 0.4
+    version = 0.5
     mainwindow(root, version)
     gc.enable()
     mainloop()   # start Tk mainloop

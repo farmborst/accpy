@@ -6,6 +6,7 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division
 from numpy import (sin, cos, arcsin, linspace, sqrt, mean, trapz, array, where,
                    repeat)
+from itertools import product
 from .const import pi, cl, e0, re, hb, qe
 from .particles import part2mqey
 from .tracking import tracktwiss4
@@ -230,7 +231,6 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     # funtions of time
     f_E, f_Edot = energy(amp, w, t_0, off)
     f_lorentzgamma, f_lorentzbeta = lorentz(f_E, E0)
-    lorentzbetagamma = lambda t: lorentzbeta(t)*f_lorentzgamma(t)
     slipfactor, gamma_tr, alpha_mc = momentumdynamics(sdip, disperdip, f_lorentzgamma, C, rho)
     f_B = Bfluxdensity(f_E, f_lorentzbeta, rho)
     f_loss = radiationloss(f_E, q, rho, E0)
@@ -255,14 +255,10 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     f_bdurequis = [bunchduration(x, f_Semitequi, slipfactor) for x in fsyns]
     f_blenequis = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurequis]
 
-    # get data from functions of t for plots
+    # prepare data for plots
     E = f_E(t)
     B = f_B(t)
     loss = f_loss(t)
-    phases = [phase(t) for phase in particlephases]
-    freqs = [fsyn(t) for fsyn in fsyns]
-
-    # prepare data for plots
     i1 = where(t > t_inj)[0][0]
     i2 = where(t > t_ext)[0][0]
     i4 = where(t < t_ext2)[0][-1:]
@@ -270,34 +266,59 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     i3 = where(t > t_max)[0][0]
     i5 = where(volt < 0)[0][0]
     i6 = where(volt == max(volt))[0][0]
+    i7 = where(E > 0)[0][0]
+    i8 = where(E > 0)[0][-1]
+    i9 = where(E > E[i1])[0][-1]
     tt = array([t[i1], t[i2], t[i3], t[i4]])
     tt2 = array([t[i1], t[i2], t[i3], t[i4], t[i5], t[i6]])
     EE = array([E[i1], E[i2], E[i3], E[i4]])
     BB = array([B[i1], B[i2], B[i3], B[i4]])
     LL = array([loss[i1], loss[i2], loss[i3], loss[i4]])
     VV = array([volt[i1], volt[i2], volt[i3], volt[i4], volt[i5], volt[i6]])
-    tEgZ = t[where(E > 0)[0][0]:where(E > 0)[0][-1]]  # time where energy > 0
-    EEgZ = E[where(E > 0)[0][0]:where(E > 0)[0][-1]]
-    tAI = t[i1:where(E > E[i1])[0][-1]]  # time after injection where energy > 0
-    EAI = E[i1:where(E > E[i1])[0][-1]]
+    # time where energy > 0
+    tEgZ = t[i7:i8]
+    EEgZ = E[i7:i8]
+    # time after injection where energy > E_inj
+    tAI = t[i1:i9]
+    EAI = E[i1:i9]
+    # time after injection where energy and acceleration voltage > 0
+    tVgZ = t[i1:i5]
+    EVgZ = E[i1:i5]
+
+    # get data from functions of t for plots
+    phases = [phase(t) for phase in particlephases]
+    freqs = [fsyn(tVgZ) for fsyn in fsyns]
 
     # get data from functions of tEgZ for plots
-    bdurequis = [f_bdurequi(tEgZ) for f_bdurequi in f_bdurequis]
-    blenequis = [f_blenequi(tEgZ) for f_blenequi in f_blenequis]
-    lorentzbetagamma = f_lorentzgamma(tEgZ)*f_lorentzbeta(tEgZ)
-    Xemitequi = f_Xemitequi(tEgZ)
+    bdurequis = [f_bdurequi(tVgZ) for f_bdurequi in f_bdurequis]
+    blenequis = [f_blenequi(tVgZ) for f_blenequi in f_blenequis]
+    Xemitequi = f_Xemitequi(tAI)
     Yemitequi = repeat(Yemitequi, len(tAI))
-    Semitequi = f_Semitequi(tEgZ)
+    Semitequi = f_Semitequi(tAI)*1e3
 
     # get data from functions of tAI for plots
     Xemits = [odeint(f_Xemitdot, tAI, ex) for ex in emitxs]
     Yemits = [odeint(f_Yemitdot, tAI, ey, atol=1e-18)+Yemitequi for ey in emitys]
-    Semits = [odeint(f_Semitdot, tAI, es) for es in emitss]
-    lorentzbetagammaAI = f_lorentzgamma(tAI)*f_lorentzbeta(tAI)
+    # careful "late binding" !!!!!!!!!!!!
+    f_Semits = [lambda t, es=es: odeint(f_Semitdot, t, es) for es in emitss]
+    Semits = [f_Semit(tAI)*1e3 for f_Semit in f_Semits]
+    f_bdurs = [bunchduration(fsyn, f_Semit, slipfactor) for fsyn, f_Semit in product(fsyns, f_Semits)]
+    f_blens = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurs]
+    bdurs = [f_bdur(tVgZ) for f_bdur in f_bdurs]
+    blens = [f_blen(tVgZ) for f_blen in f_blens]
 
-    figs = plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss,
-                    LL, volt, VV, phases, freqs, Xemitequi, Yemitequi,
-                    Semitequi, bdurequis, blenequis, lorentzbetagamma, V_HFs,
-                    Xemits, Yemits, Semits, lorentzbetagammaAI)
+    # calculate normalized emittances
+    lorentzbetagammaAI = f_lorentzgamma(tAI)*f_lorentzbeta(tAI)
+    NXemitequi = lorentzbetagammaAI*Xemitequi
+    NYemitequi = lorentzbetagammaAI*Yemitequi
+    NXemits = [lorentzbetagammaAI*ex for ex in Xemits]
+    NYemits = [lorentzbetagammaAI*ey for ey in Yemits]
+
+
+    figs = plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B,
+                    BB, loss, LL, volt, VV, phases, freqs, Xemitequi,
+                    Yemitequi, Semitequi, bdurequis, blenequis, V_HFs,
+                    Xemits, Yemits, Semits, NXemitequi, NYemitequi, NXemits,
+                    NYemits, bdurs, blens)
 
     return figs

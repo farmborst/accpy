@@ -23,6 +23,7 @@ from __future__ import division
 from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
                    array, arange, abs as npabs, sqrt, sin, cos, arccos as acos,
                    nanmean)
+from itertools import product
 from matplotlib.figure import Figure
 from matplotlib.pyplot import cm
 from matplotlib.gridspec import GridSpec
@@ -63,7 +64,48 @@ def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
         epsy = (max(y)-min(y))*0.1
         ax.set_xlim([min(x), max(x)])
         ax.set_ylim([min(y)-epsy, max(y)+epsy])
-    return x, y, xprefix, mx, yprefix, my
+    return x, y, yprefix, my
+
+
+def Mplot(ax, x, ys, lss, xlabel, xunit, ylabel, yunit, labels, rescaleX=True,
+          rescaleY=True):
+    colors = getcolors(len(ys))
+    xprefix, mx = SId(nanmean(x))
+    yprefix, my = SId(nanmean(ys))
+    if rescaleX:
+        x = x/mx  # carefull! numpy.ndarrays are mutable!!!
+        if xunit != '':
+            xunit = ' / ('+xprefix+xunit+')'
+    elif xunit != '':
+            xunit = ' / ('+xunit+')'
+    if rescaleY:
+        if yunit != '':
+            yunit = ' / ('+yprefix+yunit+')'
+    elif yunit != '':
+            yunit = ' / ('+yunit+')'
+    if labels == '':
+        labels = ['' for i in range(len(ys))]
+    for y, ls, lab, col in zip(ys, lss, labels, colors):
+        if rescaleY:
+            y = y/my
+        ax.plot(x, y, ls, color=col, label=lab)
+    if xlabel != '':
+        ax.set_xlabel(xlabel+xunit)
+    if ylabel != '':
+        ax.set_ylabel(ylabel+yunit)
+    ax.set_xlim([min(x), max(x)])
+    return
+
+
+def legplot(ax, linestyles, labels, loc=0):
+    colors = getcolors(len(labels))
+    for ls, lab, col in zip(linestyles, labels, colors):
+        ax.plot([], [], ls, label=lab, color=col)
+    ax.axis('off')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.legend(fancybox=True, loc=loc)
+    return
 
 
 def getcolors(number):
@@ -497,10 +539,10 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
     return x, xp, y, yp
 
 
-def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
+def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss, LL, volt,
              VV, phases, freqs, Xemitequi, Yemitequi, Semitequi, bdurequis,
-             blenequis, lorentzbetagamma, V_HFs, Xemits, Yemits, Semits,
-             lorentzbetagammaAI):
+             blenequis, V_HFs, Xemits, Yemits, Semits, NXemitequi, NYemitequi,
+             NXemits, NYemits, bdurs, blens):
     def annotate(ax, xs, ys, ss, epss, hs, vs):
         for x, y, s, h, v, eps in zip(xs, ys, ss, hs, vs, epss):
             ax.text(x+eps, y, s, horizontalalignment=h, verticalalignment=v)
@@ -510,7 +552,9 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
     figs = [Figure() for i in range(Nfigs)]
     ax = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
     [ax[i].grid() for i in range(len(ax))]
-    ax.append([figs[6].add_subplot(2, 1, i) for i in range(1, 3)])
+    GS = GridSpec(2, 3)
+    GS = [GS[:2, 0], GS[0, 1:], GS[1, 1:]]
+    ax.append([figs[6].add_subplot(gs) for gs in GS])
     [ax.append([figs[j].add_subplot(2, 2, i) for i in range(1, 5)]) for j in range(7, 9)]
     ax.append([figs[9].add_subplot(1, 2, i) for i in range(1, 3)])
     [[ax[i][j].grid() for j in range(len(ax[i]))] for i in range(6, 10)]
@@ -539,17 +583,20 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
           s[4]+SI(tt2[4])+'s, '+SI(VV[4]) + 'V)',
           s[5]+SI(tt2[5])+'s, '+SI(VV[5]) + 'V)']
 
+    xlab, xunit = 'Time', 's'
+    xlab2, xunit2 = 'Energy', 'eV'
+
     # Energy
     epsT = array([1, -1, 0, 1])*.02*T
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
-    ttn, EEn, _, _, _, _ = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
-    plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
+    ttn, EEn, yprefix, my = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
+    plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve', yprefix=yprefix, my=my)
     legs.append(ax[0].legend(fancybox=True, loc='lower center'))
     annotate(ax[0], ttn, EEn, s1, epsT, ha, va)
 
     # Magnetic flux
-    ttn, BBn, _, _, _, _ = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
+    ttn, BBn, yprefix, my = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
     plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
     legs.append(ax[1].legend(fancybox=True, loc='lower center'))
     annotate(ax[1], ttn, BBn, s2, epsT, ha, va)
@@ -558,7 +605,7 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
     epsT = array([1, -1, 0, 1])*.02*T
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
-    ttn, LLn, _, _, _, _ = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
+    ttn, LLn, yprefix, my = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
     plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
     annotate(ax[2], ttn, LLn, s3, epsT, ha, va)
 
@@ -566,12 +613,12 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
     epsT = array([1, -1, 1, 1, 1, -1])*.02*T
     ha = ['left', 'right', 'left', 'left', 'left', 'right']
     va = ['top', 'bottom', 'bottom', 'bottom', 'bottom', 'bottom']
-    ttn, VVn, _, _, _, _ = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
+    ttn, VVn, yprefix, my = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
     plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
     annotate(ax[3], ttn, VVn, s4, epsT, ha, va)
 
     # Synchronous phase
-    labs = ['Cavity @ {} kV'.format(V_HF/1e3) for V_HF in V_HFs]
+    labs = ['Cavity @ {0:g} kV'.format(V_HF/1e3) for V_HF in V_HFs]
     color = iter(cm.rainbow(linspace(0, 1, len(phases))))
     [plot(ax[4], t, y, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
           l, col=next(color), setlim=False) for l, y in zip(labs, phases)]
@@ -579,65 +626,48 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, E, EE, EEgZ, EAI, B, BB, loss, LL, volt,
 
     # Synchrotron frequency
     colors = getcolors(len(freqs))
-    [plot(ax[5], t, y*1e-3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
+    [plot(ax[5], tVgZ, y*1e-3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
           l, col=c, setlim=False) for l, y, c in zip(labs, freqs, colors)]
     legs.append(ax[5].legend(fancybox=True, loc='center right'))
 
     # Bunchlength and duration
-    colors = getcolors(len(blenequis))
-    labs = ['Equilibrium, Cavity @ {} kV'.format(V_HF/1e3) for V_HF in V_HFs]
-    [plot(ax[6][0], tEgZ, y, '-.', '', '', 'Bunch length', 's',
-          l, col=c, setlim=False) for l, y, c in zip(labs, bdurequis, colors)]
-    legs.append(ax[6][0].legend(fancybox=True, loc=2))
-    [plot(ax[6][1], tEgZ, blenequi, '-.b', 'Time', 's', 'Bunch length', 'm',
-          '', col=c, setlim=False) for blenequi, c in zip(blenequis, colors)]
+    labs = [r'$\delta_{{E,equi}}$, $V_{{max}}=${0:g} kV'.format(V_HF/1e3) for V_HF in V_HFs]
+    lss = ['-.' for x in range(len(bdurequis))]
+    labs += [r'$\delta_{{E,0}}=${0:g} \textperthousand, $V_{{max}}=${1:g} kV'.format(y[0], V_HF/1e3) for V_HF, y in product(V_HFs, Semits)]
+    lss += ['-' for x in range(len(bdurs))]
+    legplot(ax[6][0], lss, labs, loc=6)
+    Mplot(ax[6][1], tVgZ, bdurequis+bdurs, lss, xlab, xunit, 'Bunch duration', 's', '')
+    Mplot(ax[6][2], tVgZ, blenequis+blens, lss, xlab, xunit, 'Bunch length', 'm', '')
+
+    # Emittance
+    yunit = r'm $\pi$ rad'
 
     # Radial Emittance
-    labs = [r'$\epsilon_0=$ {} nm rad'.format(y[0]*1e9) for y in Xemits]
-    colors = getcolors(len(Xemits))
-    plot(ax[7][0], tEgZ, Xemitequi, '-.b', '', '', r'$\epsilon_x$', r'm $\pi$ rad', 'Equilibrium')
-    [plot(ax[7][0], tAI, y, '-', '', '', r'$\epsilon_x$', r'm $\pi$ rad',
-          l, col=c) for l, y, c in zip(labs, Xemits, colors)]
-    plot(ax[7][1], EEgZ, Xemitequi, '-.b', '', '', '', '', '')
-    [plot(ax[7][1], EAI, y, '-', '', '', '', '', '',
-          col=c) for y, c in zip(Xemits, colors)]
-    plot(ax[7][2], tEgZ, Xemitequi*lorentzbetagamma, '-.b', 'Time', 's', r'$\epsilon_x^*$', r'm $\pi$ rad', '')
-    [plot(ax[7][2], tAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
-          col=c) for y, c in zip(Xemits, colors)]
-    plot(ax[7][3], EEgZ, Xemitequi*lorentzbetagamma, '-.b', 'Energy', 'eV', '', '', '')
-    [plot(ax[7][3], EAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
-          col=c) for y, c in zip(Xemits, colors)]
+    labs = ['Equilibrium']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Xemits]
+    lss = ['-.']+['-' for x in range(len(Xemits))]
+    ylab, ylab2 = r'$\epsilon_x$', r'$\epsilon_x^*$'
+    Mplot(ax[7][0], tAI, [Xemitequi]+Xemits, lss, '', '', ylab, yunit, labs)
+    Mplot(ax[7][1], EAI, [Xemitequi]+Xemits, lss, '', '', '', '', '')
+    Mplot(ax[7][2], tAI, [NXemitequi]+NXemits, lss, xlab, xunit, ylab2, yunit, '')
+    Mplot(ax[7][3], EAI, [NXemitequi]+NXemits, lss, xlab2, xunit2, '', '', '')
     legs.append(ax[7][0].legend(fancybox=True, loc=2))
 
     # Axial Emittance
-    labs = [r'$\epsilon_0=$ {} nm rad'.format(y[0]*1e9) for y in Yemits]
-    colors = getcolors(len(Yemits))
-    _, _, xprefix, mx, yprefix, my = plot(ax[8][0], tAI, Yemitequi, '-.b', '', '', r'$\epsilon_y$', r'm $\pi$ rad', 'Limit', setlim=False)
-    [plot(ax[8][0], tAI, y, '-', '', '', r'$\epsilon_y$', r'm $\pi$ rad',
-          l, col=c, xprefix=xprefix, mx=mx, yprefix=yprefix, my=my) for l, y, c in zip(labs, Yemits, colors)]
-    plot(ax[8][1], EAI, Yemitequi, '-.b', '', '', '', '', '', setlim=False)
-    [plot(ax[8][1], EAI, y, '-', '', '', '', '', '',
-          col=c, rescaleY=False) for y, c in zip(Yemits, colors)]
-    plot(ax[8][2], tAI, Yemitequi*lorentzbetagammaAI, '-.b', 'Time', 's', r'$\epsilon_y^*$', r'm $\pi$ rad', '', setlim=False)
-    [plot(ax[8][2], tAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
-          col=c, rescaleY=False) for y, c in zip(Yemits, colors)]
-    plot(ax[8][3], EAI, Yemitequi*lorentzbetagammaAI, '-.b', 'Energy', 'eV', '', '', '', setlim=False)
-    [plot(ax[8][3], EAI, y*lorentzbetagammaAI, '-', '', '', '', '', '',
-          col=c, rescaleY=False) for y, c in zip(Yemits, colors)]
+    labs = ['Limit']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Yemits]
+    lss = ['-.']+['-' for x in range(len(Yemits))]
+    ylab, ylab2 = r'$\epsilon_y$', r'$\epsilon_y^*$'
+    Mplot(ax[8][0], tAI, [Yemitequi]+Yemits, lss, '', '', ylab, yunit, labs)
+    Mplot(ax[8][1], EAI, [Yemitequi]+Yemits, lss, '', '', '', '', '')
+    Mplot(ax[8][2], tAI, [NYemitequi]+NYemits, lss, xlab, xunit, ylab2, yunit, '')
+    Mplot(ax[8][3], EAI, [NYemitequi]+NYemits, lss, xlab2, xunit2, '', '', '')
     legs.append(ax[8][0].legend(fancybox=True, loc=1))
 
     # Longitudinal Emittance
-    labs = [r'$\epsilon_0=$ {} \textperthousand'.format(y[0]*1e3) for y in Semits]
-    colors = getcolors(len(Semits))
-    plot(ax[9][0], tEgZ, Semitequi*1e3, '-.b', 'Time', 's',
-         r'Energyspread $\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand ', 'Equilibrium',
-         rescaleY=False)
-    [plot(ax[9][0], tAI, y*1e3, '-', '', '', r'Energyspread $\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand ',
-          l, col=c, rescaleY=False) for l, y, c in zip(labs, Semits, colors)]
-    plot(ax[9][1], EEgZ, Semitequi*1e3, '-.b', 'Energy', 'eV', '', '', '',
-         rescaleY=False)
-    [plot(ax[9][1], EAI, y*1e3, '-', '', '', '', '', '',
-          col=c, rescaleY=False) for y, c in zip(Semits, colors)]
+    labs = ['Equilibrium']+[r'$\epsilon_0=$ {} \textperthousand'.format(y[0]) for y in Semits]
+    lss = ['-.']+['-' for x in range(len(Semits))]
+    ylab, yunit = r'$\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand '
+    Mplot(ax[9][0], tAI, [Semitequi]+Semits, lss, xlab, xunit, ylab, yunit, labs, rescaleY=False)
+    Mplot(ax[9][1], EAI, [Semitequi]+Semits, lss, xlab2, xunit2, '', '', '', rescaleY=False)
     legs.append(ax[9][0].legend(fancybox=True, loc=1))
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]

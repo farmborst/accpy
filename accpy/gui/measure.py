@@ -11,25 +11,25 @@ except:
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 
-def tunes(frame):
+def tunes(frame, w, h):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def chromaticity(frame):
+def chromaticity(frame, w, h):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def quadscanmeas(frame):
+def quadscanmeas(frame, w, h):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def achroscan(frame):
+def achroscan(frame, w, h):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
