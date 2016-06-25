@@ -628,12 +628,12 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     colors = getcolors(len(freqs))
     [plot(ax[5], tVgZ, y*1e-3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
           l, col=c, setlim=False) for l, y, c in zip(labs, freqs, colors)]
-    legs.append(ax[5].legend(fancybox=True, loc='center right'))
+    legs.append(ax[5].legend(fancybox=True, loc=1))
 
     # Bunchlength and duration
-    labs = [r'$\delta_{{E,equi}}$, $V_{{max}}=${0:g} kV'.format(V_HF/1e3) for V_HF in V_HFs]
+    labs = [r'$\delta_{{E,equilibrium}}$, $V_{{max}} = {0:g}$ kV'.format(V_HF/1e3) for V_HF in V_HFs]
     lss = ['-.' for x in range(len(bdurequis))]
-    labs += [r'$\delta_{{E,0}}=${0:g} \textperthousand, $V_{{max}}=${1:g} kV'.format(y[0], V_HF/1e3) for V_HF, y in product(V_HFs, Semits)]
+    labs += [r'$\delta_{{E,0}}={0:.1g}$ \textperthousand, $V_{{max}}={1:g}$ kV'.format(y[0], V_HF/1e3) for V_HF, y in product(V_HFs, Semits)]
     lss += ['-' for x in range(len(bdurs))]
     legplot(ax[6][0], lss, labs, loc=6)
     Mplot(ax[6][1], tVgZ, bdurequis+bdurs, lss, xlab, xunit, 'Bunch duration', 's', '')
