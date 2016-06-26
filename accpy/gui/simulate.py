@@ -3,16 +3,11 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
-try:
-    import Tkinter as Tk
-except:
-    import tkinter as Tk
 from matplotlib import use
 use('TkAgg')
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2TkAgg)
 from matplotlib.pyplot import close
-from functools import partial
 from threading import Thread
 from multiprocessing import cpu_count
 from time import time
@@ -20,8 +15,7 @@ from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
                      cs_dropd, cs_Strentry)
 from ..simulate.lsd import lsd
 from ..simulate.ramp import simulate_ramp
-
-oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
+from ..simulate.quadscan import simulate_quadscan
 
 
 def time2str(t):
@@ -47,15 +41,6 @@ def time2str(t):
     return timestring
 
 
-def runthread(go):
-    # data plotting in new thread to keep gui (main thread&loop) responsive
-    t_run = Thread(target=go)
-    # automatically let die with main thread -> no global stop required
-    t_run.setDaemon(True)
-    # start thread
-    t_run.start()
-
-
 def showfigs(t0, status, figs, tabs):
     close('all')
     for fig, tab in zip(figs, tabs):
@@ -71,21 +56,29 @@ def showfigs(t0, status, figs, tabs):
     status.set('finished, elapsed time: ' + timestring)
 
 
-def runtrack(status, mode, latt, tabs, slices, particles=1, rounds=1):
-    t0 = time()
-    status.set('running...')
-    figs = lsd(latt, slices, mode, particles=particles, rounds=rounds)
-    showfigs(t0, status, figs, tabs)
+def runthread(status, tabs, f_simulate, argstuple):
+    def run(*argstuple):
+            t0 = time()
+            status.set('running...')
+            figs = f_simulate(*argstuple)
+            showfigs(t0, status, figs, tabs[1:])
+    # data plotting in new thread to keep gui (main thread&loop) responsive
+    t_run = Thread(target=run, args=argstuple)
+    # automatically let die with main thread -> no global stop required
+    t_run.setDaemon(True)
+    # start thread
+    t_run.start()
 
 
 def gui_twisstrack(frame, w, h):
-    mode = 'trackbeta'
-
     def _start():
         latt = lattice.get()
         slic = int(entry_slice.get())
-        go = partial(runtrack, *(status, mode, latt, tabs[1:], slic))
-        runthread(go)
+        mode = 'trackbeta'
+        particles = 1
+        rounds = 1
+        runthread(status, tabs, lsd,
+                  (latt, slic, mode, particles, rounds))
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Radial', 'Axial', 'Dispersion',
                                    'Overview', 'Parameters'])
@@ -104,15 +97,14 @@ def gui_twisstrack(frame, w, h):
 
 
 def gui_parttrack(frame, w, h):
-    mode = 'trackpart'
-
     def _start():
         latt = lattice.get()
         slic = int(entry_slice.get())
+        mode = 'trackpart'
         prts = int(entry_parts.get())
         rnds = int(entry_round.get())
-        go = partial(runtrack, *(status, mode, latt, tabs[1:], slic, prts, rnds))
-        runthread(go)
+        runthread(status, tabs, lsd,
+                  (latt, slic, mode, prts, rnds))
 
     tabs = cs_tabbar(frame, w, h, [' Menu ', ' X ', ' X\' ', ' Y ', ' Y\' ',
                                    ' Z ', ' Z\' ', ' Overview ',
@@ -137,13 +129,6 @@ def gui_parttrack(frame, w, h):
 
 def gui_ramp(frame, w, h):
     def _start():
-        def run(T, t_inj, t_ext, text2, E_inj, E_ext, latt, points, f_HF,
-                V_HFs, emitxs, emitys, emitss):
-            t0 = time()
-            status.set('running...')
-            figs = simulate_ramp(T, t_inj, t_ext, text2, E_inj, E_ext, latt,
-                                 points, f_HF, V_HFs, emitxs, emitys, emitss)
-            showfigs(t0, status, figs, tabs[1:])
         points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
         t_inj = float(entry_tinj.get())
@@ -157,9 +142,9 @@ def gui_ramp(frame, w, h):
         emitxs = [float(x)*1e-9 for x in entry_emitx.get().split()]
         emitys = [float(x)*1e-9 for x in entry_emity.get().split()]
         emitss = [float(x)*1e-3 for x in entry_emits.get().split()]
-        go = partial(run, *(T_per, t_inj, t_ext, text2, E_inj, E_ext, latt,
-                            points, f_HF, V_HFs, emitxs, emitys, emitss))
-        runthread(go)
+        runthread(status, tabs, simulate_ramp,
+                  (T_per, t_inj, t_ext, text2, E_inj, E_ext, latt, points,
+                   f_HF, V_HFs, emitxs, emitys, emitss))
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
                                    'Energy loss', 'Acceleration voltage',
@@ -173,7 +158,7 @@ def gui_ramp(frame, w, h):
     cs_label(tabs[0], 1, 4, 'Extraction time 1 / s')
     cs_label(tabs[0], 1, 5, 'Extraction time 2 / s')
     lattice = cs_dropd(tabs[0], 2, 1, ['bessy2booster',
-                                        'bessy2ring'])
+                                       'bessy2ring'])
     entry_Tper = cs_Dblentry(tabs[0], 2, 2, 1e-1)
     entry_tinj = cs_Dblentry(tabs[0], 2, 3, 5518.944e-6)
     entry_text = cs_Dblentry(tabs[0], 2, 4, 38377.114e-6)
@@ -210,6 +195,14 @@ def gui_ramp(frame, w, h):
 
 
 def gui_quadscansim(frame, w, h):
-    txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
-    txt.pack()
+    def _start():
+        twiss4 = 0
+        krange = 0
+        driftlength = 0
+        runthread(status, tabs, simulate_quadscan,
+                  (twiss4, krange, driftlength))
+
+    tabs = cs_tabbar(frame, w, h, ['Menu', 'Beamextent'])
+    cs_button(tabs[0], 9, 6, 'Start', _start)
+    status = cs_label(tabs[0], 9, 7, '')
     return
