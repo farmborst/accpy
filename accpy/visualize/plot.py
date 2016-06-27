@@ -35,7 +35,7 @@ from ..simulate.tracking import trackpart
 
 def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
          setlim=True, rescaleX=True, rescaleY=True, xprefix=None, mx=None,
-         yprefix=None, my=None):
+         yprefix=None, my=None, markersize=12.0, linewidth=2.0):
     if xprefix is None:
         xprefix, mx = SId(nanmean(abs(x)))
     if yprefix is None:
@@ -53,15 +53,15 @@ def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
     elif yunit != '':
             yunit = ' / ('+yunit+')'
     if col is False:
-        ax.plot(x, y, ls, label=label)
+        ax.plot(x, y, ls, label=label, markersize=markersize, linewidth=linewidth)
     else:
-        ax.plot(x, y, ls, color=col, label=label)
+        ax.plot(x, y, ls, color=col, label=label, markersize=markersize, linewidth=linewidth)
     if xlabel != '':
         ax.set_xlabel(xlabel+xunit)
     if ylabel != '':
         ax.set_ylabel(ylabel+yunit)
     if setlim:
-        epsy = (max(y)-min(y))*0.1
+        epsy = (max(y)-min(y))*0.15
         ax.set_xlim([min(x), max(x)])
         ax.set_ylim([min(y)-epsy, max(y)+epsy])
     return x, y, yprefix, my
@@ -542,10 +542,10 @@ def twissellipse(xtwiss, emittx, ytwiss, emitty):
 def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss, LL, volt,
              VV, phases, freqs, Xemitequi, Yemitequi, Semitequi, bdurequis,
              blenequis, V_HFs, Xemits, Yemits, Semits, NXemitequi, NYemitequi,
-             NXemits, NYemits, bdurs, blens):
-    def annotate(ax, xs, ys, ss, epss, hs, vs):
-        for x, y, s, h, v, eps in zip(xs, ys, ss, hs, vs, epss):
-            ax.text(x+eps, y, s, horizontalalignment=h, verticalalignment=v)
+             NXemits, NYemits, bdurs, blens, t3, FF):
+    def annotate(ax, xs, ys, ss, epsxs, epsys, hs, vs):
+        for x, y, s, h, v, epsx, epsy in zip(xs, ys, ss, hs, vs, epsxs, epsys):
+            ax.text(x+epsx, y+epsy, s, horizontalalignment=h, verticalalignment=v)
 
     Nfigs = 10
     legs = []
@@ -587,35 +587,37 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     xlab2, xunit2 = 'Energy', 'eV'
 
     # Energy
-    epsT = array([1, -1, 0, 1])*.02*T
+    _, mx = SId(nanmean(abs(t)))
+    epsT = array([1, -1, 0, 1])*.01*T/mx
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
-    ttn, EEn, yprefix, my = plot(ax[0], tt, EE, 'ob', '', '', '', '', 'known points')
-    plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve', yprefix=yprefix, my=my)
+    _, _, yprefix, my = plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
+    ttn, EEn, _, _ = plot(ax[0], tt, EE, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
     legs.append(ax[0].legend(fancybox=True, loc='lower center'))
-    annotate(ax[0], ttn, EEn, s1, epsT, ha, va)
+    epsY = array([-1, 0, 1, 0])*.03*max(EEn)
+    annotate(ax[0], ttn, EEn, s1, epsT, epsY, ha, va)
 
     # Magnetic flux
-    ttn, BBn, yprefix, my = plot(ax[1], tt, BB, 'ob', '', '', '', '', 'known points')
-    plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
+    _, _, yprefix, my = plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
+    ttn, BBn, _, _ = plot(ax[1], tt, BB, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
     legs.append(ax[1].legend(fancybox=True, loc='lower center'))
-    annotate(ax[1], ttn, BBn, s2, epsT, ha, va)
+    epsY = array([-1, 0, 1, 0])*.03*max(BBn)
+    annotate(ax[1], ttn, BBn, s2, epsT, epsY, ha, va)
 
     # Energy loss
-    epsT = array([1, -1, 0, 1])*.02*T
-    ha = ['left', 'right', 'center', 'left']
-    va = ['top', 'bottom', 'bottom', 'bottom']
-    ttn, LLn, yprefix, my = plot(ax[2], tt, LL, 'ob', '', '', '', '', 'known points')
-    plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
-    annotate(ax[2], ttn, LLn, s3, epsT, ha, va)
+    _, _, yprefix, my = plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
+    ttn, LLn, _, _ = plot(ax[2], tt, LL, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
+    epsY = array([-1, 0, 1, 0])*.03*max(LLn)
+    annotate(ax[2], ttn, LLn, s3, epsT, epsY, ha, va)
 
     # Acceleration voltage
-    epsT = array([1, -1, 1, 1, 1, -1])*.02*T
+    epsT = array([1, -1, 1, 1, 1, -1])*.01*T/mx
     ha = ['left', 'right', 'left', 'left', 'left', 'right']
     va = ['top', 'bottom', 'bottom', 'bottom', 'bottom', 'bottom']
-    ttn, VVn, yprefix, my = plot(ax[3], tt2, VV, 'ob', '', '', '', '', 'known points')
-    plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
-    annotate(ax[3], ttn, VVn, s4, epsT, ha, va)
+    _, _, yprefix, my = plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
+    ttn, VVn, _, _ = plot(ax[3], tt2, VV, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
+    epsY = array([-1, 0, 1, 0, -1, 1])*.02*max(VVn)
+    annotate(ax[3], ttn, VVn, s4, epsT, epsY, ha, va)
 
     # Synchronous phase
     labs = ['Cavity @ {0:g} kV'.format(V_HF/1e3) for V_HF in V_HFs]
@@ -626,14 +628,15 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
 
     # Synchrotron frequency
     colors = getcolors(len(freqs))
-    [plot(ax[5], tVgZ, y*1e-3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
+    [plot(ax[5], tVgZ, y/1e3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
           l, col=c, setlim=False) for l, y, c in zip(labs, freqs, colors)]
+    [ax[5].plot(t3*1e3, x/1e3, '+k', markersize=24.0) for x in FF]
     legs.append(ax[5].legend(fancybox=True, loc=1))
 
     # Bunchlength and duration
     labs = [r'$\delta_{{E,equilibrium}}$, $V_{{max}} = {0:g}$ kV'.format(V_HF/1e3) for V_HF in V_HFs]
     lss = ['-.' for x in range(len(bdurequis))]
-    labs += [r'$\delta_{{E,0}}={0:.1g}$ \textperthousand, $V_{{max}}={1:g}$ kV'.format(y[0], V_HF/1e3) for V_HF, y in product(V_HFs, Semits)]
+    labs += [r'$\delta_{{E,0}}={0:.1f}$ \textperthousand, $V_{{max}}={1:g}$ kV'.format(y[0], V_HF/1e3) for V_HF, y in product(V_HFs, Semits)]
     lss += ['-' for x in range(len(bdurs))]
     legplot(ax[6][0], lss, labs, loc=6)
     Mplot(ax[6][1], tVgZ, bdurequis+bdurs, lss, xlab, xunit, 'Bunch duration', 's', '')
@@ -680,6 +683,7 @@ def pltsim_quadscan(k, sigx, sigy):
 
     figs = [Figure()]
     ax = [figs[0].add_subplot(1, 2, i) for i in range(1, 3)]
+    [ax[i].grid() for i in range(2)]
     plot(ax[0], k, sigx*1e6, '-b', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
     plot(ax[1], k, sigy*1e6, '-b', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
     return figs

@@ -314,11 +314,16 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     NXemits = [lorentzbetagammaAI*ex for ex in Xemits]
     NYemits = [lorentzbetagammaAI*ey for ey in Yemits]
 
+    # injection extraction points
+    t3 = array([tVgZ[i1], tVgZ[i2], tVgZ[i3]])
+    FF = [array([freq[i1], freq[i2], freq[i3]]) for freq in freqs]
+    BL = [array([blen[i1], blen[i2], blen[i3]]) for blen in blens]
+    BD = [array([bdur[i1], bdur[i2], bdur[i3]]) for bdur in bdurs]
 
     figs = plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B,
                     BB, loss, LL, volt, VV, phases, freqs, Xemitequi,
                     Yemitequi, Semitequi, bdurequis, blenequis, V_HFs,
                     Xemits, Yemits, Semits, NXemitequi, NYemitequi, NXemits,
-                    NYemits, bdurs, blens)
+                    NYemits, bdurs, blens, t3, FF)
 
     return figs
