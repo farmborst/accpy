@@ -13,32 +13,10 @@ from multiprocessing import cpu_count
 from time import time
 from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
                      cs_dropd, cs_Strentry)
+from ..visualize.stringformat import time2str, uc
 from ..simulate.lsd import lsd
 from ..simulate.ramp import simulate_ramp
 from ..simulate.quadscan import simulate_quadscan
-
-
-def time2str(t):
-    dd = t//86400
-    t %= 86400
-    hh = t//3600
-    t %= 3600
-    mm = t//60
-    t %= 60
-    ss = t//1
-    t %= 1
-    ms = (t*1e3)//1
-    if dd > 0:
-        timestring = '%g days %g hours %g minutes %g.%g seconds' % (dd, hh, mm, ss, ms)
-    elif hh > 0:
-        timestring = '%g hours %g minutes %g.%g seconds' % (hh, mm, ss, ms)
-    elif mm > 0:
-        timestring = '%g minutes %g.%g seconds' % (mm, ss, ms)
-    elif ss > 0:
-        timestring = '%g.%g seconds' % (ss, ms)
-    else:
-        timestring = '%g milliseconds' % (ms)
-    return timestring
 
 
 def showfigs(t0, status, figs, tabs):
@@ -173,17 +151,14 @@ def gui_ramp(frame, w, h):
     entry_Einj = cs_Dblentry(tabs[0], 4, 3, 52.3)
     entry_Eext = cs_Dblentry(tabs[0], 4, 4, 1720)
 
-    pi = u'\u03c0'
-    ppt = u'\u2030'
-
     cs_label(tabs[0], 5, 1, 'Cavity peak Voltages / kV')
     cs_label(tabs[0], 5, 3, 'Emittance @ injection')
     cs_label(tabs[0], 6, 2, 'Radial')
     cs_label(tabs[0], 7, 2, 'Axial')
     cs_label(tabs[0], 8, 2, 'Longitudinal')
-    cs_label(tabs[0], 6, 4, 'nm '+pi+' rad')
-    cs_label(tabs[0], 7, 4, 'nm '+pi+' rad')
-    cs_label(tabs[0], 8, 4, ppt)
+    cs_label(tabs[0], 6, 4, 'nm '+uc.pi+' rad')
+    cs_label(tabs[0], 7, 4, 'nm '+uc.pi+' rad')
+    cs_label(tabs[0], 8, 4, uc.ppt)
     entry_V_HF = cs_Strentry(tabs[0], 6, 1, '200 500 2000')
     entry_emitx = cs_Strentry(tabs[0], 6, 3, '100 200 300')
     entry_emity = cs_Strentry(tabs[0], 7, 3, '100 200 300')
@@ -196,13 +171,63 @@ def gui_ramp(frame, w, h):
 
 def gui_quadscansim(frame, w, h):
     def _start():
-        twiss4 = 0
-        krange = 0
-        driftlength = 0
+        ki = float(entry_ki.get())
+        kf = float(entry_kf.get())
+        qL = float(entry_qL.get())
+        points = int(entry_points.get())
+        driftlength = float(entry_dlen.get())
+        epsx = float(entry_epsx.get())/1e9
+        betx = float(entry_betx.get())
+        alpx = float(entry_alpx.get())
+        epsy = float(entry_epsy.get())/1e9
+        bety = float(entry_bety.get())
+        alpy = float(entry_alpy.get())
+        epss = float(entry_epss.get())/1e3
+        Dx = float(entry_Dx.get())
+        Dpx = float(entry_Dpx.get())
+        energy = float(entry_energy.get())*1e6
+        particle = 'electron'
         runthread(status, tabs, simulate_quadscan,
-                  (twiss4, krange, driftlength))
+                  (ki, kf, qL, driftlength, points, epsx, betx, alpx,
+                   epsy, bety, alpy, epss, Dx, Dpx, energy, particle))
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Beamextent'])
-    cs_button(tabs[0], 9, 6, 'Start', _start)
-    status = cs_label(tabs[0], 9, 7, '')
+
+    cs_label(tabs[0], 1, 2, uc.epsilon+' / nm rad')
+    cs_label(tabs[0], 1, 3, uc.beta+' / m')
+    cs_label(tabs[0], 1, 4, uc.alpha+'/ rad')
+    cs_label(tabs[0], 2, 1, 'Radial')
+    entry_epsx = cs_Dblentry(tabs[0], 2, 2, 104.17)
+    entry_betx = cs_Dblentry(tabs[0], 2, 3, 4.77)
+    entry_alpx = cs_Dblentry(tabs[0], 2, 4, -2.18)
+    cs_label(tabs[0], 3, 1, 'Axial')
+    entry_epsy = cs_Dblentry(tabs[0], 3, 2, 21.11)
+    entry_bety = cs_Dblentry(tabs[0], 3, 3, 1.29)
+    entry_alpy = cs_Dblentry(tabs[0], 3, 4, 1.27)
+    cs_label(tabs[0], 4, 2, uc.delta+' / '+uc.ppt)
+    cs_label(tabs[0], 4, 3, '1.8 / m')
+    cs_label(tabs[0], 4, 4, 'D\' / rad')
+    cs_label(tabs[0], 5, 1, 'Longitudinal')
+    entry_epss = cs_Dblentry(tabs[0], 5, 2, 0.547)
+    entry_Dx = cs_Dblentry(tabs[0], 5, 3, 1.8)
+    entry_Dpx = cs_Dblentry(tabs[0], 5, 4, 0.87)
+
+    cs_label(tabs[0], 6, 1, 'Driftlength / m')
+    entry_dlen = cs_Dblentry(tabs[0], 7, 1, 2.3)
+    cs_label(tabs[0], 8, 1, 'Energy / MeV')
+    entry_energy = cs_Dblentry(tabs[0], 9, 1, 1722)
+
+    cs_label(tabs[0], 6, 3, 'Quadrupole strength k / (1/m'+uc.squared+')')
+    cs_label(tabs[0], 7, 2, 'Initial (k<0 = axial focus)')
+    entry_ki = cs_Dblentry(tabs[0], 7, 3, -8)
+    cs_label(tabs[0], 8, 2, 'Final')
+    entry_kf = cs_Dblentry(tabs[0], 8, 3, 8)
+    cs_label(tabs[0], 9, 2, 'steps')
+    entry_points = cs_Intentry(tabs[0], 9, 3, 1000)
+
+    cs_label(tabs[0], 6, 4, 'Quadrupole length / m')
+    entry_qL = cs_Dblentry(tabs[0], 7, 4, .2)
+
+    cs_button(tabs[0], 10, 10, 'Start', _start)
+    status = cs_label(tabs[0], 10, 11, '')
     return

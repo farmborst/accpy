@@ -37,9 +37,9 @@ def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
          setlim=True, rescaleX=True, rescaleY=True, xprefix=None, mx=None,
          yprefix=None, my=None):
     if xprefix is None:
-        xprefix, mx = SId(nanmean(x))
+        xprefix, mx = SId(nanmean(abs(x)))
     if yprefix is None:
-        yprefix, my = SId(nanmean(y))
+        yprefix, my = SId(nanmean(abs(y)))
     if rescaleX:
         x = x/mx  # carefull! numpy.ndarrays are mutable!!!
         if xunit != '':
@@ -671,4 +671,15 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     legs.append(ax[9][0].legend(fancybox=True, loc=1))
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]
+    return figs
+
+def pltsim_quadscan(k, sigx, sigy):
+    xlabel, xunit = 'Quadrupole strength', 'm'
+    ylabel1, yunit1 = r'$\sigma_x^2$', r'$mm^2$'
+    ylabel2, yunit2 = r'$\sigma_y^2$', r'$mm^2$'
+
+    figs = [Figure()]
+    ax = [figs[0].add_subplot(1, 2, i) for i in range(1, 3)]
+    plot(ax[0], k, sigx*1e6, '-b', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
+    plot(ax[1], k, sigy*1e6, '-b', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
     return figs
