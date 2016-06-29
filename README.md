@@ -2,14 +2,14 @@ ACCPY
 =========
 
 #Python module for acclerator physics providing
-    - linear optics particle and twiss tracking
-    - energy ramp simulation for closed lattices with:
+   - linear optics particle and twiss tracking
+   - energy ramp simulation for closed lattices with:
         - energy loss
         - required acceleration voltage
         - synchrotron phase and frequency
         - equilibrium emittances and bunch lengths
         - dynamic emittances and bunch lenghths
-    - quadrupole scan simulation
+   - quadrupole scan simulation
 
 #Requirements:
     python
