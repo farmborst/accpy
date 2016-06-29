@@ -8,6 +8,8 @@ except:
     from tkinter import Tk, mainloop
 from accpy.gui.mainwin import mainwindow
 import gc
+# to check for all used imports:
+#   grep --include=\*.py -hrw '.' -e 'import'
 
 
 if __name__ == '__main__':
