@@ -79,8 +79,10 @@ def cs_button(root, r, c, label, action):
     return button
 
 
-def cs_dropd(root, r, c, options):
+def cs_dropd(root, r, c, options, action=None):
     startvalue = cs_str(options[0])
     dropdown = Tk.OptionMenu(root, startvalue, *options)
     dropdown.grid(row=r, column=c)
+    if action is not None:
+        startvalue.trace('w', action)
     return startvalue

@@ -3,7 +3,7 @@
 ''' accpy.measure.quadscan
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
-
+from __future__ import division
 import numpy as np
 from scipy import linalg
 from scipy.optimize import curve_fit

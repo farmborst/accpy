@@ -67,13 +67,11 @@ def plot(ax, x, y, ls, xlabel, xunit, ylabel, yunit, label, col=False,
     return x, y, yprefix, my
 
 
-def Mplot(ax, x, ys, lss, xlabel, xunit, ylabel, yunit, labels, rescaleX=True,
-          rescaleY=True):
+def Mplot(ax, x, ys, lss, xlabel, xunit, ylabel, yunit, labels, rescaleX=True, rescaleY=True):
     colors = getcolors(len(ys))
     xprefix, mx = SId(nanmean(x))
     yprefix, my = SId(nanmean(ys))
     if rescaleX:
-        x = x/mx  # carefull! numpy.ndarrays are mutable!!!
         if xunit != '':
             xunit = ' / ('+xprefix+xunit+')'
     elif xunit != '':
@@ -85,9 +83,15 @@ def Mplot(ax, x, ys, lss, xlabel, xunit, ylabel, yunit, labels, rescaleX=True,
             yunit = ' / ('+yunit+')'
     if labels == '':
         labels = ['' for i in range(len(ys))]
-    for y, ls, lab, col in zip(ys, lss, labels, colors):
+    if type(x) != type([]):
+        xs = [x for i in range(len(ys))]
+    else:
+        xs = x
+    for x, y, ls, lab, col in zip(xs, ys, lss, labels, colors):
         if rescaleY:
             y = y/my
+        if rescaleX:
+            x = x/mx  # carefull! numpy.ndarrays are mutable!!!
         ax.plot(x, y, ls, color=col, label=lab)
     if xlabel != '':
         ax.set_xlabel(xlabel+xunit)
@@ -393,8 +397,10 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
 def plottrajs(s, X, rounds, envelope):
     figs = [Figure() for i in range(7)]
     ax1 = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
-    ax2 = [figs[6].add_subplot(3, 3, i) for i in [1, 7, 2, 8, 3, 9]]
-    ax3 = figs[6].add_subplot(3, 3, 5)
+    GS = GridSpec(5, 3)
+    ax2 = [figs[6].add_subplot(GS[:2, i]) for i in range(3)]
+    ax2 += [figs[6].add_subplot(GS[3:, i]) for i in range(3)]
+    ax3 = figs[6].add_subplot(GS[2, :])
     ylabs = [r'$x$ radial displacement / (mm)',
              r'$x^\prime$ radial direction deviation / (mrad)',
              r'$y$ axial displacement / (mm)',
@@ -420,7 +426,7 @@ def plottrajs(s, X, rounds, envelope):
             r'Envelope $E_{x}(s)=\sqrt{\epsilon_{x}\beta_{x}+(\delta_ED_{x}(s))^2}$',
             r'Envelope $E_{y}(s)=\sqrt{\epsilon_{y}\beta_{y}}$',
             r'Ensemble']
-    for i in range(6):
+    for i, j in zip(range(6), [0, 3, 1, 4, 2, 5]):
         c = next(color)
         y = []
         y_ideal = []
@@ -436,34 +442,28 @@ def plottrajs(s, X, rounds, envelope):
                     y_ideal.append(traj[i, index]*1e3)
         # ensemble trajectories
         [ax1[i].plot(s, y[l], '-', c=c) for l in range(len(y))]
-        [ax2[i].plot(s, y[l], '-', c=c) for l in range(len(y))]
+        [ax2[j].plot(s, y[l], '-', c=c) for l in range(len(y))]
         ax1[i].plot([], [], '-', c=c, label=labs[5])
-        ax2[i].plot([], [], '-', c=c, label=labs[5])
+        ax2[j].plot([], [], '-', c=c, label=labs[5])
         # 1-sigma particle trajectories
         ax1[i].plot(s, y_sigma[0], '-b', label=labs[1])
-        ax2[i].plot(s, y_sigma[0], '-b')
+        ax2[j].plot(s, y_sigma[0], '-b')
         [ax1[i].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
-        [ax2[i].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
+        [ax2[j].plot(s, y_sigma[l], '-b') for l in range(1, len(y_sigma))]
         # ideal particle trajectories
         ax1[i].plot(s, y_ideal[0], '-k', label=labs[0])
         if i == 0:
             ax1[i].plot([], [], '-r', label=labs[3])
         elif i == 2:
             ax1[i].plot([], [], '-r', label=labs[4])
-        ax2[i].plot(s, y_ideal[0], '-k')
+        ax2[j].plot(s, y_ideal[0], '-k')
         leg = ax1[i].legend(fancybox=True, loc='upper right')
         leg.get_frame().set_alpha(0.5)
     ax1[0].plot(s, envelope[0, :], '-r', s, -envelope[0, :], '-r')
     ax1[2].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
     ax2[0].plot(s, envelope[0, :], '-r', s, -envelope[0, :], '-r')
     ax2[2].plot(s, envelope[1, :], '-r', s, -envelope[1, :], '-r')
-    ax3.plot([], [], '-k', label=labs[0])
-    ax3.plot([], [], '-b', label=labs[1])
-    ax3.plot([], [], '-r', label=labs[2])
-    ax3.get_xaxis().set_visible(False)
-    ax3.get_yaxis().set_visible(False)
-    ax3.axis('off')
-    leg = ax3.legend(fancybox=True, loc='center')
+    legplot(ax3, ['-k', '-b', '-r'], labs[:3], loc=10)
     return figs
 
 

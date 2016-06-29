@@ -13,6 +13,7 @@ from multiprocessing import cpu_count
 from time import time
 from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
                      cs_dropd, cs_Strentry)
+from ..lattices.reader import lattlist
 from ..visualize.stringformat import time2str, uc
 from ..simulate.lsd import lsd
 from ..simulate.ramp import simulate_ramp
@@ -50,23 +51,25 @@ def runthread(status, tabs, f_simulate, argstuple):
 
 def gui_twisstrack(frame, w, h):
     def _start():
-        latt = lattice.get()
+        latt = latticemenu.get()
+        if latt in closedlatts:
+            closed = True
+        else :
+            closed = False
         slic = int(entry_slice.get())
         mode = 'trackbeta'
         particles = 1
         rounds = 1
         runthread(status, tabs, lsd,
-                  (latt, slic, mode, particles, rounds))
+                  (closed, latt, slic, mode, particles, rounds))
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Radial', 'Axial', 'Dispersion',
                                    'Overview', 'Parameters'])
 
     cs_label(tabs[0], 1, 1, 'Lattice')
     cs_label(tabs[0], 1, 2, 'Nr. of slices')
-    lattice = cs_dropd(tabs[0], 2, 1, ['bessy2injectionline',
-                                       'bessy2booster',
-                                       'bessy2transfer',
-                                       'bessy2ring'])
+    closedlatts, openlatts = lattlist()
+    latticemenu = cs_dropd(tabs[0], 2, 1, closedlatts + openlatts)
     entry_slice = cs_Intentry(tabs[0], 2, 2, 1e3)
 
     cs_button(tabs[0], 3, 3, 'Start', _start)
@@ -76,13 +79,28 @@ def gui_twisstrack(frame, w, h):
 
 def gui_parttrack(frame, w, h):
     def _start():
-        latt = lattice.get()
+        latt = latticemenu.get()
         slic = int(entry_slice.get())
+        if latt in closedlatts:
+            closed = True
+            rnds = int(entry_round.get())
+        else :
+            closed = False
+            rnds = int(1)
         mode = 'trackpart'
         prts = int(entry_parts.get())
-        rnds = int(entry_round.get())
+
         runthread(status, tabs, lsd,
-                  (latt, slic, mode, prts, rnds))
+                  (closed, latt, slic, mode, prts, rnds))
+    def _check(*args):
+        lattice = latticemenu.get()
+        if lattice in openlatts:
+            roundslabel.set('')
+        else:
+            roundslabel.set('Nr. of rounds')
+
+
+
 
     tabs = cs_tabbar(frame, w, h, [' Menu ', ' X ', ' X\' ', ' Y ', ' Y\' ',
                                    ' Z ', ' Z\' ', ' Overview ',
@@ -91,15 +109,12 @@ def gui_parttrack(frame, w, h):
     cs_label(tabs[0], 1, 1, 'Lattice')
     cs_label(tabs[0], 1, 2, 'Nr. of slices')
     cs_label(tabs[0], 1, 3, 'Nr. of particles (parallelized)')
-    cs_label(tabs[0], 1, 4, 'Nr. of rounds')
-    lattice = cs_dropd(tabs[0], 2, 1, ['bessy2injectionline',
-                                       'bessy2booster',
-                                       'bessy2transfer',
-                                       'bessy2ring'])
+    roundslabel = cs_label(tabs[0], 1, 4, 'Nr. of rounds')
+    closedlatts, openlatts = lattlist()
+    latticemenu = cs_dropd(tabs[0], 2, 1, closedlatts+openlatts, action=_check)
     entry_slice = cs_Intentry(tabs[0], 2, 2, 100)
     entry_parts = cs_Intentry(tabs[0], 2, 3, cpu_count())
     entry_round = cs_Intentry(tabs[0], 2, 4, 100)
-
     cs_button(tabs[0], 3, 5, 'Start', _start)
     status = cs_label(tabs[0], 3, 6, '')
     return
@@ -135,8 +150,8 @@ def gui_ramp(frame, w, h):
     cs_label(tabs[0], 1, 3, 'Injection time / s')
     cs_label(tabs[0], 1, 4, 'Extraction time 1 / s')
     cs_label(tabs[0], 1, 5, 'Extraction time 2 / s')
-    lattice = cs_dropd(tabs[0], 2, 1, ['bessy2booster',
-                                       'bessy2ring'])
+    closedlatts, _ = lattlist()
+    lattice = cs_dropd(tabs[0], 2, 1, closedlatts)
     entry_Tper = cs_Dblentry(tabs[0], 2, 2, 1e-1)
     entry_tinj = cs_Dblentry(tabs[0], 2, 3, 5518.944e-6)
     entry_text = cs_Dblentry(tabs[0], 2, 4, 38377.114e-6)
@@ -159,10 +174,10 @@ def gui_ramp(frame, w, h):
     cs_label(tabs[0], 6, 4, 'nm '+uc.pi+' rad')
     cs_label(tabs[0], 7, 4, 'nm '+uc.pi+' rad')
     cs_label(tabs[0], 8, 4, uc.ppt)
-    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '200 500 2000')
-    entry_emitx = cs_Strentry(tabs[0], 6, 3, '100 200 300')
-    entry_emity = cs_Strentry(tabs[0], 7, 3, '100 200 300')
-    entry_emits = cs_Strentry(tabs[0], 8, 3, '.5 1 1.5')
+    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '700 2000')
+    entry_emitx = cs_Strentry(tabs[0], 6, 3, '200 300')
+    entry_emity = cs_Strentry(tabs[0], 7, 3, '200 300')
+    entry_emits = cs_Strentry(tabs[0], 8, 3, '1')
 
     cs_button(tabs[0], 9, 6, 'Start', _start)
     status = cs_label(tabs[0], 9, 7, '')

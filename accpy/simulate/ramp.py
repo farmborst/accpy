@@ -14,8 +14,8 @@ from .lsd import oneturn
 from .radiate import dipolering
 from .slicing import cellslice
 from .rmatrices import UCS2R
+from ..lattices.reader import latt2py
 from ..visualize.plot import plotramp
-from ..lattices.bessy2 import lattice
 from ..math.ode import odeint
 
 
@@ -200,9 +200,8 @@ def Semittancedot(E, Edot, Cq, Js, alphas, lorentzgamma, rho):
 def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
                   V_HFs, emitxs, emitys, emitss):
     # get parameters and unit cell of lattice
-    (closed, particle, E, I, UC, diagnostics, N_UC,     # always
-     HF_f, HF_V,                                        # closed lattice
-     xtwiss0, ytwiss0, xdisp0) = lattice(latt)          # open lattice
+    closed = True
+    particle, E, I, UC, diagnostics, N_UC, HF_f, HF_V = latt2py(latt, closed)
     m, q, E0, gamma, P_UC = part2mqey(E, UC, particle)
     xtwiss0, ytwiss0, xdisp0, rho, D_UC, UD, LD = oneturn(UC, P_UC, N_UC, gamma)
     C = sum(UC[1, :])*N_UC  # circumference

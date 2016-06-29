@@ -13,7 +13,7 @@ from .rmatrices import rmatrix, UCS2R
 from .tracking import (initialtwiss, tracktwiss4, trackparts)
 from .radiate import dipolering, synchroints
 from .particles import part2mqey
-from ..lattices.bessy2 import lattice
+from ..lattices.reader import latt2py
 from ..visualize.plot import (plotopticpars_closed, plottrajs,
                               plotopticpars_open, plotoptic, plotphasespace)
 
@@ -54,11 +54,13 @@ def getchromaticity(s, xtwiss, ytwiss, N_UC, UCS):
     return Xx, Xy
 
 
-def lsd(latt, slices, mode, particles, rounds):
-    # get parameters and unit cell of lattice
-    (closed, particle, E, I, UC, diagnostics, N_UC,     # always
-     HF_f, HF_V,                                        # closed lattice
-     xtwiss0, ytwiss0, xdisp0) = lattice(latt)          # open lattice
+def lsd(closed, latt, slices, mode, particles, rounds):
+    if closed:
+        (particle, E, I, UC, diagnostics, N_UC,
+         HF_f, HF_V) = latt2py(latt, closed)
+    else:
+        (particle, E, I, UC, diagnostics, N_UC,
+         xtwiss0, ytwiss0, xdisp0) = latt2py(latt, closed)
 
     m, q, E0, gamma, P_UC = part2mqey(E, UC, particle)
 
