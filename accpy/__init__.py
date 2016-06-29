@@ -24,7 +24,6 @@ Requirements
    - scipy
    - h5py
    - matplotlib
-   - statsmodels
    - time
 
 Tested with

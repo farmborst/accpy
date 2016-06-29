@@ -41,7 +41,7 @@ def measure_tunes(f_HF):
         try:
             from vxi11 import Instrument
             instr = Instrument('scopez6g.ctl.bessy.de')
-            print instr.ask('*IDN?')        # SCOPEZ6G/Diagnose (ROHDE&SCHWARZ)
+            print(instr.ask('*IDN?'))       # SCOPEZ6G/Diagnose (ROHDE&SCHWARZ)
             instr.write('TIM:RANGE 0.001')  # set time range to 1ms
             instr.write('TIM:HOR:POS {}'.format(t[0]/1e3))
             instr.write('CALC:MATH:FFT:CFR {} kHz'.format(f_cent))

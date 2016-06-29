@@ -3,14 +3,14 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
+from time import time
+from threading import Thread
+from multiprocessing import cpu_count
 from matplotlib import use
 use('TkAgg')
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2TkAgg)
 from matplotlib.pyplot import close
-from threading import Thread
-from multiprocessing import cpu_count
-from time import time
 from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
                      cs_dropd, cs_Strentry)
 from ..lattices.reader import lattlist

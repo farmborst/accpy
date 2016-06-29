@@ -4,6 +4,7 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from os import listdir
+from numpy import array
 header = '''
 from __future__ import division
 from numpy import array, zeros, append, sqrt
@@ -33,17 +34,39 @@ def latt2py(name, closed):
         xdisp   ...initial radial dispersion vector
         ydisp   ...initial axial dispersion vector
     '''
-
+    l = locals()
     if closed:
         filepath = './accpy/lattices/closed/'+name+'.latt'
         code = header+open(filepath).read()
         exec(code)
+        particle = l['particle']
+        energy = l['energy']
+        I = l['I']
+        UC = l['UC']
+        diagnostics = l['diagnostics']
+        N_UC = l['N_UC']
+        HF_f = l['HF_f']
+        HF_V = l['HF_V']
         return (particle, energy, I, UC, diagnostics, N_UC,
                 HF_f, HF_V)
     else:
         filepath = './accpy/lattices/open/'+name+'.latt'
         code = header+open(filepath).read()
         exec(code)
+        particle = l['particle']
+        energy = l['energy']
+        I = l['I']
+        UC = l['UC']
+        diagnostics = l['diagnostics']
+        N_UC = l['N_UC']
+        beta_x = l['beta_x']
+        alph_x = l['alph_x']
+        gamm_x = l['gamm_x']
+        beta_y = l['beta_y']
+        alph_y = l['alph_y']
+        gamm_y = l['gamm_y']
+        disp_x = l['disp_x']
+        dipr_x = l['dipr_x']
         xtwiss = array([[beta_x, -alph_x], [-alph_x, gamm_x]])
         ytwiss = array([[beta_y, -alph_y], [-alph_y, gamm_y]])
         xdisp = array([[disp_x], [dipr_x], [1]])
