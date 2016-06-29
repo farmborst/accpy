@@ -12,13 +12,13 @@ ACCPY
     - quadrupole scan simulation
 
 #Requirements:
+    matplotlib
     numpy
     scipy
     h5py
-    matplotlib
 
 #Installation:
-    install python 2.7 and numpy, scipy, h5py, matplotlib, statsmodels
+    install python 2.7 and matplotlib, numpy, scipy and h5py
     (on debian 8: >> apt-get install python python-matplotlib python-numpy python-scipy python-h5py
     run >> python startgui.py
 
