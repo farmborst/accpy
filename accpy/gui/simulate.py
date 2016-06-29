@@ -96,8 +96,10 @@ def gui_parttrack(frame, w, h):
         lattice = latticemenu.get()
         if lattice in openlatts:
             roundslabel.set('')
+            entry_round.grid_remove()
         else:
             roundslabel.set('Nr. of rounds')
+            entry_round.grid(row=2, column=4)
 
 
 
