@@ -4,12 +4,12 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 try:
-    from Tkinter import (Tk, Label, Listbox, Text, LEFT, RIGHT, BOTH, END,
-                         NORMAL, DISABLED, Scrollbar)
+    from Tkinter import (Label, Listbox, Text, LEFT, RIGHT, BOTH, END,
+                         NORMAL, DISABLED, Scrollbar, Toplevel)
     from ttk import Frame
 except:
-    from tkinter import (Tk, Label, Listbox, Text, LEFT, RIGHT, BOTH, END,
-                         NORMAL, DISABLED, Scrollbar)
+    from tkinter import (Label, Listbox, Text, LEFT, RIGHT, BOTH, END,
+                         NORMAL, DISABLED, Scrollbar, Toplevel)
     from tkinter.ttk import Frame
 
 
@@ -22,7 +22,7 @@ def documentation(version, w, h):
         textfield.delete('1.0', END)
         textfield.insert('1.0', docdic[doc])
         textfield.config(state=DISABLED)
-    r = Tk()
+    r = Toplevel()
     w = int(w/2)
     h = int(h/2)
     r.geometry('{}x{}+{}+{}'.format(w, h, int(w/2), int(h/2)))
@@ -47,10 +47,10 @@ def documentation(version, w, h):
 
 
 def about(version, w, h):
-    r = Tk()
+    r = Toplevel()
     r.wm_title('About')
     r.option_add('*font', 'Helvetica -16 bold')
-    txt1 = Label(r, text='accpy version {}'.format(version))
+    txt1 = Label(r, text='ACCPY version {}'.format(version))
     r.option_add('*font', 'Helvetica -14')
     txt2 = Label(r, text='Coded by\nfelix kramer\n(felix.kramer@physik.hu-berlin.de)')
     txt1.pack()

@@ -9,25 +9,26 @@ try:
 except:
     from tkinter import Menu
     from tkinter.ttk import Frame
-from .file import latticeeditor, settings
+from .file import latticeeditor, settings, defaults
 from .simulate import (gui_twisstrack, gui_parttrack, gui_ramp,
                        gui_quadscansim)
 from .measure import (tunes, chromaticity, quadscanmeas, achroscan)
 from .optimize import (emittex, twissmatch)
 from .help import (documentation, about)
 from ..visualize.figures import plotstandards
+from ..dataio.hdf5 import confload
 
 
 def mainwindow(root, version):
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry('{}x{}'.format(w, h))
-    root.wm_title("accpy gui {}".format(version))
-    bar, frame = menubar(root, version)
+    root.wm_title("ACCPY gui {}".format(version))
+    bar, frame = menubar(root, version, w, h)
     root.config(menu=bar)
     return
 
 
-def menubar(root, version):
+def menubar(root, version, w, h):
     def clear(frame):
         # destroy all widgets in fram/tab
         for widget in frame.winfo_children():
@@ -146,7 +147,7 @@ def menubar(root, version):
     # Entries for Help menu
     HM = Menu(bar, tearoff=0)
     HML = ['Documentation',
-           'About accpy...']
+           'About ACCPY...']
 
     def Help_docs():
         documentation(version, w, h)
@@ -159,6 +160,11 @@ def menubar(root, version):
 
     frame = Frame(root)
     frame.pack(expand=True)
-    w, h = frame.winfo_screenwidth(), frame.winfo_screenheight()
-    plotstandards('pcdisplay', [1, 1], w=w, h=h)
+
+    # load settings
+    try:
+        varlist, vallist = confload('./settings.conf')
+    except:
+        varlist, vallist = defaults('./settings.conf')
+    plotstandards(varlist, vallist, w, h)
     return bar, frame

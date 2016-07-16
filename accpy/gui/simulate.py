@@ -3,6 +3,10 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
+try:
+    from tkMessageBox import showerror
+except:
+    from tkinter.messagebox import showerror
 from time import time
 from threading import Thread
 from multiprocessing import cpu_count
@@ -54,8 +58,11 @@ def gui_twisstrack(frame, w, h):
         latt = latticemenu.get()
         if latt in closedlatts:
             closed = True
-        else :
+        elif latt in openlatts:
             closed = False
+        else:
+            showerror(title='ERROR', message='Please choose a lattice')
+            return
         slic = int(entry_slice.get())
         mode = 'trackbeta'
         particles = 1
@@ -84,9 +91,12 @@ def gui_parttrack(frame, w, h):
         if latt in closedlatts:
             closed = True
             rnds = int(entry_round.get())
-        else :
+        elif latt in openlatts:
             closed = False
             rnds = int(1)
+        else:
+            showerror(title='ERROR', message='Please choose a lattice')
+            return
         mode = 'trackpart'
         prts = int(entry_parts.get())
 

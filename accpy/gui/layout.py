@@ -3,11 +3,13 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 try:
-    import Tkinter as Tk
-    import ttk
+    from Tkinter import (Label, StringVar, IntVar, DoubleVar, BooleanVar,
+                         Entry, Button, OptionMenu, Checkbutton)
+    from ttk import (Notebook, Frame)
 except:
-    import tkinter as Tk
-    import tkinter.ttk as ttk
+    from tkinter import (Label, StringVar, IntVar, DoubleVar, BooleanVar,
+                         Entry, Button, OptionMenu, Checkbutton)
+    from tkinter.ttk import (Notebook, Frame)
 
 
 def gridwidget(widget, r, c, sticky):
@@ -16,10 +18,15 @@ def gridwidget(widget, r, c, sticky):
     else:
         widget.grid(row=r, column=c, sticky=sticky)
 
+
+def packwidget(button, side, fill, expand):
+    button.pack(side=side, fill=fill, expand=expand)
+
+
 # create and name tabs in root
 def cs_tabbar(root, w, h, names):
-    nb = ttk.Notebook(root, width=w, height=h)
-    tabs = [ttk.Frame(nb) for i in range(len(names))]  # 5 tabs
+    nb = Notebook(root, width=w, height=h)
+    tabs = [Frame(nb) for i in range(len(names))]  # 5 tabs
     [nb.add(tabs[i], text=name) for i, name in enumerate(names)]
     nb.pack()
     return tabs
@@ -27,21 +34,27 @@ def cs_tabbar(root, w, h, names):
 
 # create and set tkinter stringvar
 def cs_str(name):
-    svar = Tk.StringVar()
+    svar = StringVar()
     svar.set(name)
     return svar
 
 
+def cs_bln(val):
+    bvar = BooleanVar()
+    bvar.set(val)
+    return bvar
+
+
 # create and set tkinter IntVar
 def cs_int(value):
-    ivar = Tk.IntVar()
+    ivar = IntVar()
     ivar.set(int(value))
     return ivar
 
 
 # create and set tkinter DoubleVar
 def cs_dbl(value):
-    dvar = Tk.DoubleVar()
+    dvar = DoubleVar()
     dvar.set(float(value))
     return dvar
 
@@ -49,7 +62,7 @@ def cs_dbl(value):
 # create, position and set tkinter label
 def cs_label(root, r, c, name, sticky=None, retlab=False):
     labelstr = cs_str(name)
-    label = Tk.Label(master=root, textvariable=labelstr)
+    label = Label(master=root, textvariable=labelstr)
     gridwidget(label, r, c, sticky)
     if retlab:
         return labelstr, label
@@ -57,11 +70,10 @@ def cs_label(root, r, c, name, sticky=None, retlab=False):
         return labelstr
 
 
-
 # create, position and set IntVar label
 def cs_Intentry(root, r, c, value, sticky=None):
     entryint = cs_int(value)
-    entry = Tk.Entry(root, textvariable=entryint)
+    entry = Entry(root, textvariable=entryint)
     gridwidget(entry, r, c, sticky)
     return entry
 
@@ -69,7 +81,7 @@ def cs_Intentry(root, r, c, value, sticky=None):
 # create, position and set DoubleVar label
 def cs_Dblentry(root, r, c, value, sticky=None):
     entryint = cs_dbl(value)
-    entry = Tk.Entry(root, textvariable=entryint)
+    entry = Entry(root, textvariable=entryint)
     gridwidget(entry, r, c, sticky)
     return entry
 
@@ -77,21 +89,35 @@ def cs_Dblentry(root, r, c, value, sticky=None):
 # create, position and set StringVar label
 def cs_Strentry(root, r, c, value, sticky=None):
     entrystr = cs_str(value)
-    entry = Tk.Entry(root, textvariable=entrystr)
+    entry = Entry(root, textvariable=entrystr)
     gridwidget(entry, r, c, sticky)
     return entry
 
 
 # create, position and set button
 def cs_button(root, r, c, label, action, sticky=None):
-    button = Tk.Button(master=root, text=label, command=action)
+    button = Button(master=root, text=label, command=action)
     gridwidget(button, r, c, sticky)
     return button
 
 
+# create and pack button
+def cp_button(root, label, action, side="top", fill="both", expand=True):
+    button = Button(master=root, text=label, command=action)
+    packwidget(button, side, fill, expand)
+    return button
+
+
+# create, position and set button
+def cs_checkbox(root, r, c, label, boolval, sticky=None):
+    entrybl = cs_bln(boolval)
+    checkbox = Checkbutton(master=root, text=label, onvalue=True, offvalue=False, variable=entrybl)
+    gridwidget(checkbox, r, c, sticky)
+    return entrybl
+
 def cs_dropd(root, r, c, options, action=None, sticky=None, retbut=False):
     startvalue = cs_str('')  # cs_str(options[0])
-    dropdown = Tk.OptionMenu(root, startvalue, *options)
+    dropdown = OptionMenu(root, startvalue, *options)
     gridwidget(dropdown, r, c, sticky)
     if action is not None:
         startvalue.trace('w', action)

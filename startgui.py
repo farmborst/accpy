@@ -16,12 +16,12 @@ try:
 except:
     from tkinter import Tk, mainloop
 from accpy.gui.mainwin import mainwindow
-import gc
+from gc import enable
 
 
 if __name__ == '__main__':
     root = Tk()  # create window
     version = 0.5
     mainwindow(root, version)
-    gc.enable()
+    enable()
     mainloop()   # start Tk mainloop
