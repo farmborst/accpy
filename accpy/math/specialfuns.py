@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 ''' accpy.math.specialfuns
 author:     felix.kramer(at)physik.hu-berlin.de

@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 ''' modul of LSD for slicing of unit cell
 author:

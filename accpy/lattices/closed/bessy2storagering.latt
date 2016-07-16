@@ -25,13 +25,13 @@ g = 30e-3            # dipoles gap
 K = 0.5              # ~0.7 for Rogowski pole
 BB = uniformdipole(LD, rho, phi, K*g)
 '''===== quadrupoles ====='''
-Q1 = rfquad(.5, 1.40503)
-Q2 = afquad(.25, -2.01497)
-Q3 = afquad(.2, -1.89757)
-Q4 = rfquad(.25, 2.4519)
-Q1T = rfquad(.5, 2.62081)
-Q2T = afquad(.25, -2.46319)
-Q5T = afquad(.2, -2.6)
+Q1 = quad('rf', .5, 1.40503)
+Q2 = quad('af', .25, -2.01497)
+Q3 = quad('af', .2, -1.89757)
+Q4 = quad('rf', .25, 2.4519)
+Q1T = quad('rf', .5, 2.62081)
+Q2T = quad('af', .25, -2.46319)
+Q5T = quad('af', .2, -2.6)
 '''===== sextupoles (as drifts) ====='''
 S1 = drift(0.16)
 S2 = drift(0.16)

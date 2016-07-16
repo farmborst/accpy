@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 ''' accpy.simulate.quadscan
 author:     felix.kramer(at)physik.hu-berlin.de

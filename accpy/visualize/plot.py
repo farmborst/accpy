@@ -1,11 +1,6 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-''' evaluation of measured data to get dispersion in transferline
-author:
-    Felix Kramer
-version:
-    Created         06.11.2015
-    Last Update     06.11.2015
+''' accpy.visualize.plot
+author:     felix.kramer(at)physik.hu-berlin.de
 
 'best'         : 0, (only implemented for axes legends)
 'upper right'  : 1,
@@ -20,14 +15,14 @@ version:
 'center'       : 10,
 '''
 from __future__ import division
-from numpy import (size, cumsum, nanmax, nanmin, concatenate, empty, linspace,
-                   array, arange, abs as npabs, sqrt, sin, cos, arccos as acos,
-                   nanmean)
+from numpy import (nanmax, nanmin, concatenate, empty, linspace, array, arange,
+                   abs as npabs, sqrt, sin, cos, arccos as acos, nanmean)
 from itertools import product
 from matplotlib.figure import Figure
 from matplotlib.pyplot import cm
 from matplotlib.gridspec import GridSpec
 from .stringformat import SI, SId
+from .lattice import drawlattice
 from ..simulate import const
 from ..simulate.rmatrices import UCS2R
 from ..simulate.tracking import trackpart
@@ -114,78 +109,6 @@ def legplot(ax, linestyles, labels, loc=0):
 
 def getcolors(number):
     return list(cm.rainbow(linspace(0, 1, number)))
-
-
-def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
-    ''' function for drawing given optic into figure
-    inputs: ax      handle for figure axes
-            optic   lattice to be drawn
-            ymin    min of other functions (e.g. twiss) in same figure
-            ymax    max of other functions (e.g. twiss) in same figure
-            height  0 to 1 where to place lattice (1 at top)
-    '''
-    l = size(optic, 1)
-    s = cumsum(optic[1, :])
-    d = ymax-ymin
-    m = ymin + d*height
-    h = m + .05*d
-    l = m - .05*d
-    h2 = m + .025*d
-    l2 = m - .025*d
-    diagnostic = 0
-    for i in range(size(optic, 1)):
-        element = optic[0, i]
-        beg = s[i] - optic[1, i]
-        end = s[i]
-        if element == 0:        # drift as black line
-            x = [beg, end]
-            y = [m, m]
-            ax.plot(x, y, '-k')
-        elif element == 1:      # dipole as blue box
-            x = [end, beg, beg, end, end]
-            y = [h, h, l, l, h]
-            ax.plot(x, y, '-k')
-        elif element == 2:      # edge nothing
-            x = []
-            y = []
-        elif element == 3:      # radial focussing quad as box above
-            if optic[4, i] == 0:
-                x = [end, end, beg, beg, end]
-                y = [l2, h2, h2, l2, l2]
-                ax.plot(x, y, '--k')
-            else:
-                x = [end, end, beg, beg, end]
-                y = [m, h, h, m, m]
-                ax.plot(x, y, '-k')
-                ax.text(beg+(end-beg)/2, h+0.01*d, '%.5f' % optic[4, i], rotation=90,
-                        horizontalalignment='center',
-                        verticalalignment='bottom')
-        elif element == 4:      # axial focussing quad as box below
-            if optic[4, i] == 0:
-                x = [end, end, beg, beg, end]
-                y = [l2, h2, h2, l2, l2]
-                ax.plot(x, y, '--k')
-            else:
-                x = [end, end, beg, beg, end]
-                y = [m, l, l, m, m]
-                ax.plot(x, y, '-k')
-                ax.text(beg+(end-beg)/2, m+0.01*d, '%.5f' % optic[4, i], rotation=90,
-                        horizontalalignment='center',
-                        verticalalignment='bottom')
-        elif element == 5:      # rotator nothing
-            x = []
-            y = []
-        elif element == 6:      # solenoid nothing
-            x = []
-            y = []
-        elif element == 7:      # diagnostic as red vertical line
-            x = [beg, end]
-            y = [l, h]
-            ax.plot(x, y, '-r')
-            ax.text(beg, h, diagnostics[diagnostic], rotation=90,
-                    horizontalalignment='center', verticalalignment='bottom')
-            diagnostic += 1
-    return
 
 
 def plotoptic(UC, optic, diagnostics, s, xtwiss, ytwiss, xdisp):
@@ -514,10 +437,14 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
                                 ytwiss[:, :, 0], emitty)
     ax[0].plot(x, xp, '-g')
     ax[1].plot(y, yp, '-g')
+    ax[1].yaxis.tick_right()
+    ax[1].yaxis.set_label_position('right')
     ax2.plot([], [], '.b', label='Ensemble')
     ax2.plot([], [], '-g', label='Twiss ellipsis')
     ax2.plot([], [], 'xr', label='1 sigma particle')
     ax2.axis('off')
+    ax2.get_xaxis().set_visible(False)
+    ax2.get_yaxis().set_visible(False)
     ax2.legend(loc='center')
     return fig
 

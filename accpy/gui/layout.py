@@ -10,6 +10,12 @@ except:
     import tkinter.ttk as ttk
 
 
+def gridwidget(widget, r, c, sticky):
+    if sticky is None:
+        widget.grid(row=r, column=c)
+    else:
+        widget.grid(row=r, column=c, sticky=sticky)
+
 # create and name tabs in root
 def cs_tabbar(root, w, h, names):
     nb = ttk.Notebook(root, width=w, height=h)
@@ -41,48 +47,54 @@ def cs_dbl(value):
 
 
 # create, position and set tkinter label
-def cs_label(root, r, c, name):
+def cs_label(root, r, c, name, sticky=None, retlab=False):
     labelstr = cs_str(name)
     label = Tk.Label(master=root, textvariable=labelstr)
-    label.grid(row=r, column=c)
-    return labelstr
+    gridwidget(label, r, c, sticky)
+    if retlab:
+        return labelstr, label
+    else:
+        return labelstr
+
 
 
 # create, position and set IntVar label
-def cs_Intentry(root, r, c, value):
+def cs_Intentry(root, r, c, value, sticky=None):
     entryint = cs_int(value)
     entry = Tk.Entry(root, textvariable=entryint)
-    entry.grid(row=r, column=c)
+    gridwidget(entry, r, c, sticky)
     return entry
 
 
 # create, position and set DoubleVar label
-def cs_Dblentry(root, r, c, value):
+def cs_Dblentry(root, r, c, value, sticky=None):
     entryint = cs_dbl(value)
     entry = Tk.Entry(root, textvariable=entryint)
-    entry.grid(row=r, column=c)
+    gridwidget(entry, r, c, sticky)
     return entry
 
 
 # create, position and set StringVar label
-def cs_Strentry(root, r, c, value):
+def cs_Strentry(root, r, c, value, sticky=None):
     entrystr = cs_str(value)
     entry = Tk.Entry(root, textvariable=entrystr)
-    entry.grid(row=r, column=c)
+    gridwidget(entry, r, c, sticky)
     return entry
 
 
 # create, position and set button
-def cs_button(root, r, c, label, action):
+def cs_button(root, r, c, label, action, sticky=None):
     button = Tk.Button(master=root, text=label, command=action)
-    button.grid(row=r, column=c)
+    gridwidget(button, r, c, sticky)
     return button
 
 
-def cs_dropd(root, r, c, options, action=None):
-    startvalue = cs_str(options[0])
+def cs_dropd(root, r, c, options, action=None, sticky=None, retbut=False):
+    startvalue = cs_str('')  # cs_str(options[0])
     dropdown = Tk.OptionMenu(root, startvalue, *options)
-    dropdown.grid(row=r, column=c)
+    gridwidget(dropdown, r, c, sticky)
     if action is not None:
         startvalue.trace('w', action)
+    if retbut:
+        return startvalue, dropdown
     return startvalue

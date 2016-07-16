@@ -6,7 +6,7 @@ energy = 1.72e9
 HF_f = 499.667e6
 HF_V = 750e3
 I = 5e-3
-N_UC = 8             # number of unit cells
+N_UC = 20             # number of unit cells
 ###### drifts ######
 D1 = drift(1.160)
 D2 = drift(.23)

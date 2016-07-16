@@ -7,10 +7,8 @@ I = 5e-3
 '''===== starting twiss parameters ====='''
 beta_x = 10.101
 alph_x = 3.717
-gamm_x = (1+alph_x**2)/beta_x
 beta_y = 2.717
 alph_y = -1.115
-gamm_y = (1+alph_y**2)/beta_y
 disp_x = .847
 dipr_x = -.208
 '''===== drifts ====='''
@@ -68,17 +66,17 @@ p = pc/const.cl
 R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
 i2kl = lambda i, R=R: (.265410*i-.765828e-6*i**3-.239385)/R
 i2ks = lambda i, R=R: (.266015*i-.829333e-6*i**3-.233316)/R
-Q01 = afquad(.25, -i2kl(41.3949))
-Q02 = afquad(.25, -0)
-Q03 = rfquad(.25, i2kl(37.5109))
-Q04 = rfquad(.25, i2kl(23.4929))
-Q05 = afquad(.25, -i2kl(30.4454))
-Q07 = afquad(.25, -0)
-Q08 = rfquad(.25, i2kl(68.0279))
-Q09 = afquad(.25, -i2kl(55.5348))
-Q10 = afquad(.2, -i2ks(43.1419))
-Q11 = afquad(.2, -0)
-Q12 = rfquad(.2, i2ks(53.3176))
+Q01 = quad('af', .25, i2kl(41.3949))
+Q02 = quad('af', .25, 0)
+Q03 = quad('rf', .25, i2kl(37.5109))
+Q04 = quad('rf', .25, i2kl(23.4929))
+Q05 = quad('af', .25, i2kl(30.4454))
+Q07 = quad('af', .25, 0)
+Q08 = quad('rf', .25, i2kl(68.0279))
+Q09 = quad('af', .25, i2kl(55.5348))
+Q10 = quad('af', .20, i2ks(43.1419))
+Q11 = quad('af', .20, 0)
+Q12 = quad('rf', .20, i2ks(53.3176))
 '''===== unit cell ====='''
         # 00   01   02   03   04   05   06   07   08   09
 UC = line(DP1, D01, F1T, D02, DP2, D03, F2T, D04, Q01, D05,

@@ -38,7 +38,6 @@ from numpy import zeros, concatenate
 
 def drift(length):
     ev = zeros([6, 1])
-    # ev[0] = 0
     ev[1] = length
     return ev
 
@@ -63,27 +62,21 @@ def anglededge(radius, edgeangle, Kg):
     '''
     ev = zeros([6, 1])
     ev[0] = 2
-    # ev[1] = 0
     ev[2] = radius
     ev[3] = edgeangle
-    # ev[4] = 0
     ev[5] = Kg
     return ev
 
 
-def rfquad(length, strength):
+def quad(focusplane, length, strength):
     ev = zeros([6, 1])
-    ev[0] = 3
     ev[1] = length
-    ev[4] = strength
-    return ev
-
-
-def afquad(length, strength):
-    ev = zeros([6, 1])
-    ev[0] = 4
-    ev[1] = length
-    ev[4] = strength
+    if focusplane == 'rf':
+        ev[0] = 3
+        ev[4] = abs(strength)
+    elif focusplane == 'af':
+        ev[0] = 4
+        ev[4] = abs(strength)
     return ev
 
 

@@ -2,15 +2,13 @@
 
 '''===== general ====='''
 particle = 'electron'
-energy = 50e6
+energy = 52e6
 I = 5e-3
 '''===== starting twiss parameters ====='''
 beta_x = 2
 alph_x = 1
-gamm_x = (1+alph_x**2)/beta_x
 beta_y = 2
 alph_y = 1
-gamm_y = (1+alph_y**2)/beta_y
 disp_x = 0
 dipr_x = 0
 '''===== drifts ====='''
@@ -25,28 +23,28 @@ D08 = drift(1.0255)
 D09 = drift(.181)
 D10 = drift(.4225)
 D11 = drift(1.02853)
-D12 = drift(1)
-D13 = drift(1)
-D14 = drift(1)
-D15 = drift(1)
-D16 = drift(1)
-D17 = drift(1)
-D18 = drift(1)
-D19 = drift(1)
-D20 = drift(1)
-D21 = drift(1)
-D22 = drift(1)
-D23 = drift(1)
-D24 = drift(1)
-D25 = drift(1)
-D26 = drift(1)
-D27 = drift(1)
-D28 = drift(1)
-D29 = drift(1)
-D30 = drift(1)
-D31 = drift(1)
-D32 = drift(1)
-D33 = drift(1)
+D12 = drift(.1)
+D13 = drift(.398)
+D14 = drift(1.302)
+D15 = drift(.1)
+D16 = drift(.101)
+D17 = drift(1.725)
+D18 = drift(1.575)
+D19 = drift(.1)
+D20 = drift(.1)
+D21 = drift(.8)
+D22 = drift(.1)
+D23 = drift(.25001)
+D24 = drift(.24979)
+D25 = drift(.45)
+D26 = drift(.05)
+D27 = drift(.25)
+D28 = drift(.29978)
+D29 = drift(.273)
+D30 = drift(.127)
+D31 = drift(.4)
+D32 = drift(.13378)
+D33 = drift(.31593)
 '''===== fluorescent screens ====='''
 F01 = F02 = F03 = F04 = F05 = F06 = diagnostic()
 diagnostics = ['FOMZ1LI', 'FOMZ2LI', 'FOMZ2I', 'FOMZ3I', 'FOMZ5I', 'FOMZ6I']
@@ -64,29 +62,29 @@ R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
 i2k1 = lambda I, R=R: (6.87/2.55 * I)/R  # gradient@2.55A = 6.87 T/m
 i2k2 = lambda I, R=R: (6.86/2.55 * I)/R
 i2k3 = lambda I, R=R: (1.5 * I)/R
-Q01 = afquad(.119, i2k1(-0.562000))  # Q1PLI  +
-Q02 = afquad(.119, i2k1(-0.115052))  # Q2PLI  +
-Q03 = rfquad(.119, i2k1(+0.648000))  # Q3PLI  -
-Q04 = afquad(.220, i2k2(-1.118000))  # Q4PLI  +
-Q05 = rfquad(.119, i2k1(+0.454800))  # Q5PLI  -
-Q06 = afquad(.119, i2k1(-1.479440))  # Q6PLI  +
-Q07 = rfquad(.119, i2k1(+1.398218))  # Q7PLI  -
-Q08 = rfquad(.100, i2k3(+3.661584))  # Q2P2I  -
-Q09 = rfquad(.100, i2k3(+2.500517))  # Q1P2I  -
-Q10 = rfquad(.100, i2k3(+0.000000))  # Q4PI   -
-Q11 = afquad(.100, i2k3(-0.470000))  # Q5PI   +
-Q12 = rfquad(.100, i2k3(+0.000000))  # Q4PI   -
-Q13 = rfquad(.100, i2k3(+0.600000))  # Q6PI   -
-Q14 = afquad(.100, i2k3(-0.899900))  # Q7PI   +
-Q15 = afquad(.100, i2k3(-1.170000))  # Q8PI   +
-Q16 = afquad(.100, i2k3(-0.000000))  # Q9PI   +
-Q17 = afquad(.100, i2k3(-0.676000))  # Q10PI  +
-Q18 = afquad(.100, i2k3(-0.000000))  # Q11PI  +
-Q19 = afquad(.100, i2k3(-0.000000))  # Q12PI  +
-Q20 = afquad(.100, i2k3(-0.000000))  # Q13PI  -
-Q21 = afquad(.100, i2k3(-0.000000))  # Q14PI  +
-Q22 = afquad(.100, i2k3(-0.000000))  # Q15PI  +
-Q23 = afquad(.100, i2k3(-0.000000))  # Q16PI  +
+Q01 = quad('rf', .119, i2k1(-0.56230))  # Q1PLI  +
+Q02 = quad('rf', .119, i2k1(-0.11554))  # Q2PLI  +
+Q03 = quad('af', .119, i2k1(+0.60815))  # Q3PLI  -
+Q04 = quad('rf', .220, i2k2(-1.11836))  # Q4PLI  +
+Q05 = quad('af', .119, i2k1(+0.43467))  # Q5PLI  -
+Q06 = quad('rf', .119, i2k1(-1.48026))  # Q6PLI  +
+Q07 = quad('af', .119, i2k1(+1.39904))  # Q7PLI  -
+Q08 = quad('af', .100, i2k3(+3.64300))  # Q2P2I  -
+Q09 = quad('rf', .100, i2k3(+2.45640))  # Q1P2I  -
+Q10 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
+Q11 = quad('rf', .100, i2k3(-0.47120))  # Q5PI   +
+Q12 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
+Q13 = quad('af', .100, i2k3(+0.58900))  # Q6PI   -
+Q14 = quad('rf', .100, i2k3(-0.89050))  # Q7PI   +
+Q15 = quad('af', .100, i2k3(-1.15810))  # Q8PI   +
+Q16 = quad('rf', .100, i2k3(-0.00000))  # Q9PI   +
+Q17 = quad('rf', .100, i2k3(-0.67360))  # Q10PI  +
+Q18 = quad('af', .100, i2k3(-0.00000))  # Q11PI  +
+Q19 = quad('af', .100, i2k3(-0.00000))  # Q12PI  +
+Q20 = quad('af', .100, i2k3(-0.00000))  # Q13PI  -
+Q21 = quad('af', .100, i2k3(-0.00000))  # Q14PI  +
+Q22 = quad('af', .100, i2k3(-0.00000))  # Q15PI  +
+Q23 = quad('af', .100, i2k3(-0.00000))  # Q16PI  +
 '''===== unit cell ====='''
 UC = line(D01, Q01, D02, Q02, D03, Q03, D04, B01, D05, Q04,
           D06, F01, D07, B02, D08, Q05, D09, Q06, D10, Q07,

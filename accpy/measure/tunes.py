@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 ''' accpy.measure.tunes
 author:     felix.kramer(at)physik.hu-berlin.de
