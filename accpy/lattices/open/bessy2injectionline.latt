@@ -5,10 +5,13 @@ particle = 'electron'
 energy = 52e6
 I = 5e-3
 '''===== starting twiss parameters ====='''
-beta_x = 2
-alph_x = 1
-beta_y = 2
-alph_y = 1
+emit_x = 200e-9
+emit_y = 200e-9
+emit_s = 4e-3
+beta_x = 9
+alph_x = -.1
+beta_y = 3
+alph_y = 2
 disp_x = 0
 dipr_x = 0
 '''===== drifts ====='''
@@ -69,22 +72,37 @@ Q04 = quad('rf', .220, i2k2(-1.11836))  # Q4PLI  +
 Q05 = quad('af', .119, i2k1(+0.43467))  # Q5PLI  -
 Q06 = quad('rf', .119, i2k1(-1.48026))  # Q6PLI  +
 Q07 = quad('af', .119, i2k1(+1.39904))  # Q7PLI  -
+
 Q08 = quad('af', .100, i2k3(+3.64300))  # Q2P2I  -
 Q09 = quad('rf', .100, i2k3(+2.45640))  # Q1P2I  -
+
+
 Q10 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
-Q11 = quad('rf', .100, i2k3(-0.47120))  # Q5PI   +
+
+
+Q11 = quad('af', .100, i2k3(-0.47120))  # Q5PI   +
+
+
 Q12 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
-Q13 = quad('af', .100, i2k3(+0.58900))  # Q6PI   -
-Q14 = quad('rf', .100, i2k3(-0.89050))  # Q7PI   +
-Q15 = quad('af', .100, i2k3(-1.15810))  # Q8PI   +
+
+
+Q13 = quad('rf', .100, i2k3(+0.58900))  # Q6PI   -
+Q14 = quad('af', .100, i2k3(-0.89050))  # Q7PI   +
+Q15 = quad('rf', .100, i2k3(-1.15810))  # Q8PI   +
+
+
 Q16 = quad('rf', .100, i2k3(-0.00000))  # Q9PI   +
-Q17 = quad('rf', .100, i2k3(-0.67360))  # Q10PI  +
-Q18 = quad('af', .100, i2k3(-0.00000))  # Q11PI  +
-Q19 = quad('af', .100, i2k3(-0.00000))  # Q12PI  +
+
+
+Q17 = quad('af', .100, i2k3(-0.67360))  # Q10PI  +
+
+
+Q18 = quad('rf', .100, i2k3(-0.00000))  # Q11PI  +
+Q19 = quad('rf', .100, i2k3(-0.00000))  # Q12PI  +
 Q20 = quad('af', .100, i2k3(-0.00000))  # Q13PI  -
-Q21 = quad('af', .100, i2k3(-0.00000))  # Q14PI  +
-Q22 = quad('af', .100, i2k3(-0.00000))  # Q15PI  +
-Q23 = quad('af', .100, i2k3(-0.00000))  # Q16PI  +
+Q21 = quad('rf', .100, i2k3(-0.00000))  # Q14PI  +
+Q22 = quad('rf', .100, i2k3(-0.00000))  # Q15PI  +
+Q23 = quad('rf', .100, i2k3(-0.00000))  # Q16PI  +
 '''===== unit cell ====='''
 UC = line(D01, Q01, D02, Q02, D03, Q03, D04, B01, D05, Q04,
           D06, F01, D07, B02, D08, Q05, D09, Q06, D10, Q07,

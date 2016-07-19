@@ -64,7 +64,7 @@ def latticeeditor(frame, w, h):
             fig = latticeplot(UC, diagnostics)
         elif lattice in openlatts:
             txt = latt2txt(lattice, False)
-            _, _, _, UC, diagnostics, N_UC, _, _, _ = latt2py(lattice, False)
+            _, _, _, UC, diagnostics, N_UC, _, _, _, _, _, _ = latt2py(lattice, False)
             fig = latticeplot(UC, diagnostics)
         if lattice == 'NEW LATTICE':
             txt = ''

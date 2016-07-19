@@ -5,6 +5,9 @@ particle = 'electron'
 energy = 1.72e9
 I = 5e-3
 '''===== starting twiss parameters ====='''
+emit_x = 100e-9
+emit_y = 20e-9
+emit_s = 5.7e-4
 beta_x = 10.101
 alph_x = 3.717
 beta_y = 2.717

@@ -71,7 +71,7 @@ def gui_twisstrack(frame, w, h):
                   (closed, latt, slic, mode, particles, rounds))
 
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Radial', 'Axial', 'Dispersion',
-                                   'Overview', 'Parameters'])
+                                   'Overview', 'Parameters', 'Beam extents'])
 
     cs_label(tabs[0], 1, 1, 'Lattice')
     cs_label(tabs[0], 1, 2, 'Nr. of slices')
@@ -142,6 +142,9 @@ def gui_ramp(frame, w, h):
         E_inj = float(entry_Einj.get())*1e6
         E_ext = float(entry_Eext.get())*1e6
         latt = lattice.get()
+        if latt not in closedlatts:
+            showerror(title='ERROR', message='Please choose a lattice')
+            return
         f_HF = float(entry_f_HF.get())*1e6
         V_HFs = [float(x)*1e3 for x in entry_V_HF.get().split()]
         emitxs = [float(x)*1e-9 for x in entry_emitx.get().split()]
@@ -232,7 +235,7 @@ def gui_quadscansim(frame, w, h):
     entry_bety = cs_Dblentry(tabs[0], 3, 3, 1.29)
     entry_alpy = cs_Dblentry(tabs[0], 3, 4, 1.27)
     cs_label(tabs[0], 4, 2, uc.delta+' / '+uc.ppt)
-    cs_label(tabs[0], 4, 3, '1.8 / m')
+    cs_label(tabs[0], 4, 3, 'D / m')
     cs_label(tabs[0], 4, 4, 'D\' / rad')
     cs_label(tabs[0], 5, 1, 'Longitudinal')
     entry_epss = cs_Dblentry(tabs[0], 5, 2, 0.547)

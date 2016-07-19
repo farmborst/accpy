@@ -93,7 +93,7 @@ def Mplot(ax, x, ys, lss, xlabel, xunit, ylabel, yunit, labels, rescaleX=True, r
     if ylabel != '':
         ax.set_ylabel(ylabel+yunit)
     ax.set_xlim([min(x), max(x)])
-    return
+    return mx, my
 
 
 def legplot(ax, linestyles, labels, loc=0):
@@ -111,56 +111,78 @@ def getcolors(number):
     return list(cm.rainbow(linspace(0, 1, number)))
 
 
-def plotoptic(UC, optic, diagnostics, s, xtwiss, ytwiss, xdisp):
-    fig = Figure()
-    ax = fig.add_subplot(1, 1, 1)
+def plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp):
+    figs = [Figure() for i in range(4)]
+    ax = [figs[i].add_subplot(1, 1, 1) for i in range(4)]
     data = concatenate((xtwiss[0, 0, :], ytwiss[0, 0, :], xdisp.flatten()))
     ymin = nanmin(data)
     ymax = nanmax(data)
     ymin2 = nanmin(xdisp.flatten())
     ymax2 = nanmax(xdisp.flatten())
-    if optic == 'radial':
+    [drawlattice(ax[i], UC, diagnostics, ymin, ymax, 0) for i in [0, 1, 3]]
+    drawlattice(ax[2], UC, diagnostics, ymin2, ymax2, 0)
+    ax[0].plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
+    ax[0].plot(s, xtwiss[0, 1, :], '-c', label=r'$\alpha_x$')
+    ax[0].plot([], [], '-m', label=r'$\gamma_x$')
+    ax[0].set_ylabel(r'betatron function $\beta_x$ / (m)')
+    ax2 = ax[0].twinx()
+    ax2.plot(s, xtwiss[1, 1, :], '-m')
+    ax2.set_ylabel(r'gamma function $\gamma_x$ / (m)', color='m')
+    ax2.tick_params(axis='y', colors='m')
+    ax[1].plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
+    ax[1].plot(s, ytwiss[0, 1, :], '-c', label=r'$\alpha_y$')
+    ax[1].plot([], [], '-m', label=r'$\gamma_y$')
+    ax[1].set_ylabel(r'betatron function $\beta_y$ / (m)')
+    ax2 = ax[1].twinx()
+    ax2.plot(s, ytwiss[1, 1, :], '-m', label=r'$\gamma_y$')
+    ax2.set_ylabel(r'gamma function $\gamma_y$ / (m)', color='m')
+    ax2.tick_params(axis='y', colors='m')
+    ax[2].plot(s, xdisp[0, :], '-g', label=r'$D_x$')
+    ax[2].plot([], [], '-m', label=r'$D_x^\prime$')
+    ax[2].set_ylabel(r'dispersion function $D_x$ / (m)')
+    ax2 = ax[2].twinx()
+    ax2.plot(s, xdisp[1, :], '-m', label=r'$D_x^\prime$')
+    ax2.set_ylabel(r'derived dispersion function $D_x^\prime$ / (m)', color='m')
+    ax2.tick_params(axis='y', colors='m')
+    ax[3].plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
+    ax[3].plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
+    ax[3].plot([], [], '-g', label=r'$D_x$')
+    ax[3].set_ylabel(r'betatron function $\beta_{x,y}$ / (m)')
+    ax2 = ax[3].twinx()
+    ax2.plot(s, xdisp[0, :], '-g', label=r'$D_x$')
+    ax2.set_ylabel(r'dispersion function $D_x$ / (m)', color='g')
+    ax2.tick_params(axis='y', colors='g')
+    [ax[i].set_xlabel(r'orbit position s / (m)') for i in range(4)]
+    [ax[i].set_xlim([0, nanmax(s)]) for i in range(4)]
+    legs = [ax[i].legend(fancybox=True, loc='upper left') for i in range(4)]
+    [legs[i].get_frame().set_alpha(0.5) for i in range(4)]
+    return figs
+
+
+def plotbeamsigma(UC, diagnostics, s, sigx, sigy):
+    fig = Figure()
+    ax = fig.add_subplot(1, 1, 1)
+    rel = abs(nanmean(sigy)/nanmean(sigx))
+    if rel > 100 or rel < 1e-2:
+        ymin = nanmin(sigx)
+        ymax = nanmax(sigx)
         drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
-        ax.plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
-        ax.plot(s, xtwiss[0, 1, :], '-c', label=r'$\alpha_x$')
-        ax.plot([], [], '-m', label=r'$\gamma_x$')
-        ax.set_ylabel(r'betatron function $\beta_x$ / (m)')
+        ax.plot(s, sigx, '-r', label=r'$\sigma_x$')
+        ax.plot([], [], '-b', label=r'$\sigma_y$')
+        ax.set_ylabel(r'Beam extent $\sigma_x$ / (m)')
         ax2 = ax.twinx()
-        ax2.plot(s, xtwiss[1, 1, :], '-m')
-        ax2.set_ylabel(r'gamma function $\gamma_x$ / (m)', color='m')
-        ax2.tick_params(axis='y', colors='m')
-    if optic == 'axial':
+        ax2.plot(s, sigy, '-b')
+        ax2.tick_params(axis='y', colors='b')
+        ax2.set_ylabel(r'Beam extent $\sigma_y$ / (m)', color='b')
+    else:
+        data = concatenate((sigx, sigy))
+        ymin = nanmin(data)
+        ymax = nanmax(data)
         drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
-        ax.plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
-        ax.plot(s, ytwiss[0, 1, :], '-c', label=r'$\alpha_y$')
-        ax.plot([], [], '-m', label=r'$\gamma_y$')
-        ax.set_ylabel(r'betatron function $\beta_y$ / (m)')
-        ax2 = ax.twinx()
-        ax2.plot(s, ytwiss[1, 1, :], '-m', label=r'$\gamma_y$')
-        ax2.set_ylabel(r'gamma function $\gamma_y$ / (m)', color='m')
-        ax2.tick_params(axis='y', colors='m')
-    if optic == 'dispersion':
-        drawlattice(ax, UC, diagnostics, ymin2, ymax2, 0)
-        ax.plot(s, xdisp[0, :], '-g', label=r'$D_x$')
-        ax.plot([], [], '-m', label=r'$D_x^\prime$')
-        ax.set_ylabel(r'dispersion function $D_x$ / (m)')
-        ax2 = ax.twinx()
-        ax2.plot(s, xdisp[1, :], '-m', label=r'$D_x^\prime$')
-        ax2.set_ylabel(r'derived dispersion function $D_x^\prime$ / (m)', color='m')
-        ax2.tick_params(axis='y', colors='m')
-    if optic == 'overview':
-        drawlattice(ax, UC, diagnostics, ymin, ymax, 0)
-        ax.plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
-        ax.plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
-        ax.plot([], [], '-g', label=r'$D_x$')
-        ax.set_ylabel(r'betatron function $\beta_{x,y}$ / (m)')
-        ax2 = ax.twinx()
-        ax2.plot(s, xdisp[0, :], '-g', label=r'$D_x$')
-        ax2.set_ylabel(r'dispersion function $D_x$ / (m)', color='g')
-        ax2.tick_params(axis='y', colors='g')
-    ax.set_xlabel(r'orbit position s / (m)')
-    ax.set_xlim([0, nanmax(s)])
-    leg = ax.legend(fancybox=True, loc='upper left')
+        ax.plot(s, sigx, '-r', label=r'$\sigma_x$')
+        ax.plot(s, sigy, '-b', label=r'$\sigma_y$')
+        ax.set_ylabel(r'Beam extent $\sigma_u$ / (m)')
+    leg = ax.legend(fancybox=True, loc=2)
     leg.get_frame().set_alpha(0.5)
     return fig
 
@@ -171,6 +193,7 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
                          sigma_s, tau_s, U_rad, P_ges, E_c, lambda_c):
     fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
+    ax.axis('off')
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     radpars = ''.join(
@@ -238,6 +261,7 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
 def plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E):
     fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
+    ax.axis('off')
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     radpars = ''.join(
@@ -271,11 +295,11 @@ def plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E):
          r'$E = %g eV$''\n' % E,
          r'$\gamma_{lorentz} = %g$' % gamma])
     ax.text(0.05, 0.9, radpars, horizontalalignment='left',
-            verticalalignment='top', transform=ax.transAxes, fontsize=12)
+            verticalalignment='top', transform=ax.transAxes)
     ax.text(0.35, 0.9, axipars, horizontalalignment='left',
-            verticalalignment='top', transform=ax.transAxes, fontsize=12)
+            verticalalignment='top', transform=ax.transAxes)
     ax.text(0.65, 0.9, lonpars, horizontalalignment='left',
-            verticalalignment='top', transform=ax.transAxes, fontsize=12)
+            verticalalignment='top', transform=ax.transAxes)
     return fig
 
 
@@ -610,7 +634,6 @@ def pltsim_quadscan(k, sigx, sigy):
 
     figs = [Figure()]
     ax = [figs[0].add_subplot(1, 2, i) for i in range(1, 3)]
-    [ax[i].grid() for i in range(2)]
     plot(ax[0], k, sigx*1e6, '-b', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
     plot(ax[1], k, sigy*1e6, '-b', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
     return figs

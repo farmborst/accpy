@@ -14,7 +14,7 @@ from .tracking import (initialtwiss, tracktwiss4, trackparts)
 from .radiate import dipolering, synchroints
 from .particles import part2mqey
 from ..lattices.reader import latt2py
-from ..visualize.plot import (plotopticpars_closed, plottrajs,
+from ..visualize.plot import (plotopticpars_closed, plottrajs, plotbeamsigma,
                               plotopticpars_open, plotoptic, plotphasespace)
 
 
@@ -60,7 +60,8 @@ def lsd(closed, latt, slices, mode, particles, rounds):
          HF_f, HF_V) = latt2py(latt, closed)
     else:
         (particle, E, I, UC, diagnostics, N_UC,
-         xtwiss0, ytwiss0, xdisp0) = latt2py(latt, closed)
+         xtwiss0, ytwiss0, xdisp0,
+         emit_x, emit_y, emit_s) = latt2py(latt, closed)
 
     m, q, E0, gamma, P_UC = part2mqey(E, UC, particle)
 
@@ -92,11 +93,7 @@ def lsd(closed, latt, slices, mode, particles, rounds):
                         I, q, m, ytwiss)
 
     if mode == 'trackbeta':
-        figs = []
-        figs.append(plotoptic(UC, 'radial', diagnostics, s, xtwiss, ytwiss, xdisp))
-        figs.append(plotoptic(UC, 'axial', diagnostics, s, xtwiss, ytwiss, xdisp))
-        figs.append(plotoptic(UC, 'dispersion', diagnostics, s, xtwiss, ytwiss, xdisp))
-        figs.append(plotoptic(UC, 'overview', diagnostics, s, xtwiss, ytwiss, xdisp))
+        figs = plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp)
         if closed:
             figs.append(plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx,
                                              Xx, Jx, emiteqx, tau_x, Qy, Xy,
@@ -105,8 +102,13 @@ def lsd(closed, latt, slices, mode, particles, rounds):
                                              sigma_E, sigma_tau, sigma_s,
                                              tau_s, U_rad, P_ges, E_c,
                                              lambda_c))
+            sigx = sqrt(xtwiss[0, 0, :]*emiteqx+(xdisp[0, :]*sigma_E)**2)
+            sigy = sqrt(ytwiss[0, 0, :]*emiteqy)
         else:
             figs.append(plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E))
+            sigx = sqrt(xtwiss[0, 0, :]*emit_x+(xdisp[0, :]*emit_s)**2)
+            sigy = sqrt(ytwiss[0, 0, :]*emit_y)
+        figs.append(plotbeamsigma(UC, diagnostics, s, sigx, sigy))
     elif mode == 'trackpart':
         # [x,  x',   y,  y',   l,  delta_p/p_0]
         # [mm, mrad, mm, mrad, mm, promille]

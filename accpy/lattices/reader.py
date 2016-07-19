@@ -62,6 +62,9 @@ def latt2py(name, closed):
         I = l['I']
         UC = l['UC']
         diagnostics = l['diagnostics']
+        emit_x = l['emit_x']
+        emit_y = l['emit_y']
+        emit_s = l['emit_s']
         beta_x = l['beta_x']
         alph_x = l['alph_x']
         beta_y = l['beta_y']
@@ -75,7 +78,7 @@ def latt2py(name, closed):
         xdisp = array([[disp_x], [dipr_x], [1]])
         N_UC = 1
         return (particle, energy, I, UC, diagnostics, N_UC,
-                xtwiss, ytwiss, xdisp)
+                xtwiss, ytwiss, xdisp, emit_x, emit_y, emit_s)
 
 
 def txt2py(code, openclosed):
