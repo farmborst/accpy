@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=0.5
+Name=ACCPY
+
+GenericName=Accelerator Simulations
+
+Exec=bash -c 'cd .../accpy/ && /usr/bin/python .../accpy/startgui.py'
+Terminal=true
+Icon=.../accpy/icon.svg
+Type=Application
+
+Categories=Science;
