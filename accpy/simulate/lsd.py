@@ -48,9 +48,21 @@ def gettunes(s, xtwiss, ytwiss, N_UC):
     Qy = N_UC*trapz(1./ytwiss[0, 0, :], s)/2/pi
     return Qx, Qy
 
+
 def getchromaticity(s, xtwiss, ytwiss, N_UC, UCS):
-    Xx = N_UC*trapz(-UCS[4, :]*xtwiss[0, 0, 1:], s[1:])/4/pi
-    Xy = N_UC*trapz(UCS[4, :]*ytwiss[0, 0, 1:], s[1:])/4/pi
+    kx, ky = [], []  # negative k == focus
+    for k, t in zip(UCS[4, :], UCS[0, :]):
+        if t == 3:
+            kx.append(-k)
+            ky.append(k)
+        elif t == 4:
+            kx.append(k)
+            ky.append(-k)
+        else:
+            kx.append(0)
+            ky.append(0)
+    Xx = N_UC*trapz(kx*xtwiss[0, 0, 1:], s[1:])/4/pi
+    Xy = N_UC*trapz(ky*ytwiss[0, 0, 1:], s[1:])/4/pi
     return Xx, Xy
 
 

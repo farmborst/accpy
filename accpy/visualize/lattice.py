@@ -3,8 +3,8 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
-from numpy import (size, cumsum)
-from matplotlib.pyplot import Figure, Axes
+from numpy import (size, cumsum, nanmin, nanmax)
+from matplotlib.pyplot import Figure
 
 
 def latticeplot(optic, diagnostics):
@@ -22,7 +22,7 @@ def latticeplot(optic, diagnostics):
     return fig
 
 
-def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
+def drawlattice(ax, optic, diagnostics, data, height):
     ''' function for drawing given optic into figure
     inputs: ax      handle for figure axes
             optic   lattice to be drawn
@@ -30,6 +30,8 @@ def drawlattice(ax, optic, diagnostics, ymin, ymax, height):
             ymax    max of other functions (e.g. twiss) in same figure
             height  0 to 1 where to place lattice (1 at top)
     '''
+    ymin = nanmin([nanmin(x) for x in data])
+    ymax = nanmax([nanmax(x) for x in data])
     l = size(optic, 1)
     s = cumsum(optic[1, :])
     d = ymax-ymin
