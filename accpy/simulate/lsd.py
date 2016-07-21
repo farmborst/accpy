@@ -4,8 +4,8 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 from numpy import (eye, dot, trapz, pi, nanmean, array, newaxis,
-                              hstack, concatenate, empty, dstack, sqrt, zeros,
-                              vstack)
+                   hstack, concatenate, empty, dstack, sqrt, zeros,
+                   vstack)
 from numpy.random import standard_normal
 from numpy.linalg import inv
 from .slicing import cellslice

@@ -16,7 +16,6 @@ LD = 2.6193          # orbit length of dipole
 UD = N_UC*LD*2       # total orbit length of all dipoles
 rho = UD/2/const.pi  # bending radius
 phi = LD/2/rho       # edge angle of dipole
-D_UC = 2             # dipoles per unit cell
 g = 36e-3            # dipoles gap
 K = 0.7              # ~0.7 for Rogowski pole
 B = uniformdipole(LD, rho, phi, K*g)

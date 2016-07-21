@@ -7,14 +7,19 @@ from numpy import (array, empty, dstack, hstack, vstack, dot, zeros,
                    sqrt, sign, trace)
 from multiprocessing import cpu_count, Pool
 from functools import partial
+import numpy as np
 
 
 def initialtwiss(M):
+    np.set_printoptions(precision=3)
+    np.set_printoptions(suppress=True)
+    print M
     MX = M[:2, :2]
     MY = M[2:4, 2:4]
     MD = vstack((M[:2, [0, 1, 5]], [0, 0, 1]))
     # starting values of radial twiss matrix
     tmpx = sign(MX[0, 1])*sqrt(4-(trace(MX))**2)
+    print trace(MX)
     beta_x = 2*MX[0, 1]/tmpx
     alph_x = (MX[0, 0]-MX[1, 1])/tmpx
     gamm_x = (1+alph_x**2)/beta_x
