@@ -85,7 +85,7 @@ def synchroints(sdip, xtwissdip, disperdip, rho, E0):
     hbar = hb/qe
     Cq = 55*hbar*cl/32/sqrt(3)/E0            # Chao: 3.8319e-13 m
     Ca = re*cl/3/E0**3                       # Chao: 2.113e-24 m²/(eV)³/s
-    Cy = 4*pi/3*re/E0**3                    # Chao: 8.846e-32 m/(eV)³
+    Cy = 4*pi/3*re/E0**3                     # Chao: 8.846e-32 m/(eV)³
 
     # H FUNCTION: H(s) = beta*D'^2 + 2*alpha*D*D' + gamma*D^2
     Hsx = (xtwissdip[1, 1, :]*disperdip[0, :]**2
@@ -154,7 +154,7 @@ def Xemittancedot(E, Edot, quantex, alphax):
     def emitdot(t, emitx):
         # adiabatic damping: -emitx*Edot(t)/E(t)
         # radiation damping: -2*emitx*alphax(t)
-        # quantumexcitation: quantex(t)/2  ("radiation anti-damping")
+        # quantumexcitation: quantex(t)  ("radiation anti-damping")
         y = quantex(t)-(Edot(t)/E(t)+2*alphax(t))*emitx
         return y
     return emitdot
@@ -173,7 +173,7 @@ def Yemittancedot(E, Edot, alphay):
         # radiation damping: -2*emity*alphay(t)
         # quantumexcitation: none
         # See Hemmie 'Reduction of antidamping' or Borland SRFEL-003
-        y = -(Edot(t)/E(t)+2*alphay(t))*emity
+        y = 0-(Edot(t)/E(t)+2*alphay(t))*emity
         return y
     return emitdot
 
@@ -187,11 +187,11 @@ def Sequilibriumemittance(Cq, lorentzgamma, Js, rho):
 
 def Semittancedot(E, Edot, Cq, Js, alphas, lorentzgamma, rho):
     def emitdot(t, emits):
-        # adiabatic damping: none
-        # radiation damping: -2*emit*alphax(t)
-        # quantumexcitation: quantex(t)/2
+        # adiabatic damping: -emits*Edot(t)/E(t)
+        # radiation damping: -2*emits*alphas(t)
+        # quantumexcitation: quantes(t)
         # y = quantes(t)-(Edot(t)/E(t)+2*alphas(t))*emits
-        y = (Edot(t)/E(t)+2*alphas(t))*sqrt(Cq*lorentzgamma(t)**2/(Js*rho))-(Edot(t)/E(t)+2*alphas(t))*emits
+        y = (Edot(t)/E(t)+2*alphas(t))*(sqrt(Cq*lorentzgamma(t)**2/(Js*rho))-emits)
         return y
     return emitdot
 

@@ -8,11 +8,10 @@ from matplotlib.pyplot import Figure
 
 
 def latticeplot(optic, diagnostics):
-    height = .3
     ymin, ymax = 0, 100
     fig = Figure(frameon=False)
     ax = fig.add_subplot(111)
-    drawlattice(ax, optic, diagnostics, ymin, ymax, height)
+    drawlattice(ax, optic, diagnostics, [ymin, ymax], .3)
     s = cumsum(optic[1, :])
     ax.set_xlim(0, s[-1])
     ax.set_ylim(ymin, ymax)

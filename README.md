@@ -30,7 +30,7 @@ ACCPY
     (on debian 8: >> apt-get install python python-matplotlib python-numpy python-scipy python-h5py
     run >> python startgui.py
 
-#Info
-    see accpy.__doc__
+#Documentation
+ 	goto >>help>documentation in the GUI
 
 #FAQ (Frequently asked Questions)
