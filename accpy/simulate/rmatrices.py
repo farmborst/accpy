@@ -83,7 +83,7 @@ def edge(ev):
         cosphi = cos(phi)
         sinphi = sin(phi)
         # Hinterberger 4.79 (exakt)
-        R[3, 2] = -(tanphi-gK/rho*(1+(sinphi)**2/(cosphi**3)))/rho
+        R[3, 2] = -(tanphi-gK/rho*(1+(sinphi)**2)/(cosphi**3))/rho
         # Madx and Chao:
         # R[3,2] = -(tan(phi-gK/rho*(1+sinphi**2)/cosphi))/rho
     else:
