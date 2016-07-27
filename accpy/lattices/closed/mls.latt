@@ -5,7 +5,7 @@ particle = 'electron'
 energy = 629e6
 HF_f = 499.667e6
 HF_V = 250e3
-I = 5e-3
+I = 200e-3
 N_UC = 1             # number of unit cells
 ###### drifts ######
 DL = drift(3)

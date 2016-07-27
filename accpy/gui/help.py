@@ -34,7 +34,8 @@ def documentation(version, w, h):
     rf.pack(side=RIGHT, fill=BOTH, expand=True)
 
     docmenuopts = ['General',
-                   'Lattice editor']
+                   'Lattice editor',
+                   'Citation']
     docmenu = Listbox(lf)
     for entry in docmenuopts:
         docmenu.insert(END, entry)
@@ -103,5 +104,15 @@ here you can edit them with an editor of your choice
 you have all the powers of python including arbitrary imports at hand
 '''
 
+doc_cite = '''
+Bibtex entry:
+@misc{ACCPY,
+title    = {{ACCPY: Python module with GUI providing simmulation, measurement and optimization capabilities for accelerators}},
+url      = {https://github.com/kramerfelix/accpy},
+author   = {Felix Kramer},
+year     = {2016}}
+'''
+
 docdic = {'General': doc_general,
-          'Lattice editor': doc_lattice}
+          'Lattice editor': doc_lattice,
+          'Citation': doc_cite}
