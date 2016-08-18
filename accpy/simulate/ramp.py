@@ -84,8 +84,8 @@ def synchroints(sdip, xtwissdip, disperdip, rho, E0):
     # SOME SYNCHRTRON CONSTANTS
     hbar = hb/qe
     Cq = 55*hbar*cl/32/sqrt(3)/E0            # Chao: 3.8319e-13 m
-    Ca = re*cl/3/E0**3                       # Chao: 2.113e-24 m²/(eV)³/s
-    Cy = 4*pi/3*re/E0**3                     # Chao: 8.846e-32 m/(eV)³
+    Ca = cl*re/3/E0**3                       # Chao: 2.113e-24 m²/(eV)³/s
+    Cy = 4*pi/cl*Ca                          # Chao: 8.846e-32 m/(eV)³
 
     # H FUNCTION: H(s) = beta*D'^2 + 2*alpha*D*D' + gamma*D^2
     Hsx = (xtwissdip[1, 1, :]*disperdip[0, :]**2
@@ -95,6 +95,7 @@ def synchroints(sdip, xtwissdip, disperdip, rho, E0):
     # SYNCHROTRIN INTEGRALS
     SYNIN1 = trapz(disperdip[0, :], sdip)/rho
     SYNIN2 = 2*pi/rho
+    SYNIN3 = 2*pi/rho**2
     SYNIN4x = SYNIN1/rho/rho
     SYNIN4y = 0
     SYNIN5x = trapz(Hsx, sdip)/rho/rho/rho
@@ -103,7 +104,7 @@ def synchroints(sdip, xtwissdip, disperdip, rho, E0):
     Jx = 1 - SYNIN4x/SYNIN2
     Jy = 1 - SYNIN4y/SYNIN2
     Js = 2 + (SYNIN4x+SYNIN4y)/SYNIN2
-    return SYNIN1, SYNIN2, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq, Ca
+    return SYNIN1, SYNIN2, SYNIN3, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq, Ca
 
 
 def momentumdynamics(sdip, disperdip, lorentzgamma, C, rho):
@@ -131,16 +132,11 @@ def bunchduration(fsyn, energyspread, slipfactor):
     return bdur
 
 
-def quantumexcitation(Cq, Ca, lorentzgamma, E, SYNIN5x, SYNIN2, rho):
-    ''' QUANTUM EXCITATION (per round)
-    quantex = lambda t: 55*re*hbar*c*c/24/sqrt(3)/E0*gamma(t)**5*SYNIN5x/C
-    following formulas give same results!!!
-    Chao (3.1.4.3):   quantex = 55*re*hbar*c/48/sqrt(3)/E0**6*SYNIN5x
-    my quantum excitation formulas are based on Wiedemann (13.15)
-    '''
-    x = lambda t: Cq*lorentzgamma(t)**2*Ca*2*E(t)**3*SYNIN5x/SYNIN2/rho**2
-    s = lambda t: Cq*re*cl*2/3*lorentzgamma(t)**5*rho
-    return x, s
+def quantumexcitation(Cq, Ca, lorentzgamma, E, SYNIN2, SYNIN3, SYNIN5x, rho):
+    # quantum excitation per round
+    x = lambda t: 2*Cq*Ca/rho**2*lorentzgamma(t)**2*E(t)**3*SYNIN5x/SYNIN2
+    s2 = lambda t: 2*Cq*Ca/rho**2*lorentzgamma(t)**2*E(t)**3*SYNIN3/SYNIN2
+    return x, s2
 
 
 # RADIAL EMITTANCE
@@ -179,19 +175,18 @@ def Yemittancedot(E, Edot, alphay):
 
 
 # LONGITUDINAL EMITTANCE
-def Sequilibriumemittance(Cq, lorentzgamma, Js, rho):
+def Sequilibriumemittance(Cq, lorentzgamma, SYNIN2, SYNIN3, Js):
     # from emit_dot != 0 we get:
-    emit = lambda t: sqrt(Cq*lorentzgamma(t)**2/(Js*rho))
+    emit = lambda t: sqrt(Cq*lorentzgamma(t)**2/Js*SYNIN3/SYNIN2)
     return emit
 
 
-def Semittancedot(E, Edot, Cq, Js, alphas, lorentzgamma, rho):
+def Semittancedot2(E, Edot, Cq, Js, alphas, lorentzgamma, rho, quantes2):
     def emitdot(t, emits):
         # adiabatic damping: -emits*Edot(t)/E(t)
         # radiation damping: -2*emits*alphas(t)
         # quantumexcitation: quantes(t)
-        # y = quantes(t)-(Edot(t)/E(t)+2*alphas(t))*emits
-        y = (Edot(t)/E(t)+2*alphas(t))*(sqrt(Cq*lorentzgamma(t)**2/(Js*rho))-emits)
+        y = quantes2(t)-(Edot(t)/E(t)+2*alphas(t))*emits
         return y
     return emitdot
 
@@ -224,7 +219,7 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     sdip, disperdip, xtwissdip, ytwissdip = dipolering(s, N_UC, UD, P_UCS, UCS, xdisp, xtwiss, ytwiss, points, D_UC)
     Cdip = sdip[-1]
     # synchrotron integrals
-    SYNIN1, SYNIN2, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq, Ca = synchroints(sdip, xtwissdip, disperdip, rho, E0)
+    SYNIN1, SYNIN2, SYNIN3, SYNIN4x, SYNIN4y, SYNIN5x, Jx, Jy, Js, Cq, Ca = synchroints(sdip, xtwissdip, disperdip, rho, E0)
 
     # funtions of time
     f_E, f_Edot = energy(amp, w, t_0, off)
@@ -242,14 +237,14 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
 
     f_Xemitequi = Xequilibriumemittance(Cq, f_lorentzgamma, SYNIN2, SYNIN5x, Jx)
     Yemitequi = Yequilibriumemittance(Cq, ytwiss, rho, Jy)
-    f_Semitequi = Sequilibriumemittance(Cq, f_lorentzgamma, Js, rho)
+    f_Semitequi = Sequilibriumemittance(Cq, f_lorentzgamma, SYNIN2, SYNIN3, Js)
 
     # funtions of time and initial value (odes)
     alphax, alphay, alphas = dampingdecrements(Ca, Cdip, f_E, SYNIN2, Jx, Jy, Js)
-    f_quantex, f_quantes = quantumexcitation(Cq, Ca, f_lorentzgamma, f_E, SYNIN5x, SYNIN2, rho)
+    f_quantex, f_quantes2 = quantumexcitation(Cq, Ca, f_lorentzgamma, f_E, SYNIN2, SYNIN3, SYNIN5x, rho)
     f_Xemitdot = Xemittancedot(f_E, f_Edot, f_quantex, alphax)
     f_Yemitdot = Yemittancedot(f_E, f_Edot, alphay)
-    f_Semitdot = Semittancedot(f_E, f_Edot, Cq, Js, alphas, f_lorentzgamma, rho)
+    f_Semitdot = Semittancedot2(f_E, f_Edot, Cq, Js, alphas, f_lorentzgamma, rho, f_quantes2)
     f_bdurequis = [bunchduration(x, f_Semitequi, slipfactor) for x in fsyns]
     f_blenequis = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurequis]
 
@@ -298,7 +293,7 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     Xemits = [odeint(f_Xemitdot, tAI, ex) for ex in emitxs]
     Yemits = [odeint(f_Yemitdot, tAI, ey, atol=1e-18)+Yemitequi for ey in emitys]
     # careful "late binding" !!!!!!!!!!!!
-    f_Semits = [lambda t, es=es: odeint(f_Semitdot, t, es) for es in emitss]
+    f_Semits = [lambda t, es=es: sqrt(odeint(f_Semitdot, t, es**2)) for es in emitss]
     Semits = [f_Semit(tAI)*1e3 for f_Semit in f_Semits]
     f_bdurs = [bunchduration(fsyn, f_Semit, slipfactor) for fsyn, f_Semit in product(fsyns, f_Semits)]
     f_blens = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurs]

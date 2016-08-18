@@ -12,15 +12,17 @@ grep checking:
     grep --include=\*.py -hrw '.' -e 'import'
 '''
 try:
-    from Tkinter import Tk, mainloop
+    from Tkinter import Tk, mainloop, PhotoImage
 except:
-    from tkinter import Tk, mainloop
+    from tkinter import Tk, mainloop, PhotoImage
 from accpy.gui.mainwin import mainwindow
 from gc import enable
 
 
 if __name__ == '__main__':
     root = Tk()  # create window
+    icon = PhotoImage(file='icon.gif')
+    root.tk.call('wm', 'iconphoto', root._w, icon)
     version = 0.5
     mainwindow(root, version)
     enable()

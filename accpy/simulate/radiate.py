@@ -72,10 +72,8 @@ def synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0, I,
     N_e = I*Tr/const.qe         # number of electrons in accelerator
     U_ges = U_rad*const.qe*N_e  # radiated energy / circumnavigation / (Ws)
     P_ges = U_ges/Tr            # total power / (W)
-    # equilibrium emittances and damping times (!amplitude damping *1/2)
+    # equilibrium emittances and damping times (!amplitude damping *2)
     Cq = (55*const.hb)/(32*sqrt(3)*m*const.cl)
-    Cgamma = 4*pi*const.re/(3*E0**3)
-    Calpha = 2113.1e-27
     emiteqx = Cq*gamma*gamma*SYNIN5x/Jx/SYNIN2
     tau_x = T_rev*E/(U_rad*Jx)
     emiteqy = Cq*nanmean(ytwiss[0, 0, :])/(2*Jy*rho)
