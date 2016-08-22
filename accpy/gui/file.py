@@ -82,6 +82,9 @@ def latticeeditor(frame, w, h):
             editor.delete('1.0', END)
             editor.insert('1.0', txt)
             editor.config(state=DISABLED)
+            namelab.grid_remove()
+            name.grid_remove()
+            menulab.grid_remove()
             closedmenu.grid_remove()
             showbutton.grid_remove()
             savebutton.grid_remove()
@@ -134,6 +137,10 @@ def settings(w, h):
         n = dropd_laxpowerlimits.get()
         m = dropd_uaxpowerlimits.get()
         vallist[8] = [n, m]
+        vallist[9] = showlat.get()
+        vallist[10] = showqk.get()
+        vallist[11] = showfom.get()
+        vallist[12] = showqn.get()
         confsave(confpath, varlist, vallist)
         plotstandards(varlist, vallist, w, h)
         r.destroy()
@@ -142,9 +149,9 @@ def settings(w, h):
     varlist, vallist = confload(confpath)
 
     r = Toplevel()
-    w = int(w/2)
-    h = int(h/2)
-    r.geometry('{}x{}+{}+{}'.format(w, h, int(w/2), int(h/2)))
+    # w = int(w/2)
+    # h = int(h/2)
+    # r.geometry('{}x{}+{}+{}'.format(w, h, int(w/2), int(h/2)))
     r.wm_title('ACCPY Settings')
 
     uf = Frame(r, relief=RAISED)
@@ -161,7 +168,6 @@ def settings(w, h):
     cs_label(lf_figures, 5, 0, 'DPI', sticky=W)
     entry_dpi = cs_Dblentry(lf_figures, 6, 0, vallist[3], sticky=W+E)
     gridon = cs_checkbox(lf_figures, 7, 0, 'Show grid', vallist[2], sticky=W)
-
     fontfamilys = ['serif', 'sans-serif', 'cursive', 'fantasy', 'monospace']
     cs_label(lf_figures, 8, 0, 'Fontfamily', sticky=W)
     dropd_fontfamily = cs_dropd(lf_figures, 9, 0, fontfamilys, sticky=W)
@@ -185,6 +191,12 @@ def settings(w, h):
     dropd_uaxpowerlimits = cs_dropd(lf_figures, 20, 0, range(1, 9), sticky=W)
     dropd_uaxpowerlimits.set(vallist[8][1])
 
+    lf_drawlattice = LabelFrame(uf, text="Lattice painter", padx=5, pady=5)
+    lf_drawlattice.grid(row=1, column=1, sticky=W+E+N+S, padx=10, pady=10)
+    showlat = cs_checkbox(lf_drawlattice, 0, 0, 'Show Lattice', vallist[9], sticky=W)
+    showqk = cs_checkbox(lf_drawlattice, 1, 0, 'Show quad strengths', vallist[10], sticky=W)
+    showqn = cs_checkbox(lf_drawlattice, 2, 0, 'Show quad numbers', vallist[10], sticky=W)
+    showfom = cs_checkbox(lf_drawlattice, 3, 0, 'Show diagnostic elements', vallist[11], sticky=W)
 
     cp_button(lf, 'Save and Close', _save, side=RIGHT, fill=BOTH, expand=True)
     cp_button(lf, 'Close', _cancel, side=RIGHT, fill=BOTH, expand=True)
@@ -200,7 +212,11 @@ def defaults(confpath):
                'fontsize',
                'markersize',
                'linewidth',
-               'axformatterlimits']
+               'axformatterlimits',
+               'showlattice',
+               'showquadstrength',
+               'showdiagnostic',
+               'showquadnr']
     vallist = [19.2,
                10.8,
                1,
@@ -209,6 +225,10 @@ def defaults(confpath):
                28,
                3,
                2,
-               [-2, 3]]
+               [-2, 3],
+               1,
+               1,
+               1,
+               1]
     confsave(confpath, varlist, vallist)
     return varlist, vallist

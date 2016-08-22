@@ -350,3 +350,10 @@ def UCS2R(P_UCS, UCS, gamma):
     for i in range(P_UCS):
             R[:, :, i] = rmatrix(UCS[:, i], gamma)
     return R
+
+
+def UC2T(UC, gamma):
+    T = eye(6)
+    for i in range(len(UC[0, :])):
+            T = dot(rmatrix(UC[:, i], gamma), T)
+    return T

@@ -161,7 +161,7 @@ def menubar(root, version, w, h):
     frame = Frame(root)
     frame.pack(expand=True)
 
-    # load settings
+    # test load settings or set defaults
     try:
         varlist, vallist = confload('./settings.conf')
     except:

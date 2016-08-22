@@ -493,13 +493,11 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     legs = []
     figs = [Figure() for i in range(Nfigs)]
     ax = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
-    [ax[i].grid() for i in range(len(ax))]
     GS = GridSpec(2, 3)
     GS = [GS[:2, 0], GS[0, 1:], GS[1, 1:]]
     ax.append([figs[6].add_subplot(gs) for gs in GS])
     [ax.append([figs[j].add_subplot(2, 2, i) for i in range(1, 5)]) for j in range(7, 9)]
     ax.append([figs[9].add_subplot(1, 2, i) for i in range(1, 3)])
-    [[ax[i][j].grid() for j in range(len(ax[i]))] for i in range(6, 10)]
     s = [r'Injection''\n(',
          r'Extraction''\n(',
          r'Maximum energy''\n(',
@@ -618,13 +616,20 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     [leg.get_frame().set_alpha(0.5) for leg in legs]
     return figs
 
-def pltsim_quadscan(k, sigx, sigy):
+def pltsim_quadscan(k, sigx, sigy, sigx2, sigy2, data=None):
     xlabel, xunit = 'Quadrupole strength', 'm'
     ylabel1, yunit1 = r'$\sigma_x^2$', r'$mm^2$'
     ylabel2, yunit2 = r'$\sigma_y^2$', r'$mm^2$'
 
     figs = [Figure()]
     ax = [figs[0].add_subplot(1, 2, i) for i in range(1, 3)]
-    plot(ax[0], k, sigx*1e6, '-b', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
-    plot(ax[1], k, sigy*1e6, '-b', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+    plot(ax[0], k, sigx*1e6, '-g', xlabel, xunit, ylabel1, yunit1, 'Full linear quadrupole modell', rescaleY=False)
+    plot(ax[0], k, sigx2*1e6, '-r', xlabel, xunit, ylabel1, yunit1, 'Thin lens', rescaleY=False)
+    plot(ax[1], k, sigy*1e6, '-g', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+    plot(ax[1], k, sigy2*1e6, '-r', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+    if data is not None:
+        plot(ax[0], data[0], data[1]*1e6, 'xb', xlabel, xunit, ylabel1, yunit1, 'Data', rescaleY=False)
+        plot(ax[1], data[0], data[2]*1e6, 'xb', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+    leg = ax[0].legend(fancybox=True, loc=0)
+    leg.get_frame().set_alpha(0.5)
     return figs
