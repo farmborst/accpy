@@ -23,7 +23,7 @@ if __name__ == '__main__':
     root = Tk()  # create window
     icon = PhotoImage(file='icon.gif')
     root.tk.call('wm', 'iconphoto', root._w, icon)
-    version = 0.5
+    version = 0.6
     mainwindow(root, version)
     enable()
     mainloop()   # start Tk mainloop

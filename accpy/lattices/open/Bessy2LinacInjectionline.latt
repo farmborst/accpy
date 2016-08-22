@@ -1,0 +1,56 @@
+# author:     felix.kramer(at)physik.hu-berlin.de
+
+'''===== general ====='''
+particle = 'electron'
+energy = 52e6
+I = 5e-3
+'''===== starting twiss parameters ====='''
+emit_x = 200e-9
+emit_y = 200e-9
+emit_s = 4e-3
+beta_x = 9
+alph_x = -.1
+beta_y = 3
+alph_y = 2
+disp_x = 0
+dipr_x = 0
+'''===== drifts ====='''
+D01 = drift(0)
+D02 = drift(.111)
+D03 = drift(.111)
+D04 = drift(.2542)
+D05 = drift(.46668)
+D06 = drift(.26168)
+D07 = drift(.205)
+D08 = drift(1.0255)
+D09 = drift(.181)
+D10 = drift(.4225)
+D11 = drift(1.02853)
+'''===== fluorescent screens ====='''
+F01 = F02 = diagnostic()
+diagnostics = ['FOMZ1LI', 'FOMZ2LI', 'FOMZ2I', 'FOMZ3I', 'FOMZ5I', 'FOMZ6I']
+'''===== dipoles ====='''
+B01 = uniformdipole(.143, .143/.4373, 0, .5*.03)  # B1P1LI 81.25 A   rbend
+B02 = uniformdipole(.143, .143/.43464, 0, .5*.03)  # B1P2LI 80.63 A   rbend
+'''===== quadrupoles ====='''
+q = const.qe
+E0 = const.Ee/q
+pc = sqrt(energy**2-E0**2)*q
+p = pc/const.cl
+R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
+i2k1 = lambda I, R=R: (6.87/2.55 * I)/R  # gradient at 2.55A = 6.87 T/m
+i2k2 = lambda I, R=R: (6.86/2.55 * I)/R
+i2k3 = lambda I, R=R: (1.5 * I)/R
+# linac injectionline : all quads are radial focus for I<0 (-)
+Q01 = quad('rf', .119, i2k1(-0.56230))  # Q1PLI  -
+Q02 = quad('rf', .119, i2k1(-0.11554))  # Q2PLI  -
+Q03 = quad('af', .119, i2k1(+0.60815))  # Q3PLI  -
+Q04 = quad('rf', .220, i2k2(-1.0145))   # Q4PLI  -  -1.11836 -1.0108
+Q05 = quad('af', .119, i2k1(+0.43467))  # Q5PLI  -
+Q06 = quad('rf', .119, i2k1(-1.48026))  # Q6PLI  -
+Q07 = quad('af', .119, i2k1(+1.39904))  # Q7PLI  -
+
+'''===== unit cell ====='''
+UC = line(D01, Q01, D02, Q02, D03, Q03, D04, B01, D05, Q04,
+          D06, F01, D07, B02, D08, Q05, D09, Q06, D10, Q07,
+          D10, F02, D11)

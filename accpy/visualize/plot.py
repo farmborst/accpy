@@ -151,7 +151,7 @@ def plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp):
     ax2.tick_params(axis='y', colors='g')
     [ax[i].set_xlabel(r'orbit position s / (m)') for i in range(4)]
     [ax[i].set_xlim([0, nanmax(s)]) for i in range(4)]
-    legs = [ax[i].legend(fancybox=True, loc='upper left') for i in range(4)]
+    legs = [ax[i].legend(fancybox=True, loc=0) for i in range(4)]
     [legs[i].get_frame().set_alpha(0.5) for i in range(4)]
     return figs
 
@@ -460,7 +460,8 @@ def plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty):
     ax2.axis('off')
     ax2.get_xaxis().set_visible(False)
     ax2.get_yaxis().set_visible(False)
-    ax2.legend(loc='center')
+    leg = ax2.legend(fancybox=True, loc='center')
+    leg.get_frame().set_alpha(0.5)
     return fig
 
 

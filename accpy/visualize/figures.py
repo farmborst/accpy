@@ -46,7 +46,7 @@ def plotstandards(varlist, vallist, w, h):
               'savefig.edgecolor': 'white',
               'savefig.format': 'svg',
               'savefig.bbox': 'tight',
-              'savefig.pad_inches': 0,
+              'savefig.pad_inches': 0.05,
               'text.usetex': True,
               'xtick.labelsize': fontsize,
               'ytick.labelsize': fontsize}

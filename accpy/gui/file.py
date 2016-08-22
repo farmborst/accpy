@@ -8,11 +8,13 @@ try:
                          S, W, Scrollbar, LabelFrame, TOP, BOTTOM, RAISED,
                          Toplevel)
     from ttk import Frame
+    from tkMessageBox import showerror
 except:
     from tkinter import (Text, LEFT, RIGHT, BOTH, END, NORMAL, DISABLED, N, E,
                          S, W, Scrollbar, LabelFrame, TOP, BOTTOM, RAISED,
                          Toplevel)
     from tkinter.ttk import Frame
+    from tkinter.messagebox import showerror
 from matplotlib import use
 use('TkAgg')
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
@@ -46,12 +48,18 @@ def showfigs(figs, tabs):
 
 def latticeeditor(frame, w, h):
     def _save():
-        txt = editor.get('1.0', END)
+        txt = (editor.get('1.0', END)).encode('utf-8')
         txt2latt(txt, name.get(), closedmenuval.get())
 
     def _show():
         txt = editor.get('1.0', END)
-        _, _, _, UC, diagnostics, N_UC, _, _ = txt2py(txt, closedmenuval.get())
+        if closedmenuval.get() == '':
+            showerror('ERROR', 'Please choose open or closed lattice type')
+            return
+        elif closedmenuval.get() == 'open':
+            _, _, _, UC, diagnostics, N_UC, _, _, _ = txt2py(txt, closedmenuval.get())
+        else:
+            _, _, _, UC, diagnostics, N_UC, _, _ = txt2py(txt, closedmenuval.get())
         fig = latticeplot(UC, diagnostics)
         showfigs([fig], tabs[1:])
 
