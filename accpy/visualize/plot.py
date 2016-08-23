@@ -116,7 +116,7 @@ def plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp):
     ax = [figs[i].add_subplot(1, 1, 1) for i in range(4)]
     drawlattice(ax[0], UC, diagnostics, [xtwiss[0, 0, :], xtwiss[0, 1, :]], 0)
     ax[0].plot(s, xtwiss[0, 0, :], '-r', label=r'$\beta_x$')
-    ax[0].plot(s, xtwiss[0, 1, :], '-c', label=r'$\alpha_x$')
+    ax[0].plot(s, -xtwiss[0, 1, :], '-c', label=r'$\alpha_x$')
     ax[0].plot([], [], '-m', label=r'$\gamma_x$')
     ax[0].set_ylabel(r'betatron function $\beta_x$ / (m)')
     ax2 = ax[0].twinx()
@@ -125,7 +125,7 @@ def plotoptic(UC, diagnostics, s, xtwiss, ytwiss, xdisp):
     ax2.tick_params(axis='y', colors='m')
     drawlattice(ax[1], UC, diagnostics, [ytwiss[0, 0, :], ytwiss[0, 1, :]], 0)
     ax[1].plot(s, ytwiss[0, 0, :], '-b', label=r'$\beta_y$')
-    ax[1].plot(s, ytwiss[0, 1, :], '-c', label=r'$\alpha_y$')
+    ax[1].plot(s, -ytwiss[0, 1, :], '-c', label=r'$\alpha_y$')
     ax[1].plot([], [], '-m', label=r'$\gamma_y$')
     ax[1].set_ylabel(r'betatron function $\beta_y$ / (m)')
     ax2 = ax[1].twinx()
@@ -195,8 +195,8 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
          r'------------------------------------''\n',
          r'$\beta_{x,max} = %g m$''\n' % nanmax(xtwiss[0, 0, :]),
          r'$\beta_{x,min} = %g m$''\n' % nanmin(xtwiss[0, 0, :]),
-         r'$\alpha_{x,max} = %g$''\n' % nanmax(xtwiss[0, 1, :]),
-         r'$\alpha_{x,min} = %g$''\n' % nanmin(xtwiss[0, 1, :]),
+         r'$\alpha_{x,max} = %g$''\n' % nanmax(-xtwiss[0, 1, :]),
+         r'$\alpha_{x,min} = %g$''\n' % nanmin(-xtwiss[0, 1, :]),
          r'$\gamma_{x,max} = %g$''\n' % nanmax(xtwiss[1, 1, :]),
          r'$\gamma_{x,min} = %g$''\n' % nanmin(xtwiss[1, 1, :]),
          r'$D_{x,max} = %g m$''\n' % nanmax(xdisp[0, :]),
@@ -214,8 +214,8 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
          r'------------------------------------''\n',
          r'$\beta_{y,max} = %g m$''\n' % nanmax(ytwiss[0, 0, :]),
          r'$\beta_{y,min} = %g m$''\n' % nanmin(ytwiss[0, 0, :]),
-         r'$\alpha_{y,max} = %g$''\n' % nanmax(ytwiss[0, 1, :]),
-         r'$\alpha_{y,min} = %g$''\n' % nanmin(ytwiss[0, 1, :]),
+         r'$\alpha_{y,max} = %g$''\n' % nanmax(-ytwiss[0, 1, :]),
+         r'$\alpha_{y,min} = %g$''\n' % nanmin(-ytwiss[0, 1, :]),
          r'$\gamma_{x,max} = %g$''\n' % nanmax(ytwiss[1, 1, :]),
          r'$\gamma_{x,min} = %g$''\n' % nanmin(ytwiss[1, 1, :]),
          r'$Q_y = %g$''\n' % Qy,
@@ -263,8 +263,8 @@ def plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E):
          r'------------------------------------''\n',
          r'$\beta_{x,max} = %g m$''\n' % nanmax(xtwiss[0, 0, :]),
          r'$\beta_{x,min} = %g m$''\n' % nanmin(xtwiss[0, 0, :]),
-         r'$\alpha_{x,max} = %g$''\n' % nanmax(xtwiss[0, 1, :]),
-         r'$\alpha_{x,min} = %g$''\n' % nanmin(xtwiss[0, 1, :]),
+         r'$\alpha_{x,max} = %g$''\n' % nanmax(-xtwiss[0, 1, :]),
+         r'$\alpha_{x,min} = %g$''\n' % nanmin(-xtwiss[0, 1, :]),
          r'$\gamma_{x,max} = %g$''\n' % nanmax(xtwiss[1, 1, :]),
          r'$\gamma_{x,min} = %g$''\n' % nanmin(xtwiss[1, 1, :]),
          r'$D_{x,max} = %g m$''\n' % nanmax(xdisp[0, :]),
@@ -277,8 +277,8 @@ def plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E):
          r'------------------------------------''\n',
          r'$\beta_{y,max} = %g m$''\n' % nanmax(ytwiss[0, 0, :]),
          r'$\beta_{y,min} = %g m$''\n' % nanmin(ytwiss[0, 0, :]),
-         r'$\alpha_{y,max} = %g$''\n' % nanmax(ytwiss[0, 1, :]),
-         r'$\alpha_{y,min} = %g$''\n' % nanmin(ytwiss[0, 1, :]),
+         r'$\alpha_{y,max} = %g$''\n' % nanmax(-ytwiss[0, 1, :]),
+         r'$\alpha_{y,min} = %g$''\n' % nanmin(-ytwiss[0, 1, :]),
          r'$\gamma_{x,max} = %g$''\n' % nanmax(ytwiss[1, 1, :]),
          r'$\gamma_{x,min} = %g$' % nanmin(ytwiss[1, 1, :])])
     lonpars = ''.join(

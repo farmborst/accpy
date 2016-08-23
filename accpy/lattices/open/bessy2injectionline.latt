@@ -5,13 +5,13 @@ particle = 'electron'
 energy = 52e6
 I = 5e-3
 '''===== starting twiss parameters ====='''
-emit_x = 200e-9
-emit_y = 200e-9
+emit_x = 202e-9
+emit_y = 144e-9
 emit_s = 4e-3
 beta_x = 9
-alph_x = -.1
+alph_x = -1
 beta_y = 3
-alph_y = 2
+alph_y = -3
 disp_x = 0
 dipr_x = 0
 '''===== drifts ====='''
@@ -65,14 +65,15 @@ R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
 i2k1 = lambda I, R=R: (6.87/2.55 * I)/R  # gradient@2.55A = 6.87 T/m
 i2k2 = lambda I, R=R: (6.86/2.55 * I)/R
 i2k3 = lambda I, R=R: (1.5 * I)/R
+
 # linac injectionline : all quads are radial focus for I<0 (-)
-Q01 = quad('rf', .119, i2k1(-0.56230))  # Q1PLI  -
+Q01 = quad('rf', .119, i2k1(-0.55230))  # Q1PLI  -
 Q02 = quad('rf', .119, i2k1(-0.11554))  # Q2PLI  -
-Q03 = quad('af', .119, i2k1(+0.60815))  # Q3PLI  -
+Q03 = quad('af', .119, i2k1(+0.60813))  # Q3PLI  -
 Q04 = quad('rf', .220, i2k2(-1.0145))   # Q4PLI  -  -1.11836 -1.0108
-Q05 = quad('af', .119, i2k1(+0.43467))  # Q5PLI  -
-Q06 = quad('rf', .119, i2k1(-1.48026))  # Q6PLI  -
-Q07 = quad('af', .119, i2k1(+1.39904))  # Q7PLI  -
+Q05 = quad('af', .119, i2k1(+0.43473))  # Q5PLI  -
+Q06 = quad('rf', .119, i2k1(-1.48022))  # Q6PLI  -
+Q07 = quad('af', .119, i2k1(+1.36891))  # Q7PLI  -
 
 # microtron injectionline : + = radial focus for I>0, - = radial focus for I<0
 Q08 = quad('af', .100, i2k3(+3.64300))  # Q2P2I  -
@@ -81,18 +82,18 @@ Q10 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
 Q11 = quad('af', .100, i2k3(-0.47120))  # Q5PI   +
 Q12 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
 Q13 = quad('rf', .100, i2k3(+0.58900))  # Q6PI   +
-Q14 = quad('rf', .100, i2k3(-0.89050))  # Q7PI   -
-Q15 = quad('af', .100, i2k3(-1.15810))  # Q8PI   +
+Q14 = quad('rf', .100, i2k3(-0.90010))  # Q7PI   -
+Q15 = quad('af', .100, i2k3(-1.15800))  # Q8PI   +
 Q16 = quad('rf', .100, i2k3(-0.00000))  # Q9PI   -
-Q17 = quad('af', .100, i2k3(-0.67360))  # Q10PI  +
+Q17 = quad('af', .100, i2k3(-0.63380))  # Q10PI  +
 
 # rest are off
-Q18 = quad('rf', .100, i2k3(-0.80000))  # Q11PI  +
-Q19 = quad('af', .100, i2k3(-0.80000))  # Q12PI  -
-Q20 = quad('rf', .100, i2k3(-0.80000))  # Q13PI  -
-Q21 = quad('af', .100, i2k3(-1.00000))  # Q14PI  +
+Q18 = quad('rf', .100, i2k3(-0.00000))  # Q11PI  +
+Q19 = quad('af', .100, i2k3(-0.00000))  # Q12PI  -
+Q20 = quad('rf', .100, i2k3(-0.00000))  # Q13PI  -
+Q21 = quad('af', .100, i2k3(-0.00000))  # Q14PI  +
 Q22 = quad('af', .100, i2k3(-0.00000))  # Q15PI  -
-Q23 = quad('rf', .100, i2k3(-3.50000))  # Q16PI  -
+Q23 = quad('rf', .100, i2k3(-0.00000))  # Q16PI  -
 '''===== unit cell ====='''
 UC = line(D01, Q01, D02, Q02, D03, Q03, D04, B01, D05, Q04,
           D06, F01, D07, B02, D08, Q05, D09, Q06, D10, Q07,

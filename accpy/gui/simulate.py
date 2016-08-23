@@ -240,7 +240,10 @@ def gui_quadscansim(frame, w, h):
         Dpx = float(entry_Dpx.get())
         energy = float(entry_energy.get())*1e6
         particle = 'electron'
-        data = loadtxt(filestr.get())
+        if filestr.get() != '':
+            data = loadtxt(filestr.get())
+        else:
+                data = None
         if betx < 0 or bety < 0:
             showerror('ERROR', 'beta function must be positive')
             return
