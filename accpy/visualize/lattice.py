@@ -83,7 +83,7 @@ def drawlattice(ax, optic, diagnostics, data, height, checkconf=True):
                 if optic[4, i] == 0:
                     x = [end, end, beg, beg, end]
                     y = [l2, h2, h2, l2, l2]
-                    ax.plot(x, y, '--k')
+                    ax.plot(x, y, '-k', color = '0.75')
                 else:
                     x = [end, end, beg, beg, end]
                     y = [m, h, h, m, m]
@@ -102,7 +102,7 @@ def drawlattice(ax, optic, diagnostics, data, height, checkconf=True):
                 if optic[4, i] == 0:
                     x = [end, end, beg, beg, end]
                     y = [l2, h2, h2, l2, l2]
-                    ax.plot(x, y, '--k')
+                    ax.plot(x, y, '-k', color = '0.75')
                 else:
                     x = [end, end, beg, beg, end]
                     y = [m, l, l, m, m]
