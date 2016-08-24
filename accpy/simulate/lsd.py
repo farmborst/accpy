@@ -15,7 +15,8 @@ from .radiate import dipolering, synchroints
 from .particles import part2mqey
 from ..lattices.reader import latt2py
 from ..visualize.plot import (plotopticpars_closed, plottrajs, plotbeamsigma,
-                              plotopticpars_open, plotoptic, plotphasespace)
+                              plotopticpars_open, plotoptic, plotphasespace,
+                              plotdisptraj)
 
 
 def oneturn(UC, P_UC, N_UC, gamma):
@@ -153,4 +154,5 @@ def lsd(closed, latt, slices, mode, particles, rounds):
             envelope = hstack([envelope, envelope0[:, 1:]])
         figs = plottrajs(s, X, rounds, envelope)
         figs.append(plotphasespace(s, X, rounds, xtwiss, emittx, ytwiss, emitty))
+        #figs.append(plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics))
     return figs

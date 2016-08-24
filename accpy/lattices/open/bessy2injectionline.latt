@@ -9,9 +9,9 @@ emit_x = 202e-9
 emit_y = 144e-9
 emit_s = 4e-3
 beta_x = 9
-alph_x = -1
+alph_x = -.1
 beta_y = 3
-alph_y = -3
+alph_y = 2
 disp_x = 0
 dipr_x = 0
 '''===== drifts ====='''

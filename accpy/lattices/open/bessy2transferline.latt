@@ -42,8 +42,8 @@ D24 = drift(.15082)
 D25 = drift(.09)
 '''===== diagnostics ====='''
 F1T = F2T = F3T = F4T = F5T = F6T = F7T = F8T = diagnostic()
-diagnostics = ['FOMZ1T', 'FOMZ2T', 'FOMZ3T = Halo Colimator',
-               'FOMZ4T = Collimator 1', 'FOMZ5T = Collimator 2',
+diagnostics = ['FOMZ1T', 'FOMZ2T', 'Halo Colimator',
+               'Collimator 1', 'Collimator 2',
                'FOMZ6T', 'FOMZ7T', 'FOMZ8T']
 '''===== dipoles ====='''
 # pole shoe form factor K (close to rectangular)
@@ -69,6 +69,7 @@ p = pc/const.cl
 R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
 i2kl = lambda i, R=R: (.265410*i-.765828e-6*i**3-.239385)/R
 i2ks = lambda i, R=R: (.266015*i-.829333e-6*i**3-.233316)/R
+
 Q01 = quad('af', .25, i2kl(41.3949))
 Q02 = quad('af', .25, 0)
 Q03 = quad('rf', .25, i2kl(37.5109))
@@ -80,6 +81,19 @@ Q09 = quad('af', .25, i2kl(55.5348))
 Q10 = quad('af', .20, i2ks(43.1419))
 Q11 = quad('af', .20, 0)
 Q12 = quad('rf', .20, i2ks(53.3176))
+'''
+Q01 =  quad('af', .25, -2.22882)
+Q02 =  quad('af', .25, -0)
+Q03 =  quad('rf', .25, 2.35313)
+Q04 =  quad('rf', .25, 1.43251)
+Q05 =  quad('af', .25, -1.49005)
+Q07 =  quad('af', .25, -0)
+Q08 =  quad('rf', .25, 3.18960)
+Q09 =  quad('af', .25, -2.32719)
+Q10 =  quad('af', .2, -1.84272)
+Q11 =  quad('af', .2, -0)
+Q12 =  quad('rf', .2, 2.59190)
+'''
 '''===== unit cell ====='''
         # 00   01   02   03   04   05   06   07   08   09
 UC = line(DP1, D01, F1T, D02, DP2, D03, F2T, D04, Q01, D05,

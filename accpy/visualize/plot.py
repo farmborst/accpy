@@ -165,6 +165,7 @@ def plotbeamsigma(UC, diagnostics, s, sigx, sigy):
         ax.plot(s, sigx, '-r', label=r'$\sigma_x$')
         ax.plot([], [], '-b', label=r'$\sigma_y$')
         ax.set_ylabel(r'Beam extent $\sigma_x$ / (m)')
+        ax.set_xlabel(r'orbit position s / (m)')
         ax2 = ax.twinx()
         ax2.plot(s, sigy, '-b')
         ax2.tick_params(axis='y', colors='b')
@@ -173,6 +174,7 @@ def plotbeamsigma(UC, diagnostics, s, sigx, sigy):
         drawlattice(ax, UC, diagnostics, [sigx, sigy], 0)
         ax.plot(s, sigx, '-r', label=r'$\sigma_x$')
         ax.plot(s, sigy, '-b', label=r'$\sigma_y$')
+        ax.set_xlabel(r'orbit position s / (m)')
         ax.set_ylabel(r'Beam extent $\sigma_u$ / (m)')
     ax.set_xlim([min(s), max(s)])
     leg = ax.legend(fancybox=True, loc=2)
@@ -234,7 +236,7 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
          r'$\gamma_{tr} = %g $''\n' % gamma_tr,
          r'$Q_s = %g$''\n' % Q_s,
          r'$J_s = %g$''\n' % Js,
-         r'$\sigma_{E} = %e \%% $''\n' % sigma_E,
+         r'$\sigma_{E} = %e \%% $''\n' % (sigma_E*100),
          r'$\sigma_{\tau} = %g s$''\n' % sigma_tau,
          r'$\sigma_{s} = %g m$''\n' % sigma_s,
          r'$\tau_{s} = %e s$''\n' % tau_s,
@@ -242,11 +244,11 @@ def plotopticpars_closed(xtwiss, xdisp, ytwiss, gamma, Qx, Xx, Jx, emiteqx,
          r'$P_{rad} = %g W$''\n' % P_ges,
          r'$E_{crit} = %g eV$''\n' % E_c,
          r'$\lambda_{crit} = %g m$' % lambda_c])
-    ax.text(0.05, 0.9, radpars, horizontalalignment='left',
+    ax.text(0.025, 0.975, radpars, horizontalalignment='left',
             verticalalignment='top', transform=ax.transAxes)
-    ax.text(0.35, 0.9, axipars, horizontalalignment='left',
+    ax.text(0.35, 0.975, axipars, horizontalalignment='left',
             verticalalignment='top', transform=ax.transAxes)
-    ax.text(0.65, 0.9, lonpars, horizontalalignment='left',
+    ax.text(0.675, 0.975, lonpars, horizontalalignment='left',
             verticalalignment='top', transform=ax.transAxes)
     return fig
 
@@ -287,11 +289,11 @@ def plotopticpars_open(xtwiss, xdisp, ytwiss, gamma, E):
          r'------------------------------------''\n',
          r'$E = %g eV$''\n' % E,
          r'$\gamma_{lorentz} = %g$' % gamma])
-    ax.text(0.05, 0.9, radpars, horizontalalignment='left',
+    ax.text(0.025, 0.975, radpars, horizontalalignment='left',
             verticalalignment='top', transform=ax.transAxes)
-    ax.text(0.35, 0.9, axipars, horizontalalignment='left',
+    ax.text(0.35, 0.975, axipars, horizontalalignment='left',
             verticalalignment='top', transform=ax.transAxes)
-    ax.text(0.65, 0.9, lonpars, horizontalalignment='left',
+    ax.text(0.675, 0.975, lonpars, horizontalalignment='left',
             verticalalignment='top', transform=ax.transAxes)
     return fig
 
@@ -304,30 +306,31 @@ def plotdisptraj(s, P_UCS, E, E0, UCS, UC, diagnostics):
     xf7t = lambda EbE0: .998679*EbE0 - .998679      # - 1.018895
     xf8t = lambda EbE0: .769875*EbE0 - .769875      # - .787049
     steps = 6
-    X = empty([6, P_UCS+1, steps])
+    X = [empty([6, P_UCS+1]) for i in range(steps)]
     dEbE = linspace(-0.005, 0.005, steps)
     for deltaE, i in zip(dEbE, range(steps)):
         # R calculated for every energy (not necessary)
         gamma = (E+deltaE*E)/E0+1
         R = UCS2R(P_UCS, UCS, gamma)
-        X0 = array([[0], [0], [0], [0], [0], [deltaE]])
-        X[:, :, i] = trackpart(R, P_UCS, X0)
+        X[i][:, 0] = array([0, 0, 0, 0, 0, deltaE])
+        X[i] = trackpart(X[i], R, P_UCS, P_UCS)*1e3
     fig = Figure()
     ax = fig.add_subplot(1, 1, 1)
-    drawlattice(ax, UC, diagnostics, [X.flatten()], 0)
+    drawlattice(ax, UC, diagnostics, X, 0)
     ax.set_xlabel(r'orbit position s / (m)')
-    ax.set_ylabel(r'radial displacement / (m)')
+    ax.set_ylabel(r'radial displacement / (mm)')
     x = [s[UCS[0, :] == 7][i] for i in [0, 1, 5, 6, 7]]
     color = iter(cm.rainbow(linspace(0, 1, steps)))
     for i in range(steps):
         c = next(color)
         EE0 = 1 + dEbE[i]
-        y = array([xf1t(EE0), xf2t(EE0), xf6t(EE0), xf7t(EE0), xf8t(EE0)])
+        y = array([xf1t(EE0), xf2t(EE0), xf6t(EE0), xf7t(EE0), xf8t(EE0)])*1e3
         ax.plot(x, y, 'o', c=c)
-        ax.plot(s, X[0, :, i], c=c, label=r'$\Delta E/E_0=%.3f$' % dEbE[i])
+        ax.plot(s, X[i][0, :], c=c, label=r'$\delta={:g}$\textperthousand'.format(dEbE[i]*1e3))
     ax.plot([], [], 'ok', label=r'measured')
-    leg = ax.legend(fancybox=True, loc='upper left')
-    leg.get_frame().set_alpha(0.5)
+    #ax.get_xaxis().set_visible(False)
+    #leg = ax.legend(fancybox=True, loc=0)
+    #leg.get_frame().set_alpha(0.5)
     ax.set_xlim([0, nanmax(s)])
     return fig
 
