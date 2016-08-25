@@ -83,13 +83,43 @@ def Rrange2sigxy(Rrange, points, twiss0, xdisp0, epsx, epsy, epss):
         RD = vstack((R[:2, [0, 1, 5]], array([[0, 0, 1]])))
         twiss[:, :, i] = dot(dot(RXY, twiss0), RXY.T)
         disper[:, [i]] = dot(RD, xdisp0)
-    # sig_u = eps_u*beta_u + (delta_E*D)^2
+    # sig_u^2 = eps_u*beta_u + (delta_E*D)^2
     sigx = twiss[0, 0, :]*epsx + epss*(disper[0, :])**2
     sigy = twiss[2, 2, :]*epsy
     return sigx, sigy
 
 
 def simulate_quadscan(ki, kf, qL, UC, points, epsx, betx, alpx, epsy,
+                      bety, alpy, epss, Dx, Dpx, energy, particle, data):
+    gamma = part2y(energy, particle)
+    krange = linspace(ki, kf, points)
+    # get transport matrix to FOM as function of k
+    Rtransfer = UC2T(UC, gamma)
+    Rquad = partial(quadrupole, L=qL, y=gamma)
+    Rrange = [dot(Rtransfer, Rquad(k)) for k in krange]
+
+    # thin lens approximation
+    Rtransfer2 = dot(Rtransfer, drift(qL, gamma))
+    Rquad2 = partial(thinlens, L=qL, y=gamma)
+    Rrange2 = [dot(Rtransfer2, Rquad2(k)) for k in krange]
+
+    # upstream beta (twiss) matrix and dispersion vector
+    gamx = (1+alpx**2)/betx
+    xtwi = array([[betx, -alpx], [-alpx, gamx]])
+    gamy = (1+alpy**2)/bety
+    ytwi = array([[bety, -alpy], [-alpy, gamy]])
+    twiss0 = hstack((xtwi, zeros((2, 2))))
+    twiss0 = vstack((twiss0, hstack((zeros((2, 2)), ytwi))))
+    xdisp0 = array([[Dx], [Dpx], [1]])
+
+    # transport twiss
+    sigx, sigy = Rrange2sigxy(Rrange, points, twiss0, xdisp0, epsx, epsy, epss)
+    sigx2, sigy2 = Rrange2sigxy(Rrange2, points, twiss0, xdisp0, epsx, epsy, epss)
+    figs = pltsim_quadscan(krange, sigx, sigy, sigx2, sigy2, data)
+    return figs
+
+
+def measure_quadscan(ki, kf, qL, UC, points, epsx, betx, alpx, epsy,
                       bety, alpy, epss, Dx, Dpx, energy, particle, data):
     gamma = part2y(energy, particle)
     krange = linspace(ki, kf, points)
