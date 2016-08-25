@@ -15,7 +15,7 @@ from matplotlib import use
 use('TkAgg')
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2TkAgg)
-from matplotlib.pyplot import close
+from matplotlib.pyplot import figure, close
 from threading import Thread
 from time import time
 from numpy import zeros, where, sort, concatenate, array, loadtxt
@@ -27,27 +27,31 @@ from ..measure.tunes import measure_tunes
 from ..simulate.quadscan import measure_quadscan
 
 
-def showfigs(t0, status, figs, tabs):
+def initfigs(tabs):
     close('all')
-    for fig, tab in zip(figs, tabs):
+    figs, canvass = [], []
+    for tab in tabs:
         # destroy all widgets in fram/tab and close all figures
         for widget in tab.winfo_children():
             widget.destroy()
+        fig = figure()
+        figs.append(fig)
         canvas = FigureCanvasTkAgg(fig, master=tab)
+        canvass.append(canvas)
         toolbar = NavigationToolbar2TkAgg(canvas, tab)
         canvas.get_tk_widget().pack()
         toolbar.pack()
         canvas.draw()
-    timestring = time2str(time() - t0)
-    status.set('finished, elapsed time: ' + timestring)
+    return figs, canvass
 
 
 def runthread(status, tabs, f_simulate, argstuple):
     def run(*argstuple):
             t0 = time()
             status.set('running...')
-            figs = f_simulate(*argstuple)
-            showfigs(t0, status, figs, tabs[1:])
+            f_simulate(*argstuple)
+            timestring = time2str(time() - t0)
+            status.set('finished, elapsed time: ' + timestring)
     # data plotting in new thread to keep gui (main thread&loop) responsive
     t_run = Thread(target=run, args=argstuple)
     # automatically let die with main thread -> no global stop required
@@ -61,12 +65,16 @@ oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 def tunes(frame, w, h):
     def _start():
+        figs, canvass = initfigs(tabs[1:4])
+        filename = filestr.get()
         mode = modemenu.get()
-        f_HF = float(entry_f_HF.get())
+        f_rf = float(entry_f_HF.get())
+        h = float(entry_h.get())
+        bunch = float(entry_bunch.get())
+        steps = int(entry_steps.get())
         runthread(status, tabs, measure_tunes,
-                  (mode, f_HF))
+                  (figs, canvass, tunestr, mode, filename, f_rf, h,bunch, steps))
     def _load():
-        global filename
         filename = askopenfilename()
         if filename[-5::] != '.hdf5':
             filestr.set('error: {} is not hdf5 file-type'.format(filename))
@@ -84,17 +92,26 @@ def tunes(frame, w, h):
     # row 1
     cs_label(tabs[0], 1, 1, 'Mode')
     cs_label(tabs[0], 1, 2, 'Cavity frequency / MHz')
+    cs_label(tabs[0], 3, 2, 'harmonic number')
+    cs_label(tabs[0], 5, 2, 'bunch nr.')
+    cs_label(tabs[0], 7, 2, 'steps')
 
     # row 2
     modemenu = cs_dropd(tabs[0], 2, 1, ['Measurement',
                                         'From File'], action=_mode)
     entry_f_HF = cs_Dblentry(tabs[0], 2, 2, 499.667)
+    entry_h = cs_Dblentry(tabs[0], 4, 2, 160)
+    entry_bunch = cs_Dblentry(tabs[0], 6, 2, 13)
+    entry_steps = cs_Intentry(tabs[0], 8, 2, 50)
 
     # row 3
     # 3, 1Loadbutton
 
     # row 4
     filestr = cs_label(tabs[0], 4, 1, '')
+
+    # add tunes to overview tab
+    tunestr = [cs_label(tabs[4], i, 0, 'NaN', fg='green') for i in range(3)]
 
     # last row, column
     cs_button(tabs[0], 10, 10, 'Start', _start)

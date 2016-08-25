@@ -7,7 +7,7 @@ from h5py import File as h5pyFile
 from time import strftime
 
 
-def save(filename, showinfo=False, **namesandvariables):
+def save(filename, showinfo, **namesandvariables):
     ''' save(filename,variables(e.g. a=a, b=b, ...))
     input:
         - desired filename as string
@@ -38,7 +38,7 @@ def save(filename, showinfo=False, **namesandvariables):
     return filename
 
 
-def load(filename, showinfo=False, *varnames):
+def load(filename, showinfo, *varnames):
     ''' load(filename,variables(e.g. 'a', 'b', ...))
     input:
         - desired filename (as string)

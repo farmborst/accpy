@@ -60,9 +60,9 @@ def cs_dbl(value):
 
 
 # create, position and set tkinter label
-def cs_label(root, r, c, name, sticky=None, retlab=False):
+def cs_label(root, r, c, name, sticky=None, retlab=False, fg=None):
     labelstr = cs_str(name)
-    label = Label(master=root, textvariable=labelstr)
+    label = Label(master=root, textvariable=labelstr, fg=fg)
     gridwidget(label, r, c, sticky)
     if retlab:
         return labelstr, label
