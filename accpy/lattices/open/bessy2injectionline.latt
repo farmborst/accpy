@@ -5,11 +5,11 @@ particle = 'electron'
 energy = 52e6
 I = 5e-3
 '''===== starting twiss parameters ====='''
-emit_x = 320e-9
-emit_y = 144e-9
-emit_s = 4e-3
-beta_x = 6.6
-alph_x = 6.7
+emit_x = 230e-9
+emit_y = 190e-9
+emit_s = 2e-3
+beta_x = 9
+alph_x = -.1
 beta_y = 3
 alph_y = 2
 disp_x = 0

@@ -16,6 +16,7 @@ from .rmatrices import UCS2R
 from ..lattices.reader import latt2py
 from ..visualize.plot import plotramp
 from ..math.ode import odeint
+from numpy import savetxt
 
 
 def energy(amp, w, t_0, off):
@@ -116,6 +117,7 @@ def momentumdynamics(sdip, disperdip, lorentzgamma, C, rho):
 
 
 def dampingdecrements(Ca, Cdip, E, SYNIN2, Jx, Jy, Js):
+    # OF THE EMITTANCE !!!
     alphax = lambda t: 2*Ca/Cdip*E(t)**3*SYNIN2*Jx
     alphay = lambda t: 2*Ca/Cdip*E(t)**3*SYNIN2*Jy
     alphas = lambda t: 2*Ca/Cdip*E(t)**3*SYNIN2*Js
@@ -133,10 +135,10 @@ def bunchduration(fsyn, energyspread, slipfactor):
 
 
 def quantumexcitation(Cq, Ca, lorentzgamma, E, SYNIN2, SYNIN3, SYNIN5x, rho):
-    # quantum excitation per round
+    # # OF THE EMITTANCE !!!
     x = lambda t: 2*Cq*Ca/rho**2*lorentzgamma(t)**2*E(t)**3*SYNIN5x/SYNIN2
-    s2 = lambda t: 2*Cq*Ca/rho**2*lorentzgamma(t)**2*E(t)**3*SYNIN3/SYNIN2
-    return x, s2
+    s = lambda t: 2*Cq*Ca/rho**2*lorentzgamma(t)**2*E(t)**3*SYNIN3/SYNIN2
+    return x, s
 
 
 # RADIAL EMITTANCE
@@ -149,7 +151,7 @@ def Xequilibriumemittance(Cq, lorentzgamma, SYNIN2, SYNIN5x, Jx):
 def Xemittancedot(E, Edot, quantex, alphax):
     def emitdot(t, emitx):
         # adiabatic damping: -emitx*Edot(t)/E(t)
-        # radiation damping: -2*emitx*alphax(t)
+        # radiation damping: -emitx*alphax(t)
         # quantumexcitation: quantex(t)  ("radiation anti-damping")
         y = quantex(t)-(Edot(t)/E(t)+alphax(t))*emitx
         return y
@@ -166,7 +168,7 @@ def Yequilibriumemittance(Cq, ytwiss, rho, Jy):
 def Yemittancedot(E, Edot, alphay):
     def emitdot(t, emity):
         # adiabatic damping: -emity*Edot(t)/E(t)
-        # radiation damping: -2*emity*alphay(t)
+        # radiation damping: -emity*alphay(t)
         # quantumexcitation: none
         # See Hemmie 'Reduction of antidamping' or Borland SRFEL-003
         y = 0-(Edot(t)/E(t)+alphay(t))*emity
@@ -181,12 +183,12 @@ def Sequilibriumemittance(Cq, lorentzgamma, SYNIN2, SYNIN3, Js):
     return emit
 
 
-def Semittancedot2(E, Edot, Cq, Js, alphas, lorentzgamma, rho, quantes2):
+def Semittancedot(E, Edot, Cq, Js, alphas, lorentzgamma, rho, quantes):
     def emitdot(t, emits):
         # adiabatic damping: -emits*Edot(t)/E(t)
-        # radiation damping: -2*emits*alphas(t)
+        # radiation damping: -emits*alphas(t)
         # quantumexcitation: quantes(t)
-        y = quantes2(t)-(Edot(t)/E(t)+alphas(t))*emits
+        y = quantes(t)-(Edot(t)/E(t)+alphas(t))*emits
         return y
     return emitdot
 
@@ -237,15 +239,15 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
 
     f_Xemitequi = Xequilibriumemittance(Cq, f_lorentzgamma, SYNIN2, SYNIN5x, Jx)
     Yemitequi = Yequilibriumemittance(Cq, ytwiss, rho, Jy)
-    f_Semitequi = Sequilibriumemittance(Cq, f_lorentzgamma, SYNIN2, SYNIN3, Js)
+    f_sigdelta_equi = Sequilibriumemittance(Cq, f_lorentzgamma, SYNIN2, SYNIN3, Js)
 
     # funtions of time and initial value (odes)
     alphax, alphay, alphas = dampingdecrements(Ca, Cdip, f_E, SYNIN2, Jx, Jy, Js)
-    f_quantex, f_quantes2 = quantumexcitation(Cq, Ca, f_lorentzgamma, f_E, SYNIN2, SYNIN3, SYNIN5x, rho)
+    f_quantex, f_quantes = quantumexcitation(Cq, Ca, f_lorentzgamma, f_E, SYNIN2, SYNIN3, SYNIN5x, rho)
     f_Xemitdot = Xemittancedot(f_E, f_Edot, f_quantex, alphax)
     f_Yemitdot = Yemittancedot(f_E, f_Edot, alphay)
-    f_Semitdot = Semittancedot2(f_E, f_Edot, Cq, Js, alphas, f_lorentzgamma, rho, f_quantes2)
-    f_bdurequis = [bunchduration(x, f_Semitequi, slipfactor) for x in fsyns]
+    f_Semitdot = Semittancedot(f_E, f_Edot, Cq, Js, alphas, f_lorentzgamma, rho, f_quantes)
+    f_bdurequis = [bunchduration(x, f_sigdelta_equi, slipfactor) for x in fsyns]
     f_blenequis = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurequis]
 
     # prepare data for plots
@@ -287,15 +289,15 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
     blenequis = [f_blenequi(tVgZ) for f_blenequi in f_blenequis]
     Xemitequi = f_Xemitequi(tAI)
     Yemitequi = repeat(Yemitequi, len(tAI))
-    Semitequi = f_Semitequi(tAI)*1e3
+    sigdelta_equi = f_sigdelta_equi(tAI)*1e3
 
     # get data from functions of tAI for plots
     Xemits = [odeint(f_Xemitdot, tAI, ex) for ex in emitxs]
     Yemits = [odeint(f_Yemitdot, tAI, ey, atol=1e-18)+Yemitequi for ey in emitys]
     # careful "late binding" !!!!!!!!!!!!
-    f_Semits = [lambda t, es=es: sqrt(odeint(f_Semitdot, t, es**2)) for es in emitss]
-    Semits = [f_Semit(tAI)*1e3 for f_Semit in f_Semits]
-    f_bdurs = [bunchduration(fsyn, f_Semit, slipfactor) for fsyn, f_Semit in product(fsyns, f_Semits)]
+    f_sigdelta = [lambda t, es=es: sqrt(odeint(f_Semitdot, t, es**2)) for es in emitss]
+    sigdeltas = [f_Semit(tAI)*1e3 for f_Semit in f_sigdelta]
+    f_bdurs = [bunchduration(fsyn, f_Semit, slipfactor) for fsyn, f_Semit in product(fsyns, f_sigdelta)]
     f_blens = [bunchlength(f_lorentzbeta, slipfactor, x) for x in f_bdurs]
     bdurs = [f_bdur(tVgZ) for f_bdur in f_bdurs]
     blens = [f_blen(tVgZ) for f_blen in f_blens]
@@ -315,8 +317,8 @@ def simulate_ramp(T, t_inj, t_ext, t_ext2, E_inj, E_ext, latt, points, f_hf,
 
     figs = plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B,
                     BB, loss, LL, volt, VV, phases, freqs, Xemitequi,
-                    Yemitequi, Semitequi, bdurequis, blenequis, V_HFs,
-                    Xemits, Yemits, Semits, NXemitequi, NYemitequi, NXemits,
+                    Yemitequi, sigdelta_equi, bdurequis, blenequis, V_HFs,
+                    Xemits, Yemits, sigdeltas, NXemitequi, NYemitequi, NXemits,
                     NYemits, bdurs, blens, t3, FF)
-
+    #savetxt('sigE.txt', [tAI, sigdeltas[0]])
     return figs
