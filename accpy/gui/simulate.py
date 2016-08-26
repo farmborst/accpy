@@ -255,7 +255,7 @@ def gui_quadscansim(frame, w, h):
 
     def _load():
         global filename
-        filename = askopenfilename()
+        filename = askopenfilename(initialdir='accpy/exampledata/')
         if filename[-5::] != '.hdf5':
             #filestr.set('error: {} is not hdf5 file-type'.format(filename))
             #showerror('ERROR', 'THIS IS NOT A HDF5 FILE')

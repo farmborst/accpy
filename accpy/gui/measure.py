@@ -73,7 +73,7 @@ def tunes(frame, w, h):
         runthread(status, measure_tunes,
                   (figs, tunestr, mode, filename, f_rf, h,bunch, steps))
     def _load():
-        filename = askopenfilename()
+        filename = askopenfilename(initialdir='accpy/exampledata/')
         if filename[-5::] != '.hdf5':
             filestr.set('error: {} is not hdf5 file-type'.format(filename))
             showerror('ERROR', 'THIS IS NOT A HDF5 FILE')
@@ -174,7 +174,7 @@ def quadscanmeas(frame, w, h):
                    energy, particle))
 
     def _load():
-        filename = askopenfilename()
+        filename = askopenfilename(initialdir='accpy/exampledata/')
         filestr.set(filename)
 
     def _mode(*args):
