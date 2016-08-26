@@ -639,16 +639,23 @@ def pltsim_quadscan(k, sigx, sigy, sigx2, sigy2, data=None):
     return figs
 
 
-def pltmeas_quadscan(figs, kx, sigx, ky, sigy, kfx, fitx, kfy, fity, strings):
+def pltmeas_quadscan(figs, kx, sigx, ky, sigy, kfx, fitx, kfy, fity, strings, xerr=None, yerr=None):
     ax = [figs[0].add_subplot(1, 2, i) for i in range(1, 3)]
 
     xlabel, xunit = 'Quadrupole strength', r'$m^{-2}$'
     ylabel1, yunit1 = r'$\sigma_x^2$', r'$mm^2$'
     ylabel2, yunit2 = r'$\sigma_y^2$', r'$mm^2$'
 
-    plot(ax[0], kx, sigx*1e6, 'xb', xlabel, xunit, ylabel1, yunit1, 'Data', rescaleY=False)
+    if xerr is None:
+        plot(ax[0], kx, sigx*1e6, 'xb', xlabel, xunit, ylabel1, yunit1, 'Data', rescaleY=False)
+    else:
+        ax[0].errorbar(kx, sigx*1e6, yerr=xerr*1e6, marker='x', mfc='blue', ls='None', label='Data')
     plot(ax[0], kfx, fitx*1e6, '-r', xlabel, xunit, ylabel1, yunit1, 'Fit', rescaleY=False)
-    plot(ax[1], ky, sigy*1e6, 'xb', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+
+    if yerr is None:
+        plot(ax[1], ky, sigy*1e6, 'xb', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+    else:
+        ax[1].errorbar(ky, sigy*1e6, yerr=yerr*1e6, marker='x', mfc='blue', ls='None', label='Data')
     plot(ax[1], kfy, fity*1e6, '-r', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
 
     ax[0].text(0.95, 0.95, strings[0],horizontalalignment='right', verticalalignment='top', transform=ax[0].transAxes)

@@ -127,7 +127,7 @@ def fun(x, A, B, C):
 def myfit(x, y, betagamma, qL, orientation, T, yerr=None, krange=[]):
     if len(krange) != 0:
         # trim to given range
-        booleanrange = [(x > krange[0]) & (x < krange[1])]
+        booleanrange = [(x >= krange[0]) & (x <= krange[1])]
         x = x[booleanrange]
         y = y[booleanrange]
     if yerr is None:
@@ -136,6 +136,7 @@ def myfit(x, y, betagamma, qL, orientation, T, yerr=None, krange=[]):
         if len(krange) != 0:
             yerr = yerr[booleanrange]
         popt, pcov = curve_fit(fun, x, y, sigma=yerr, absolute_sigma=True)
+    x = linspace(x[0], x[-1], 1e3)
     fit = fun(x, *popt)
     perr = sqrt(diag(pcov))
     A = array([popt[0], perr[0]])/qL**2
@@ -233,5 +234,6 @@ def measure_quadscan(figs, data, kr_fit, kr_mes, points, qL, UC, epss, Dx,
                      ky, sigy,
                      kfx, fitx,
                      kfy, fity,
-                     [stringx, stringy])
+                     [stringx, stringy],
+                     xerr=sigxe, yerr=sigye)
     return
