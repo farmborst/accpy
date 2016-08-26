@@ -115,8 +115,10 @@ def simulate_quadscan(ki, kf, qL, UC, points, epsx, betx, alpx, epsy,
 
     # transport twiss
     sigx, sigy = Rrange2sigxy(Rrange, points, twiss0, xdisp0, epsx, epsy, epss)
+    sigxdf, sigydf = Rrange2sigxy(Rrange, points, twiss0, xdisp0, epsx, epsy, 0)
     sigx2, sigy2 = Rrange2sigxy(Rrange2, points, twiss0, xdisp0, epsx, epsy, epss)
-    figs = pltsim_quadscan(krange, sigx, sigy, sigx2, sigy2, data)
+    sigx2df, sigy2df = Rrange2sigxy(Rrange2, points, twiss0, xdisp0, epsx, epsy, 0)
+    figs = pltsim_quadscan(krange, sigx, sigy, sigx2, sigy2, sigxdf, sigydf, sigx2df, sigy2df, data)
     return figs
 
 

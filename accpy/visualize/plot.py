@@ -536,21 +536,21 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
     _, _, yprefix, my = plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
-    ttn, EEn, _, _ = plot(ax[0], tt, EE, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
+    ttn, EEn, _, _ = plot(ax[0], tt, EE, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
     legs.append(ax[0].legend(fancybox=True, loc='lower center'))
     epsY = array([-1, 0, 1, 0])*.03*max(EEn)
     annotate(ax[0], ttn, EEn, s1, epsT, epsY, ha, va)
 
     # Magnetic flux
     _, _, yprefix, my = plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
-    ttn, BBn, _, _ = plot(ax[1], tt, BB, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
+    ttn, BBn, _, _ = plot(ax[1], tt, BB, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
     legs.append(ax[1].legend(fancybox=True, loc='lower center'))
     epsY = array([-1, 0, 1, 0])*.03*max(BBn)
     annotate(ax[1], ttn, BBn, s2, epsT, epsY, ha, va)
 
     # Energy loss
     _, _, yprefix, my = plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
-    ttn, LLn, _, _ = plot(ax[2], tt, LL, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
+    ttn, LLn, _, _ = plot(ax[2], tt, LL, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
     epsY = array([-1, 0, 1, 0])*.03*max(LLn)
     annotate(ax[2], ttn, LLn, s3, epsT, epsY, ha, va)
 
@@ -559,7 +559,7 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     ha = ['left', 'right', 'left', 'left', 'left', 'right']
     va = ['top', 'bottom', 'bottom', 'bottom', 'bottom', 'bottom']
     _, _, yprefix, my = plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
-    ttn, VVn, _, _ = plot(ax[3], tt2, VV, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False, markersize=24.0)
+    ttn, VVn, _, _ = plot(ax[3], tt2, VV, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
     epsY = array([-1, 0, 1, 0, -1, 1])*.02*max(VVn)
     annotate(ax[3], ttn, VVn, s4, epsT, epsY, ha, va)
 
@@ -620,21 +620,25 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     [leg.get_frame().set_alpha(0.5) for leg in legs]
     return figs
 
-def pltsim_quadscan(k, sigx, sigy, sigx2, sigy2, data=None):
+def pltsim_quadscan(k, sigx, sigy, sigx2, sigy2, sigxdf, sigydf, sigx2df, sigy2df, data=None):
     xlabel, xunit = 'Quadrupole strength', 'm'
     ylabel1, yunit1 = r'$\sigma_x^2$', r'$mm^2$'
     ylabel2, yunit2 = r'$\sigma_y^2$', r'$mm^2$'
 
     figs = [Figure()]
     ax = [figs[0].add_subplot(1, 2, i) for i in range(1, 3)]
-    plot(ax[0], k, sigx*1e6, '-g', xlabel, xunit, ylabel1, yunit1, 'Full linear quadrupole modell', rescaleY=False)
-    plot(ax[0], k, sigx2*1e6, '-r', xlabel, xunit, ylabel1, yunit1, 'Thin lens', rescaleY=False)
-    plot(ax[1], k, sigy*1e6, '-g', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
-    plot(ax[1], k, sigy2*1e6, '-r', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
+    plot(ax[0], k, sigx*1e6, '-g', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
+    plot(ax[0], k, sigxdf*1e6, '--g', xlabel, xunit, ylabel1, yunit1, 'neglect dispersion', rescaleY=False)
+    plot(ax[0], k, sigx2*1e6, '-r', xlabel, xunit, ylabel1, yunit1, '', rescaleY=False)
+    plot(ax[0], k, sigx2df*1e6, '--r', xlabel, xunit, ylabel1, yunit1, 'neglect dispersion', rescaleY=False)
+    plot(ax[1], k, sigy*1e6, '-g', xlabel, xunit, ylabel2, yunit2, 'Full linear quadrupole modell', rescaleY=False)
+    ax[1].plot([], [], '--g', label='neglect dispersion')
+    plot(ax[1], k, sigy2*1e6, '-r', xlabel, xunit, ylabel2, yunit2, 'Thin lens', rescaleY=False)
+    ax[1].plot([], [], '--r', label='neglect dispersion')
     if data is not None:
         plot(ax[0], data[0], data[1]*1e6, 'xb', xlabel, xunit, ylabel1, yunit1, 'Data', rescaleY=False)
         plot(ax[1], data[0], data[2]*1e6, 'xb', xlabel, xunit, ylabel2, yunit2, '', rescaleY=False)
-    leg = ax[0].legend(fancybox=True, loc=0)
+    leg = ax[1].legend(fancybox=True, loc=0)
     leg.get_frame().set_alpha(0.5)
     return figs
 

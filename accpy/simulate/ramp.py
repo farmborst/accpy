@@ -116,9 +116,9 @@ def momentumdynamics(sdip, disperdip, lorentzgamma, C, rho):
 
 
 def dampingdecrements(Ca, Cdip, E, SYNIN2, Jx, Jy, Js):
-    alphax = lambda t: Ca/Cdip*E(t)**3*SYNIN2*Jx
-    alphay = lambda t: Ca/Cdip*E(t)**3*SYNIN2*Jy
-    alphas = lambda t: Ca/Cdip*E(t)**3*SYNIN2*Js
+    alphax = lambda t: 2*Ca/Cdip*E(t)**3*SYNIN2*Jx
+    alphay = lambda t: 2*Ca/Cdip*E(t)**3*SYNIN2*Jy
+    alphas = lambda t: 2*Ca/Cdip*E(t)**3*SYNIN2*Js
     return alphax, alphay, alphas
 
 
@@ -151,7 +151,7 @@ def Xemittancedot(E, Edot, quantex, alphax):
         # adiabatic damping: -emitx*Edot(t)/E(t)
         # radiation damping: -2*emitx*alphax(t)
         # quantumexcitation: quantex(t)  ("radiation anti-damping")
-        y = quantex(t)-(Edot(t)/E(t)+2*alphax(t))*emitx
+        y = quantex(t)-(Edot(t)/E(t)+alphax(t))*emitx
         return y
     return emitdot
 
@@ -169,7 +169,7 @@ def Yemittancedot(E, Edot, alphay):
         # radiation damping: -2*emity*alphay(t)
         # quantumexcitation: none
         # See Hemmie 'Reduction of antidamping' or Borland SRFEL-003
-        y = 0-(Edot(t)/E(t)+2*alphay(t))*emity
+        y = 0-(Edot(t)/E(t)+alphay(t))*emity
         return y
     return emitdot
 
@@ -186,7 +186,7 @@ def Semittancedot2(E, Edot, Cq, Js, alphas, lorentzgamma, rho, quantes2):
         # adiabatic damping: -emits*Edot(t)/E(t)
         # radiation damping: -2*emits*alphas(t)
         # quantumexcitation: quantes(t)
-        y = quantes2(t)-(Edot(t)/E(t)+2*alphas(t))*emits
+        y = quantes2(t)-(Edot(t)/E(t)+alphas(t))*emits
         return y
     return emitdot
 
