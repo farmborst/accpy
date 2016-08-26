@@ -4,11 +4,11 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 try:
-    from Tkinter import N, E, S, W, LabelFrame, _setit, Label
+    from Tkinter import N, E, S, W, LabelFrame, _setit, Label, BOTH
     from tkFileDialog import askopenfilename
     from tkMessageBox import showerror
 except:
-    from tkinter import N, E, S, W, LabelFrame, _setit, Label
+    from tkinter import N, E, S, W, LabelFrame, _setit, Label, BOTH
     from tkinter.filedialog import askopenfilename
     from tkinter.messagebox import showerror
 from matplotlib import use
@@ -29,23 +29,21 @@ from ..simulate.quadscan import measure_quadscan
 
 def initfigs(tabs):
     close('all')
-    figs, canvass = [], []
+    figs = []
     for tab in tabs:
         # destroy all widgets in fram/tab and close all figures
         for widget in tab.winfo_children():
             widget.destroy()
         fig = figure()
-        figs.append(fig)
         canvas = FigureCanvasTkAgg(fig, master=tab)
-        canvass.append(canvas)
+        figs.append(fig)
         toolbar = NavigationToolbar2TkAgg(canvas, tab)
         canvas.get_tk_widget().pack()
         toolbar.pack()
-        canvas.draw()
-    return figs, canvass
+    return figs
 
 
-def runthread(status, tabs, f_simulate, argstuple):
+def runthread(status, f_simulate, argstuple):
     def run(*argstuple):
             t0 = time()
             status.set('running...')
@@ -65,15 +63,15 @@ oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 def tunes(frame, w, h):
     def _start():
-        figs, canvass = initfigs(tabs[1:4])
+        figs = initfigs(tabs[1:4])
         filename = filestr.get()
         mode = modemenu.get()
         f_rf = float(entry_f_HF.get())
         h = float(entry_h.get())
         bunch = float(entry_bunch.get())
         steps = int(entry_steps.get())
-        runthread(status, tabs, measure_tunes,
-                  (figs, canvass, tunestr, mode, filename, f_rf, h,bunch, steps))
+        runthread(status, measure_tunes,
+                  (figs, tunestr, mode, filename, f_rf, h,bunch, steps))
     def _load():
         filename = askopenfilename()
         if filename[-5::] != '.hdf5':
@@ -127,9 +125,21 @@ def chromaticity(frame, w, h):
 
 def quadscanmeas(frame, w, h):
     def _start():
+        figs = initfigs([lf_OUT])
+        mode = modemenu.get()
+        if mode == 'From File':
+            data = loadtxt(filestr.get())
+            ki = None
+            kf = None
+            points = None
+        if mode == 'Measurement':
+            data = None
+            ki = float(entry_ki.get())
+            kf = float(entry_kf.get())
+            points = int(entry_points.get())
         lattice = latticemenu.get()
-        qL = float(entry_qL.get())
         if lattice == 'drift':
+            qL = float(entry_qL.get())
             driftlength = float(entry_dlen.get())
             UC = zeros([6, 1])
             UC[1] = driftlength
@@ -146,41 +156,35 @@ def quadscanmeas(frame, w, h):
             if i > f:
                 showerror(title='ERROR', message='Please choose a quad before chosen screen')
                 return
+            qL = UC[1, i-1]
             UC = UC[:, i:f]
-        ki = float(entry_ki.get())
-        kf = float(entry_kf.get())
-        points = int(entry_points.get())
-        epsx = float(entry_epsx.get())/1e9
-        betx = float(entry_betx.get())
-        alpx = float(entry_alpx.get())
-        epsy = float(entry_epsy.get())/1e9
-        bety = float(entry_bety.get())
-        alpy = float(entry_alpy.get())
+        kxi = float(entry_kxi.get())
+        kxf = float(entry_kxf.get())
+        kyi = float(entry_kyi.get())
+        kyf = float(entry_kyf.get())
+        kr_fit = [kxi, kxf, kyi, kyf]
+        kr_mes = [ki, kf]
         epss = (float(entry_epss.get())/1e3)**2
         Dx = float(entry_Dx.get())
         Dpx = float(entry_Dpx.get())
         energy = float(entry_energy.get())*1e6
         particle = 'electron'
-        if filestr.get() != '':
-            data = loadtxt(filestr.get())
-        else:
-                data = None
-        if betx < 0 or bety < 0:
-            showerror('ERROR', 'beta function must be positive')
-            return
-        runthread(status, tabs, measure_quadscan,
-                  (ki, kf, qL, UC, points, epsx, betx, alpx,
-                   epsy, bety, alpy, epss, Dx, Dpx, energy, particle, data))
+        runthread(status, measure_quadscan,
+                  (figs, data, kr_fit, kr_mes, points, qL, UC, epss, Dx, Dpx,
+                   energy, particle))
 
     def _load():
-        global filename
         filename = askopenfilename()
-        if filename[-5::] != '.hdf5':
-            #filestr.set('error: {} is not hdf5 file-type'.format(filename))
-            #showerror('ERROR', 'THIS IS NOT A HDF5 FILE')
-            filestr.set(filename)
-        else:
-            filestr.set(filename)
+        filestr.set(filename)
+
+    def _mode(*args):
+        mode = modemenu.get()
+        if mode == 'From File':
+            cs_button(lf_data, 1, 0, 'Load', _load)
+        if mode == 'Measurement':
+            showerror('Sorry', 'this feature is not ready')
+            modemenu.set('From File')
+            cs_button(lf_data, 1, 0, 'Load', _load)
 
     def _check(*args):
         lattice = latticemenu.get()
@@ -224,36 +228,28 @@ def quadscanmeas(frame, w, h):
             quadmenu.grid()
 
 
-    tabs = cs_tabbar(frame, w, h, ['Menu', 'Beam extents'])
-    lf_upbeam = LabelFrame(tabs[0], text="Upstream beam parameters", padx=5, pady=5)
-    lf_upbeam.grid(row=1, column=0, sticky=W+E+N+S, padx=10, pady=10)
-    lf_transfer = LabelFrame(tabs[0], text="Transport matrix", padx=5, pady=5)
-    lf_transfer.grid(row=2, column=0, sticky=W+E+N+S, padx=10, pady=10)
-    lf_quadrupole = LabelFrame(tabs[0], text="Quadrupole range", padx=5, pady=5)
-    lf_quadrupole.grid(row=1, column=1, sticky=W+E+N+S, padx=10, pady=10)
-    lf_data = LabelFrame(tabs[0], text="Data comparison", padx=5, pady=5)
-    lf_data.grid(row=2, column=1, sticky=W+E+N+S, padx=10, pady=10)
-    cs_button(tabs[0], 4, 3, 'Start', _start)
-    status = cs_label(tabs[0], 4, 4, '')
+    frame.pack(fill=BOTH, expand=1)
+    lf_upbeam = LabelFrame(frame, text="Upstream longitudinal beam parameters", padx=5, pady=5)
+    lf_upbeam.grid(row=0, column=0, sticky=W+E+N+S, padx=10, pady=10)
+    lf_transfer = LabelFrame(frame, text="Transport matrix", padx=5, pady=5)
+    lf_transfer.grid(row=1, column=0, sticky=W+E+N+S, padx=10, pady=10)
+    lf_fit = LabelFrame(frame, text="Fit range", padx=5, pady=5)
+    lf_fit.grid(row=0, column=1, sticky=W+E+N+S, padx=10, pady=10)
+    lf_data = LabelFrame(frame, text="Data acquisition", padx=5, pady=5)
+    lf_data.grid(row=1, column=1, sticky=W+E+N+S, padx=10, pady=10)
+    lf_OUT = LabelFrame(frame, text="Results", padx=5, pady=5)
+    lf_OUT.grid(row=2, column=0, columnspan=2, sticky=W+E+N+S, padx=10, pady=10)
+    cs_button(frame, 4, 3, 'Start', _start)
+    status = cs_label(frame, 4, 4, '')
 
-    cs_label(lf_upbeam, 1, 2, uc.epsilon+' / nm rad')
-    cs_label(lf_upbeam, 1, 3, uc.beta+' / m')
-    cs_label(lf_upbeam, 1, 4, uc.alpha+'/ rad')
-    cs_label(lf_upbeam, 2, 1, 'Radial')
-    entry_epsx = cs_Dblentry(lf_upbeam, 2, 2, 202)
-    entry_betx = cs_Dblentry(lf_upbeam, 2, 3, 6.37)
-    entry_alpx = cs_Dblentry(lf_upbeam, 2, 4, -0.13)
-    cs_label(lf_upbeam, 3, 1, 'Axial')
-    entry_epsy = cs_Dblentry(lf_upbeam, 3, 2, 144)
-    entry_bety = cs_Dblentry(lf_upbeam, 3, 3, 4.1)
-    entry_alpy = cs_Dblentry(lf_upbeam, 3, 4, -0.51)
-    cs_label(lf_upbeam, 4, 2, uc.delta+' / '+uc.ppt)
-    cs_label(lf_upbeam, 4, 3, 'D / m')
-    cs_label(lf_upbeam, 4, 4, 'D\' / rad')
-    cs_label(lf_upbeam, 5, 1, 'Longitudinal')
-    entry_epss = cs_Dblentry(lf_upbeam, 5, 2, 2.4)
-    entry_Dx = cs_Dblentry(lf_upbeam, 5, 3, 0.)
-    entry_Dpx = cs_Dblentry(lf_upbeam, 5, 4, 0.)
+    cs_label(lf_upbeam, 0, 0, 'Beam energy / MeV')
+    cs_label(lf_upbeam, 1, 0, uc.delta+' / '+uc.ppt)
+    cs_label(lf_upbeam, 2, 0, 'D / m')
+    cs_label(lf_upbeam, 3, 0, 'D\' / rad')
+    entry_energy = cs_Dblentry(lf_upbeam, 0, 1, 52)
+    entry_epss = cs_Dblentry(lf_upbeam, 1, 1, 2.4)
+    entry_Dx = cs_Dblentry(lf_upbeam, 2, 1, 0.)
+    entry_Dpx = cs_Dblentry(lf_upbeam, 3, 1, 0.)
 
     cs_label(lf_transfer, 0, 0, 'Optic', sticky=W)
     _, openlatts = lattlist()
@@ -275,18 +271,19 @@ def quadscanmeas(frame, w, h):
     driftlab.grid_remove()
     driftent.grid_remove()
 
-    cs_button(lf_data, 0, 0, 'Load', _load)
-    filestr = cs_label(lf_data, 1, 0, '')
+    modemenu = cs_dropd(lf_data, 0, 0, ['Measurement',
+                                        'From File'], action=_mode)
+    filestr = cs_label(lf_data, 1,1, '')
 
-    cs_label(lf_quadrupole, 0, 0, 'Beam energy / MeV')
-    entry_energy = cs_Dblentry(lf_quadrupole, 0, 1, 52)
-    cs_label(lf_quadrupole, 1, 1, 'Quadrupole strength k / (1/m'+uc.squared+')')
-    cs_label(lf_quadrupole, 2, 0, 'Initial (k<0 = axial focus)')
-    entry_ki = cs_Dblentry(lf_quadrupole, 2, 1, -8)
-    cs_label(lf_quadrupole, 3, 0, 'Final')
-    entry_kf = cs_Dblentry(lf_quadrupole, 3, 1, 8)
-    cs_label(lf_quadrupole, 4, 0, 'steps')
-    entry_points = cs_Intentry(lf_quadrupole, 4, 1, 1000)
+
+    cs_label(lf_fit, 0, 0, 'k_x / (1/m'+uc.squared+')')
+    cs_label(lf_fit, 1, 0, 'k_y / (1/m'+uc.squared+')')
+    cs_label(lf_fit, 2, 0, 'Points')
+    entry_kxi = cs_Dblentry(lf_fit, 0, 1, -8)
+    entry_kxf = cs_Dblentry(lf_fit, 0, 2, 8)
+    entry_kyi = cs_Dblentry(lf_fit, 1, 1, -8)
+    entry_kyf = cs_Dblentry(lf_fit, 1, 2, 8)
+    entry_points = cs_Intentry(lf_fit, 2, 1, 1000)
     return
 
 

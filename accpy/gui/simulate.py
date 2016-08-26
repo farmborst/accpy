@@ -4,11 +4,11 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 try:
-    from Tkinter import N, E, S, W, LabelFrame, _setit
+    from Tkinter import N, E, S, W, LabelFrame, _setit, BOTH
     from tkFileDialog import askopenfilename
     from tkMessageBox import showerror
 except:
-    from tkinter import N, E, S, W, LabelFrame, _setit
+    from tkinter import N, E, S, W, LabelFrame, _setit, BOTH
     from tkinter.filedialog import askopenfilename
     from tkinter.messagebox import showerror
 from time import time
@@ -207,8 +207,8 @@ def gui_ramp(frame, w, h):
 def gui_quadscansim(frame, w, h):
     def _start():
         lattice = latticemenu.get()
-        qL = float(entry_qL.get())
         if lattice == 'drift':
+            qL = float(entry_qL.get())
             driftlength = float(entry_dlen.get())
             UC = zeros([6, 1])
             UC[1] = driftlength
@@ -225,7 +225,9 @@ def gui_quadscansim(frame, w, h):
             if i > f:
                 showerror(title='ERROR', message='Please choose a quad before chosen screen')
                 return
+            qL = UC[1, i-1]
             UC = UC[:, i:f]
+
         ki = float(entry_ki.get())
         kf = float(entry_kf.get())
         points = int(entry_points.get())
@@ -247,7 +249,7 @@ def gui_quadscansim(frame, w, h):
         if betx < 0 or bety < 0:
             showerror('ERROR', 'beta function must be positive')
             return
-        runthread(status, tabs, simulate_quadscan,
+        runthread(status, [1, lf_OUT], simulate_quadscan,
                   (ki, kf, qL, UC, points, epsx, betx, alpx,
                    epsy, bety, alpy, epss, Dx, Dpx, energy, particle, data))
 
@@ -263,19 +265,6 @@ def gui_quadscansim(frame, w, h):
 
     def _check(*args):
         lattice = latticemenu.get()
-        def clearfigs1(tabs):
-            close('all')
-            for tab in tabs:
-                # destroy all widgets in fram/tab and close all figures
-                for widget in tab.winfo_children():
-                    widget.destroy()
-
-        def showfigs1(figs, tabs):
-            clearfigs1(tabs)
-            for fig, tab in zip(figs, tabs):
-                canvas = FigureCanvasTkAgg(fig, master=tab)
-                canvas.get_tk_widget().pack()
-                canvas.draw()
         if lattice == 'drift':
             quadN.grid_remove()
             quadmenu.grid_remove()
@@ -302,18 +291,19 @@ def gui_quadscansim(frame, w, h):
             screenmenu.grid()
             quadmenu.grid()
 
-
-    tabs = cs_tabbar(frame, w, h, ['Menu', 'Beam extents'])
-    lf_upbeam = LabelFrame(tabs[0], text="Upstream beam parameters", padx=5, pady=5)
+    frame.pack(fill=BOTH, expand=1)
+    lf_upbeam = LabelFrame(frame, text="Upstream beam parameters", padx=5, pady=5)
     lf_upbeam.grid(row=1, column=0, sticky=W+E+N+S, padx=10, pady=10)
-    lf_transfer = LabelFrame(tabs[0], text="Transport matrix", padx=5, pady=5)
+    lf_transfer = LabelFrame(frame, text="Transport matrix", padx=5, pady=5)
     lf_transfer.grid(row=2, column=0, sticky=W+E+N+S, padx=10, pady=10)
-    lf_quadrupole = LabelFrame(tabs[0], text="Quadrupole range", padx=5, pady=5)
+    lf_quadrupole = LabelFrame(frame, text="Quadrupole range", padx=5, pady=5)
     lf_quadrupole.grid(row=1, column=1, sticky=W+E+N+S, padx=10, pady=10)
-    lf_data = LabelFrame(tabs[0], text="Data comparison", padx=5, pady=5)
+    lf_data = LabelFrame(frame, text="Data comparison", padx=5, pady=5)
     lf_data.grid(row=2, column=1, sticky=W+E+N+S, padx=10, pady=10)
-    cs_button(tabs[0], 4, 3, 'Start', _start)
-    status = cs_label(tabs[0], 4, 4, '')
+    lf_OUT = LabelFrame(frame, text="Results", padx=5, pady=5)
+    lf_OUT.grid(row=3, column=0, columnspan=2, sticky=W+E+N+S, padx=10, pady=10)
+    cs_button(frame, 4, 3, 'Start', _start)
+    status = cs_label(frame, 4, 4, '')
 
     cs_label(lf_upbeam, 1, 2, uc.epsilon+' / nm rad')
     cs_label(lf_upbeam, 1, 3, uc.beta+' / m')

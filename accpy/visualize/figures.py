@@ -25,7 +25,7 @@ def plotstandards(varlist, vallist, w, h):
     dpi = vallist[varlist.index('dpi')]
     fontfamily = vallist[varlist.index('fontfamily')]
     fontsize = vallist[varlist.index('fontsize')]
-    markersize = vallist[varlist.index('markersize')]
+    markersize = float(vallist[varlist.index('markersize')])
     linewidth = vallist[varlist.index('linewidth')]
     axformatterlimits = vallist[varlist.index('axformatterlimits')]
 
