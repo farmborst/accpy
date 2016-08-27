@@ -496,12 +496,6 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     Nfigs = 10
     legs = []
     figs = [Figure() for i in range(Nfigs)]
-    ax = [figs[i].add_subplot(1, 1, 1) for i in range(6)]
-    GS = GridSpec(2, 3)
-    GS = [GS[:2, 0], GS[0, 1:], GS[1, 1:]]
-    ax.append([figs[6].add_subplot(gs) for gs in GS])
-    [ax.append([figs[j].add_subplot(2, 2, i) for i in range(1, 5)]) for j in range(7, 9)]
-    ax.append([figs[9].add_subplot(1, 2, i) for i in range(1, 3)])
     s = [r'Injection''\n(',
          r'Extraction''\n(',
          r'Maximum energy''\n(',
@@ -531,91 +525,103 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     xlab2, xunit2 = 'Energy', 'eV'
 
     # Energy
+    ax = figs[0].add_subplot(1, 1, 1)
     _, mx = SId(nanmean(abs(t)))
     epsT = array([1, -1, 0, 1])*.01*T/mx
     ha = ['left', 'right', 'center', 'left']
     va = ['top', 'bottom', 'bottom', 'bottom']
-    _, _, yprefix, my = plot(ax[0], t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
-    ttn, EEn, _, _ = plot(ax[0], tt, EE, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
-    legs.append(ax[0].legend(fancybox=True, loc='lower center'))
+    _, _, yprefix, my = plot(ax, t, E, '-r', 'Time', 's', 'Energy', 'eV', 'calculated curve')
+    ttn, EEn, _, _ = plot(ax, tt, EE, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
+    legs.append(ax.legend(fancybox=True, loc='center'))
     epsY = array([-1, 0, 1, 0])*.03*max(EEn)
-    annotate(ax[0], ttn, EEn, s1, epsT, epsY, ha, va)
+    annotate(ax, ttn, EEn, s1, epsT, epsY, ha, va)
 
     # Magnetic flux
-    _, _, yprefix, my = plot(ax[1], t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
-    ttn, BBn, _, _ = plot(ax[1], tt, BB, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
-    legs.append(ax[1].legend(fancybox=True, loc='lower center'))
+    ax = figs[1].add_subplot(1, 1, 1)
+    _, _, yprefix, my = plot(ax, t, B, '-r', 'Time', 's', 'Magnetic flux density', 'T', 'calculated curve')
+    ttn, BBn, _, _ = plot(ax, tt, BB, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
+    legs.append(ax.legend(fancybox=True, loc='lower center'))
     epsY = array([-1, 0, 1, 0])*.03*max(BBn)
-    annotate(ax[1], ttn, BBn, s2, epsT, epsY, ha, va)
+    annotate(ax, ttn, BBn, s2, epsT, epsY, ha, va)
 
     # Energy loss
-    _, _, yprefix, my = plot(ax[2], t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
-    ttn, LLn, _, _ = plot(ax[2], tt, LL, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
+    ax = figs[2].add_subplot(1, 1, 1)
+    _, _, yprefix, my = plot(ax, t, loss, '-r', 'Time', 's', 'Energyloss per turn', 'eV', '')
+    ttn, LLn, _, _ = plot(ax, tt, LL, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
     epsY = array([-1, 0, 1, 0])*.03*max(LLn)
-    annotate(ax[2], ttn, LLn, s3, epsT, epsY, ha, va)
+    annotate(ax, ttn, LLn, s3, epsT, epsY, ha, va)
 
     # Acceleration voltage
+    ax = figs[3].add_subplot(1, 1, 1)
     epsT = array([1, -1, 1, 1, 1, -1])*.01*T/mx
     ha = ['left', 'right', 'left', 'left', 'left', 'right']
     va = ['top', 'bottom', 'bottom', 'bottom', 'bottom', 'bottom']
-    _, _, yprefix, my = plot(ax[3], t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
-    ttn, VVn, _, _ = plot(ax[3], tt2, VV, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
+    _, _, yprefix, my = plot(ax, t, volt, '-r', 'Time', 's', 'Required acceleration voltage', 'V', '')
+    ttn, VVn, _, _ = plot(ax, tt2, VV, '+k', '', '', '', '', 'known points', yprefix=yprefix, my=my, setlim=False)
     epsY = array([-1, 0, 1, 0, -1, 1])*.02*max(VVn)
-    annotate(ax[3], ttn, VVn, s4, epsT, epsY, ha, va)
+    annotate(ax, ttn, VVn, s4, epsT, epsY, ha, va)
 
     # Synchronous phase
+    ax = figs[4].add_subplot(1, 1, 1)
     labs = ['Cavity @ {0:g} kV'.format(V_HF/1e3) for V_HF in V_HFs]
     color = iter(cm.rainbow(linspace(0, 1, len(phases))))
-    [plot(ax[4], t, y, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
+    [plot(ax, t, y, '-', 'Time', 's', 'Cavity Phase', r'2$\pi$',
           l, col=next(color), setlim=False) for l, y in zip(labs, phases)]
-    legs.append(ax[4].legend(fancybox=True, loc='center right'))
+    legs.append(ax.legend(fancybox=True, loc='center right'))
 
     # Synchrotron frequency
+    ax = figs[5].add_subplot(1, 1, 1)
     colors = getcolors(len(freqs))
-    [plot(ax[5], tVgZ, y/1e3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
+    [plot(ax, tVgZ, y/1e3, '-', 'Time', 's', 'Synchrotron frequency', r'kHz',
           l, col=c, setlim=False) for l, y, c in zip(labs, freqs, colors)]
-    [ax[5].plot(t3*1e3, x/1e3, '+k', markersize=24.0) for x in FF]
-    legs.append(ax[5].legend(fancybox=True, loc=1))
+    [ax.plot(t3*1e3, x/1e3, '+k', markersize=24.0) for x in FF]
+    legs.append(ax.legend(fancybox=True, loc=1))
 
     # Bunchlength and duration
+    GS = GridSpec(3, 2)
+    GS = [GS[2, :], GS[0, :], GS[1, :]]
+    ax = [figs[6].add_subplot(gs) for gs in GS]
     labs = [r'$\delta_{{E,equilibrium}}$, $V_{{max}} = {0:g}$ kV'.format(V_HF/1e3) for V_HF in V_HFs]
     lss = ['-.' for x in range(len(bdurequis))]
     labs += [r'$\delta_{{E,0}}={0:.1f}$ \textperthousand, $V_{{max}}={1:g}$ kV'.format(y[0], V_HF/1e3) for V_HF, y in product(V_HFs, Semits)]
     lss += ['-' for x in range(len(bdurs))]
-    legplot(ax[6][0], lss, labs, loc=6)
-    Mplot(ax[6][1], tVgZ, bdurequis+bdurs, lss, xlab, xunit, 'Bunch duration', 's', '')
-    Mplot(ax[6][2], tVgZ, blenequis+blens, lss, xlab, xunit, 'Bunch length', 'm', '')
+    legplot(ax[0], lss, labs, loc=6)
+    Mplot(ax[1], tVgZ, bdurequis+bdurs, lss, '', '', 'Bunch duration', 's', '')
+    Mplot(ax[2], tVgZ, blenequis+blens, lss, xlab, xunit, 'Bunch length', 'm', '')
 
     # Emittance
     yunit = r'm $\pi$ rad'
 
     # Radial Emittance
+    ax = [figs[7].add_subplot(2, 2, i) for i in range(1, 5)]
     labs = ['Equilibrium']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Xemits]
     lss = ['-.']+['-' for x in range(len(Xemits))]
     ylab, ylab2 = r'$\epsilon_x$', r'$\epsilon_x^*$'
-    Mplot(ax[7][0], tAI, [Xemitequi]+Xemits, lss, '', '', ylab, yunit, labs)
-    Mplot(ax[7][1], EAI, [Xemitequi]+Xemits, lss, '', '', '', '', '')
-    Mplot(ax[7][2], tAI, [NXemitequi]+NXemits, lss, xlab, xunit, ylab2, yunit, '')
-    Mplot(ax[7][3], EAI, [NXemitequi]+NXemits, lss, xlab2, xunit2, '', '', '')
-    legs.append(ax[7][0].legend(fancybox=True, loc=2))
+    Mplot(ax[0], tAI, [Xemitequi]+Xemits, lss, '', '', ylab, yunit, labs)
+    Mplot(ax[1], EAI, [Xemitequi]+Xemits, lss, '', '', '', '', '')
+    Mplot(ax[2], tAI, [NXemitequi]+NXemits, lss, xlab, xunit, ylab2, yunit, '')
+    Mplot(ax[3], EAI, [NXemitequi]+NXemits, lss, xlab2, xunit2, '', '', '')
+    legs.append(ax[0].legend(fancybox=True, loc=2))
 
     # Axial Emittance
+    ax = [figs[8].add_subplot(2, 2, i) for i in range(1, 5)]
     labs = ['Limit']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Yemits]
     lss = ['-.']+['-' for x in range(len(Yemits))]
     ylab, ylab2 = r'$\epsilon_y$', r'$\epsilon_y^*$'
-    Mplot(ax[8][0], tAI, [Yemitequi]+Yemits, lss, '', '', ylab, yunit, labs)
-    Mplot(ax[8][1], EAI, [Yemitequi]+Yemits, lss, '', '', '', '', '')
-    Mplot(ax[8][2], tAI, [NYemitequi]+NYemits, lss, xlab, xunit, ylab2, yunit, '')
-    Mplot(ax[8][3], EAI, [NYemitequi]+NYemits, lss, xlab2, xunit2, '', '', '')
-    legs.append(ax[8][0].legend(fancybox=True, loc=1))
+    Mplot(ax[0], tAI, [Yemitequi]+Yemits, lss, '', '', ylab, yunit, labs)
+    Mplot(ax[1], EAI, [Yemitequi]+Yemits, lss, '', '', '', '', '')
+    Mplot(ax[2], tAI, [NYemitequi]+NYemits, lss, xlab, xunit, ylab2, yunit, '')
+    Mplot(ax[3], EAI, [NYemitequi]+NYemits, lss, xlab2, xunit2, '', '', '')
+    legs.append(ax[0].legend(fancybox=True, loc=1))
 
     # Longitudinal Emittance
+    ax = [figs[9].add_subplot(1, 2, i) for i in range(1, 3)]
     labs = ['Equilibrium']+[r'$\epsilon_0=$ {} \textperthousand'.format(y[0]) for y in Semits]
     lss = ['-.']+['-' for x in range(len(Semits))]
     ylab, yunit = r'$\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand '
-    Mplot(ax[9][0], tAI, [Semitequi]+Semits, lss, xlab, xunit, ylab, yunit, labs, rescaleY=False)
-    Mplot(ax[9][1], EAI, [Semitequi]+Semits, lss, xlab2, xunit2, '', '', '', rescaleY=False)
-    legs.append(ax[9][0].legend(fancybox=True, loc=1))
+    Mplot(ax[0], tAI, [Semitequi]+Semits, lss, xlab, xunit, ylab, yunit, labs, rescaleY=False)
+    Mplot(ax[1], EAI, [Semitequi]+Semits, lss, xlab2, xunit2, '', '', '', rescaleY=False)
+    legs.append(ax[0].legend(fancybox=True, loc=1))
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]
     return figs

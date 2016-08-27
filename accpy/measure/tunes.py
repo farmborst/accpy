@@ -106,6 +106,7 @@ def measure_tunes(figs, tunestr, mode, filename, f_rf, h, bunch, steps):
     # synchrotron frequency
     ln2_fs = ax2.errorbar(nan, nan, yerr=nan, marker='.', mfc='b', ecolor='b', mec='b', ls='None')
     fig.canvas.draw()
+
     t = linspace(5, 90, steps)  # time in ms
     if mode == 'From File':
         fftdata = load(filename, False, 'fftdata')[0]
@@ -163,4 +164,5 @@ def measure_tunes(figs, tunestr, mode, filename, f_rf, h, bunch, steps):
         sleep(.2)
     if mode == 'Measurement':
         instr.write('TIM:HOR:POS {}'.format(20/1e3))
+        save('syntuneramp', False, t=t, fs=fs[0, :], fse=fs[1, :])
     return figs

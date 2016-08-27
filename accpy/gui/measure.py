@@ -61,7 +61,7 @@ def runthread(status, f_simulate, argstuple):
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 
-def tunes(frame, w, h):
+def tunes(frame, w, h, status, start, stop):
     def _start():
         figs = initfigs(tabs[1:4])
         filename = filestr.get()
@@ -71,7 +71,8 @@ def tunes(frame, w, h):
         bunch = float(entry_bunch.get())
         steps = int(entry_steps.get())
         runthread(status, measure_tunes,
-                  (figs, tunestr, mode, filename, f_rf, h,bunch, steps))
+                  (figs, tunestr, mode, filename, f_rf, h, bunch, steps))
+
     def _load():
         filename = askopenfilename(initialdir='accpy/exampledata/')
         if filename[-5::] != '.hdf5':
@@ -79,11 +80,13 @@ def tunes(frame, w, h):
             showerror('ERROR', 'THIS IS NOT A HDF5 FILE')
         else:
             filestr.set(filename)
+
     def _mode(*args):
         mode = modemenu.get()
         if mode == 'From File':
             cs_button(tabs[0], 3, 1, 'Load', _load)
 
+    start.configure(command=_start)
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Radial', 'Axial', 'Longitudinal',
                                    'Overview'])
 
@@ -110,20 +113,16 @@ def tunes(frame, w, h):
 
     # add tunes to overview tab
     tunestr = [cs_label(tabs[4], i, 0, 'NaN', fg='green') for i in range(3)]
-
-    # last row, column
-    cs_button(tabs[0], 10, 10, 'Start', _start)
-    status = cs_label(tabs[0], 10, 11, '')
     return
 
 
-def chromaticity(frame, w, h):
+def chromaticity(frame, w, h, status, start, stop):
     txt = Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def quadscanmeas(frame, w, h):
+def quadscanmeas(frame, w, h, status, start, stop):
     def _start():
         figs = initfigs([lf_OUT])
         mode = modemenu.get()
@@ -227,7 +226,7 @@ def quadscanmeas(frame, w, h):
             screenmenu.grid()
             quadmenu.grid()
 
-
+    start.configure(command=_start)
     frame.pack(fill=BOTH, expand=1)
     lf_upbeam = LabelFrame(frame, text="Upstream longitudinal beam parameters", padx=5, pady=5)
     lf_upbeam.grid(row=0, column=0, sticky=W+E+N+S, padx=10, pady=10)
@@ -239,8 +238,6 @@ def quadscanmeas(frame, w, h):
     lf_data.grid(row=1, column=1, sticky=W+E+N+S, padx=10, pady=10)
     lf_OUT = LabelFrame(frame, text="Results", padx=5, pady=5)
     lf_OUT.grid(row=2, column=0, columnspan=2, sticky=W+E+N+S, padx=10, pady=10)
-    cs_button(frame, 4, 3, 'Start', _start)
-    status = cs_label(frame, 4, 4, '')
 
     cs_label(lf_upbeam, 0, 0, 'Beam energy / MeV')
     cs_label(lf_upbeam, 1, 0, uc.delta+' / '+uc.ppt)
@@ -287,7 +284,7 @@ def quadscanmeas(frame, w, h):
     return
 
 
-def achroscan(frame, w, h):
+def achroscan(frame, w, h, status, start, stop):
     txt = Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return

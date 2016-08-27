@@ -4,10 +4,12 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 try:
-    from Tkinter import Menu
+    from Tkinter import (Menu, TOP, X, Button, LEFT, Label, StringVar, RAISED,
+                         FLAT)
     from ttk import Frame
 except:
-    from tkinter import Menu
+    from tkinter import (Menu, TOP, X, Button, LEFT, Label, StringVar, RAISED,
+                         FLAT)
     from tkinter.ttk import Frame
 from .file import latticeeditor, settings, defaults
 from .simulate import (gui_twisstrack, gui_parttrack, gui_ramp,
@@ -19,22 +21,32 @@ from ..visualize.figures import plotstandards
 from ..dataio.hdf5 import confload
 
 
-def mainwindow(root, version):
+def mainwindow(root, version, icon_start, icon_stop):
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry('{}x{}'.format(w, h))
     root.wm_title("ACCPY gui {}".format(version))
-    bar, frame = menubar(root, version, w, h)
+    bar, frame, tool_bar = menubar(root, version, w, h, icon_start, icon_stop)
     root.config(menu=bar)
     return
 
 
-def menubar(root, version, w, h):
+def menubar(root, version, w, h, icon_start, icon_stop):
     def clear(frame):
         # destroy all widgets in fram/tab
         for widget in frame.winfo_children():
             widget.destroy()
 
     bar = Menu(root)
+    status = StringVar()
+    status.set('Status')
+    # Start Stop Status toolbar
+    tool_bar = Frame(root, relief=RAISED)
+    stop = Button(master=tool_bar, relief=FLAT, image=icon_stop)
+    start = Button(master=tool_bar, relief=FLAT, image=icon_start)
+    #stop.pack(side=LEFT, padx=2, pady=2)
+    start.pack(side=LEFT, padx=2, pady=2)
+    Label(master=tool_bar, textvariable=status).pack(side=LEFT)
+    tool_bar.pack(side=TOP, fill=X)
 
     # FILE MENU
     FM = Menu(bar, tearoff=0)
@@ -72,25 +84,25 @@ def menubar(root, version, w, h):
     def Simu_twisstrack():
         root.wm_title('accpy gui - simulations: {}'.format(SML[0]))
         clear(frame)
-        gui_twisstrack(frame, w, h)
+        gui_twisstrack(frame, w, h, status, start, stop)
     SM.add_command(label=SML[0], command=Simu_twisstrack)
 
     def Simu_parttrack():
         root.wm_title('accpy gui - simulations: {}'.format(SML[1]))
         clear(frame)
-        gui_parttrack(frame, w, h)
+        gui_parttrack(frame, w, h, status, start, stop)
     SM.add_command(label=SML[1], command=Simu_parttrack)
 
     def Simu_hframp():
         root.wm_title('accpy gui - simulations: {}'.format(SML[2]))
         clear(frame)
-        gui_ramp(frame, w, h)
+        gui_ramp(frame, w, h, status, start, stop)
     SM.add_command(label=SML[2], command=Simu_hframp)
 
     def Simu_quadscan():
         root.wm_title('accpy gui - simulations: {}'.format(SML[2]))
         clear(frame)
-        gui_quadscansim(frame, w, h)
+        gui_quadscansim(frame, w, h, status, start, stop)
     SM.add_command(label=SML[3], command=Simu_quadscan)
     bar.add_cascade(label='Simulation', menu=SM)
 
@@ -104,29 +116,29 @@ def menubar(root, version, w, h):
     def Meas_tunes():
         root.wm_title('accpy gui - measurements: {}'.format(MML[0]))
         clear(frame)
-        tunes(frame, w, h)
+        tunes(frame, w, h, status, start, stop)
     MM.add_command(label=MML[0], command=Meas_tunes)
 
     def Meas_chrom():
         root.wm_title('accpy gui - measurements: {}'.format(MML[1]))
         clear(frame)
-        chromaticity(frame, w, h)
+        chromaticity(frame, w, h, status, start, stop)
     MM.add_command(label=MML[1], command=Meas_chrom)
 
     def Meas_QuadScan():
         root.wm_title('accpy gui - measurements: {}'.format(MML[2]))
         clear(frame)
-        quadscanmeas(frame, w, h)
+        quadscanmeas(frame, w, h, status, start, stop)
     MM.add_command(label=MML[2], command=Meas_QuadScan)
 
     def Meas_AchroScan():
         root.wm_title('accpy gui - measurements: {}'.format(MML[3]))
         clear(frame)
-        achroscan(frame, w, h)
+        achroscan(frame, w, h, status, start, stop)
     MM.add_command(label=MML[3], command=Meas_AchroScan)
     bar.add_cascade(label='Measurement', menu=MM)
 
-    # Entries for Optimization menu
+    # Optimization menu
     OM = Menu(bar, tearoff=0)
     OML = ['Find Transverse emittance exchange section',
            'Twiss matching']
@@ -134,17 +146,17 @@ def menubar(root, version, w, h):
     def Opti_emittex():
         root.wm_title('accpy gui - optimizations: {}'.format(OML[0]))
         clear(frame)
-        emittex(frame, w, h)
+        emittex(frame, w, h, status, start, stop)
     OM.add_command(label=OML[0], command=Opti_emittex)
 
     def Opti_twissmatch():
         root.wm_title('accpy gui - measurements: {}'.format(OML[1]))
         clear(frame)
-        twissmatch(frame, w, h)
+        twissmatch(frame, w, h, status, start, stop)
     OM.add_command(label=OML[1], command=Opti_twissmatch)
     bar.add_cascade(label='Optimization', menu=OM)
 
-    # Entries for Help menu
+    # Help menu
     HM = Menu(bar, tearoff=0)
     HML = ['Documentation',
            'About ACCPY...']
@@ -167,4 +179,4 @@ def menubar(root, version, w, h):
     except:
         varlist, vallist = defaults('./settings.conf')
     plotstandards(varlist, vallist, w, h)
-    return bar, frame
+    return bar, frame, tool_bar

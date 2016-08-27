@@ -58,7 +58,7 @@ def runthread(status, tabs, f_simulate, argstuple):
     t_run.start()
 
 
-def gui_twisstrack(frame, w, h):
+def gui_twisstrack(frame, w, h, status, start, stop):
     def _start():
         latt = latticemenu.get()
         if latt in closedlatts:
@@ -75,6 +75,7 @@ def gui_twisstrack(frame, w, h):
         runthread(status, tabs, lsd,
                   (closed, latt, slic, mode, particles, rounds))
 
+    start.configure(command=_start)
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Radial', 'Axial', 'Dispersion',
                                    'Overview', 'Parameters', 'Beam extents'])
 
@@ -83,13 +84,10 @@ def gui_twisstrack(frame, w, h):
     closedlatts, openlatts = lattlist()
     latticemenu = cs_dropd(tabs[0], 2, 1, closedlatts + openlatts)
     entry_slice = cs_Intentry(tabs[0], 2, 2, 1e3)
-
-    cs_button(tabs[0], 3, 3, 'Start', _start)
-    status = cs_label(tabs[0], 3, 4, '')
     return
 
 
-def gui_parttrack(frame, w, h):
+def gui_parttrack(frame, w, h, status, start, stop):
     def _start():
         latt = latticemenu.get()
         slic = int(entry_slice.get())
@@ -116,9 +114,7 @@ def gui_parttrack(frame, w, h):
             roundslabel.set('Nr. of rounds')
             entry_round.grid(row=2, column=4)
 
-
-
-
+    start.configure(command=_start)
     tabs = cs_tabbar(frame, w, h, [' Menu ', ' X ', ' X\' ', ' Y ', ' Y\' ',
                                    ' Z ', ' Z\' ', ' Overview ',
                                    ' Transverse phase space '])
@@ -132,12 +128,10 @@ def gui_parttrack(frame, w, h):
     entry_slice = cs_Intentry(tabs[0], 2, 2, 100)
     entry_parts = cs_Intentry(tabs[0], 2, 3, cpu_count())
     entry_round = cs_Intentry(tabs[0], 2, 4, 100)
-    cs_button(tabs[0], 3, 5, 'Start', _start)
-    status = cs_label(tabs[0], 3, 6, '')
     return
 
 
-def gui_ramp(frame, w, h):
+def gui_ramp(frame, w, h, status, start, stop):
     def _start():
         points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
@@ -159,6 +153,7 @@ def gui_ramp(frame, w, h):
                   (T_per, t_inj, t_ext, text2, E_inj, E_ext, latt, points,
                    f_HF, V_HFs, emitxs, emitys, emitss))
 
+    start.configure(command=_start)
     tabs = cs_tabbar(frame, w, h, ['Menu', 'Energy', 'Magnetic Flux',
                                    'Energy loss', 'Acceleration voltage',
                                    'Synchronous phase',
@@ -174,8 +169,8 @@ def gui_ramp(frame, w, h):
     lattice = cs_dropd(tabs[0], 2, 1, closedlatts)
     entry_Tper = cs_Dblentry(tabs[0], 2, 2, 1e-1)
     entry_tinj = cs_Dblentry(tabs[0], 2, 3, 5518.944e-6)
-    entry_text = cs_Dblentry(tabs[0], 2, 4, 38377.114e-6)
-    entry_tex2 = cs_Dblentry(tabs[0], 2, 5, 57076.1e-6)
+    entry_text = cs_Dblentry(tabs[0], 2, 4, 0.03839) # 38377.114e-6
+    entry_tex2 = cs_Dblentry(tabs[0], 2, 5, 0.05696)   # 57076.1e-6
 
     cs_label(tabs[0], 3, 1, 'Calculation points')
     cs_label(tabs[0], 3, 2, 'Cavity frequency / MHz')
@@ -194,17 +189,14 @@ def gui_ramp(frame, w, h):
     cs_label(tabs[0], 6, 4, 'nm '+uc.pi+' rad')
     cs_label(tabs[0], 7, 4, 'nm '+uc.pi+' rad')
     cs_label(tabs[0], 8, 4, uc.ppt)
-    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '700 2000')
-    entry_emitx = cs_Strentry(tabs[0], 6, 3, '200 300')
-    entry_emity = cs_Strentry(tabs[0], 7, 3, '200 300')
-    entry_emits = cs_Strentry(tabs[0], 8, 3, '1')
-
-    cs_button(tabs[0], 9, 6, 'Start', _start)
-    status = cs_label(tabs[0], 9, 7, '')
+    entry_V_HF = cs_Strentry(tabs[0], 6, 1, '720 20000')
+    entry_emitx = cs_Strentry(tabs[0], 6, 3, '100 200 300')
+    entry_emity = cs_Strentry(tabs[0], 7, 3, '100 200 300')
+    entry_emits = cs_Strentry(tabs[0], 8, 3, '1 2 3')
     return
 
 
-def gui_quadscansim(frame, w, h):
+def gui_quadscansim(frame, w, h, status, start, stop):
     def _start():
         lattice = latticemenu.get()
         if lattice == 'drift':
@@ -291,6 +283,7 @@ def gui_quadscansim(frame, w, h):
             screenmenu.grid()
             quadmenu.grid()
 
+    start.configure(command=_start)
     frame.pack(fill=BOTH, expand=1)
     lf_upbeam = LabelFrame(frame, text="Upstream beam parameters", padx=5, pady=5)
     lf_upbeam.grid(row=1, column=0, sticky=W+E+N+S, padx=10, pady=10)
@@ -302,8 +295,6 @@ def gui_quadscansim(frame, w, h):
     lf_data.grid(row=2, column=1, sticky=W+E+N+S, padx=10, pady=10)
     lf_OUT = LabelFrame(frame, text="Results", padx=5, pady=5)
     lf_OUT.grid(row=3, column=0, columnspan=2, sticky=W+E+N+S, padx=10, pady=10)
-    cs_button(frame, 4, 3, 'Start', _start)
-    status = cs_label(frame, 4, 4, '')
 
     cs_label(lf_upbeam, 1, 2, uc.epsilon+' / nm rad')
     cs_label(lf_upbeam, 1, 3, uc.beta+' / m')
