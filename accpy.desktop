@@ -4,9 +4,9 @@ Name=ACCPY
 
 GenericName=Accelerator Simulations
 
-Exec=bash -c 'cd .../accpy/ && /usr/bin/python .../accpy/startgui.py'
+Exec=bash -c 'cd /home/inp/git/github/accpy/ && /usr/bin/python /home/inp/git/github/accpy/startgui.py'
 Terminal=true
-Icon=.../accpy/icon.svg
+Icon=/home/inp/git/github/accpy/accpy/icons/icon.svg
 Type=Application
 
 Categories=Science;

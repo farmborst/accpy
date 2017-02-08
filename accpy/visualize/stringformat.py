@@ -6,7 +6,64 @@ from __future__ import division
 from math import log10
 
 
+class struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 class uc:
+    class greek:
+        Alpha   = u'\u0391'
+        Beta    = u'\u0392'
+        Gamma   = u'\u0393'
+        Delta   = u'\u0394'
+        Epsilon = u'\u0395'
+        Zeta    = u'\u0396'
+        Eta     = u'\u0397'
+        Theta   = u'\u0398'
+        Iota    = u'\u0399'
+        Kappa   = u'\u039a'
+        Lambda  = u'\u039b'
+        Mu      = u'\u039c'
+        Nu      = u'\u039d'
+        Xi      = u'\u039e'
+        Omicron = u'\u039f'
+        Pi      = u'\u03a0'
+        Rho     = u'\u03a1'
+        Sigma   = u'\u03a3'
+        Tau     = u'\u03a4'
+        Upsilon = u'\u03a5'
+        Phi     = u'\u03a6'
+        Chi     = u'\u03a7'      
+        Psi     = u'\u03a8'
+        Omega   = u'\u03a9'
+        alpha   = u'\u03b1'
+        beta    = u'\u03b2'
+        gamma   = u'\u03b3'
+        delta   = u'\u03b4'
+        epsilon = u'\u03b5'
+        zeta    = u'\u03b6'
+        eta     = u'\u03b7'
+        theta   = u'\u03b8'
+        iota    = u'\u03b9'
+        kappa   = u'\u03ba'
+        lamda   = u'\u03bb'
+        mu      = u'\u03bc'
+        nu      = u'\u03bd'
+        xi      = u'\u03be'
+        omicron = u'\u03bf'
+        pi      = u'\u03c0'
+        rho     = u'\u03c1'
+        sigma   = u'\u03c3'
+        tau     = u'\u03c4'
+        upsilon = u'\u03c5'
+        phi     = u'\u03c6'
+        chi     = u'\u03c7'
+        psi     = u'\u03c8'
+        omega   = u'\u03c9'
+    class math:
+        permille = u'\u2030'
+        squared  = u'\u00B2'
     pi = u'\u03c0'
     ppt = u'\u2030'
     squared = u'\u00B2'
@@ -14,7 +71,6 @@ class uc:
     beta = u'\u03B2'
     delta =	u"\u03B4"
     epsilon = u'\u03B5'
-
 
 
 def SI(d, significantfigures=4):
