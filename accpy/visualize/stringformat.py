@@ -6,11 +6,6 @@ from __future__ import division
 from math import log10
 
 
-class struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
 class uc:
     class greek:
         Alpha   = u'\u0391'

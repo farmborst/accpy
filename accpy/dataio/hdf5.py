@@ -8,32 +8,40 @@ from time import strftime
 
 
 def save(filename, showinfo, **namesandvariables):
-    ''' save(filename,variables(e.g. a=a, b=b, ...))
+    ''' save dataset to hdf5 format
     input:
         - desired filename as string
         - names = values of variables to be saved
     return:
-        - saves data to "datetime_filename.hdf5 in working directory"
-    notice:
-        accepted datatypes:
-            -
+        - saves data to "timestamp_filename.hdf5 in working directory"
+        - complete filename is returned
+    usage:
+        1. save(filename, True. a=2, b='foo', c=1.337, d=[1, 2, 'c'])
+            accepted datatypes:
+                - int   -> numpy.int64
+                - str   -> str
+                - float -> numpy.float64
+                - list  -> numpy.ndarray of:
+                                - np.string__   if >0 string
+                                - np.float64    if >0 float
+                                - np.int64      if only ints
+        2. 
     '''
     timstamp = strftime('%Y%m%d%H%M%S')
     filename = ''.join([timstamp, '_', filename, '.hdf5'])
-    hdf5_fid = h5pyFile(filename, 'w')
+    hdf5_fid = h5pyFile(filename, 'w')              
     if showinfo:
         print('\n==========================================================')
         print('Beginning to save to %s ...' % filename)
         print('\n----------------------------------------------------------')
-        for key, value in namesandvariables.iteritems():
-            print('Saving values in %s ... ' % key)
+    for key, value in namesandvariables.iteritems():
+            if showinfo:
+                print('Saving values in %s ... ' % key)
             hdf5_fid.create_dataset(key, data=value)
+    if showinfo:
         print('\n----------------------------------------------------------')
         print('... finished saving to %s !' % filename)
         print('\n==========================================================')
-    else:
-        for key, value in namesandvariables.iteritems():
-            hdf5_fid.create_dataset(key, data=value)
     hdf5_fid.close()
     return filename
 
@@ -41,13 +49,12 @@ def save(filename, showinfo, **namesandvariables):
 def load(filename, showinfo, *varnames):
     ''' load(filename,variables(e.g. 'a', 'b', ...))
     input:
-        - desired filename (as string)
+        - filename (as string)
         - names of variables and values to be loaded (as string)
     return:
         - wanted variables are loaded from filename
     notice:
-        use with files saved with mypy.save
-        -
+        use with files saved with accpy.dataio.save
     '''
     if filename[-5:] != '.hdf5':
         filename = ''.join([filename, '.hdf5'])
@@ -58,8 +65,9 @@ def load(filename, showinfo, *varnames):
         print('Beginning to load from %s ...' % filename)
         print('\n----------------------------------------------------------')
         for arg in varnames:
-            print('Loading values from %s ...' % arg)
-            data.append(fid[arg].value)
+            value = fid[arg].value
+            print('Loading values from {0:} {1:} ... '.format(arg, type(value)))
+            data.append(value)
         print('\n----------------------------------------------------------')
         print('... finished loading from %s !' % filename)
         print('\n==========================================================')

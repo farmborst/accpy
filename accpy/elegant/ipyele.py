@@ -4,12 +4,20 @@ author:     felix.kramer(at)physik.hu-berlin.de
 """
 from __future__ import print_function, division
 from subprocess import Popen, PIPE, STDOUT
-from numpy import shape, array, max as npmax
+from numpy import shape, array, max as npmax, argmax, roll, float64, core, min
 from matplotlib.pylab import (plot, subplot, xlabel, ylabel, twinx, gca, xlim,
                               ylim, annotate)
+import matplotlib.patches as patches
+from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, HPacker, VPacker
 from IPython.display import display, Javascript
 from . import sdds
 from ..visualize.stringformat import uc
+
+
+class struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
 
 def elegant(filename):
     processstring = "export RPN_DEFNS='/home/inp/defns.rpn' && elegant " + filename
@@ -41,6 +49,7 @@ def sddsload(filename, verbose=False):
     else:
         colvals = [array(val) for val in colvals]
     coldict = dict(zip(cols, colvals))
+    
 
     if verbose:
         # print information on loaded data
@@ -53,8 +62,12 @@ def sddsload(filename, verbose=False):
         [print('{0:} {1:}'.format(key, shape(val))) for key, val in coldict.items()]
         print()
 
-    return data, pardict, coldict
-    
+    return pardict, coldict
+#    parstruct = struct(**pardict)
+#    colstruct = struct(**coldict)
+#    return parstruct, colstruct
+
+
 def eleplot(datadict, x, y, *args, **kwargs):
     try:
         selected = kwargs['sel']
@@ -102,7 +115,27 @@ def trackplot2(datadict, abscissa='t'):
     eleplot(datadict, 'y', 'yp', '.')
 
 
-def twissplot(coldict, pardict):
+def twissplot(pardict, coldict):
+    L = npmax(coldict['s'])
+    print('L = {:}'.format(L))
+    print('Qx = {:}'.format(pardict['nux'][0]))
+    print('Qy = {:}'.format(pardict['nuy'][0]))
+    print(uc.greek.alpha + 'p = {:e}'.format(pardict['alphac'][0]))
+    
+    plot(coldict, 's', 'betax', '-g')
+    eleplot(coldict, 's', 'betay', '-b')
+    twinx()
+    eleplot(coldict, 's', 'etax', '-r')
+    
+    # Latteice graphics vertical position and size (axis coordinates!)
+    lypos = gca().get_ylim()[1]
+    tp = Twissplot(lypos = lypos, lysize = lypos*0.12)
+    tp.axislabels(yscale=0.5)
+    tp.paintlattice(coldict, 0, L, ec=False, fscale=2)
+    xlim(0, L)
+
+
+def b2twissplot(coldict, pardict):
     L = npmax(coldict['s'])
     print('L = {:}'.format(L))
     print('Qx = {:}'.format(pardict['nux'][0]))
@@ -142,31 +175,26 @@ def autoscroll(threshhold):
     display(Javascript(javastring))
 
 
-import numpy as np
-import matplotlib.patches as patches
-from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, HPacker, VPacker
 class Twissplot():
-    lypos = None
-    lysize = None
     Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
     Tnames = ['Landau + BAM WLS7','MPW','U41','UE49','UE46','CPMU17 + UE48 (EMIL)','PSF WLS7','Cavities']
-    names = {'D': Dnames, 'T' : Tnames, 'S' :  np.core.defchararray.add(Dnames,np.core.defchararray.add(' + ',Tnames))}
+    names = {'D': Dnames, 'T' : Tnames, 'S' :  core.defchararray.add(Dnames,core.defchararray.add(' + ',Tnames))}
             
     def __init__(self, lypos = 25, lysize = 3):
         self.lypos = lypos
         self.lysize = lysize
     
-    def getrolled(self,s,y,fmt=None): # access lattice from -120 to 120m
-        x = np.array(s,dtype=np.float64)
-        y = np.array(y,dtype=np.float64)
-        x[x > 120] = x[x > 120] - 240.0
-        ishift = np.argmax(x < 0)
-        x = np.roll(x,-ishift)
-        y = np.roll(y,-ishift)
-        if fmt:
-            return x,y,fmt
-        else:
-            return x,y
+#    def getrolled(self,s,y,fmt=None): # access lattice from -120 to 120m
+#        x = array(s,dtype=float64)
+#        y = array(y,dtype=float64)
+#        x[x > 120] = x[x > 120] - 240.0
+#        ishift = argmax(x < 0)
+#        x = roll(x,-ishift)
+#        y = roll(y,-ishift)
+#        if fmt:
+#            return x,y,fmt
+#        else:
+#            return x,y
 
     # Note:
     # It seem elegant twiss-ouput always prints the length, type and name
@@ -186,13 +214,13 @@ class Twissplot():
         en = d['ElementName']
         if rolled:
             s[s> 120] = s[s > 120] - 240.0
-            ishift = np.argmax(s < 0)    
-            s = np.roll(s,-ishift)
-            et = np.roll(et,-ishift)
-            en = np.roll(en,-ishift)
+            ishift = argmax(s < 0)    
+            s = roll(s,-ishift)
+            et = roll(et,-ishift)
+            en = roll(en,-ishift)
 
-        i0 = np.argmax(s >= s0)
-        i1 = np.argmax(s >= s1)
+        i0 = argmax(s >= s0)
+        i1 = argmax(s >= s1)
         #print i0,i1
         start = s0
         for i in range(i0,i1 + 1):
@@ -204,7 +232,7 @@ class Twissplot():
             if i < i1:
                 if et[i] == et[i+1]:
                     continue
-            end = np.min((s[i],s1))
+            end = min((s[i],s1))
             l = end - start
             #print i, s[i], et[i], en[i], '    length of element:', l
             col = 'none'
@@ -241,7 +269,7 @@ class Twissplot():
         anchored_ybox = AnchoredOffsetbox(loc=8, child=ybox, pad=0., frameon=False, bbox_to_anchor=(-0.08*yscale, 0.15), 
                                           bbox_transform=gca().transAxes, borderpad=0.)
         gca().add_artist(anchored_ybox)
-        #ylim(-1)
+        ylim(-1)
 
 
     def plotsection(self,d,stype,nr):
@@ -262,7 +290,7 @@ class Twissplot():
         else:
             plot(d.s, d.betax,'g-')
             plot(d.s, d.betay,'b-')
-            plot(d.s, 10* np.array(d.etax,dtype=np.float64) ,'r-')
+            plot(d.s, 10* array(d.etax,dtype=float64) ,'r-')
             rolled=False
 
         annotate(stype+'{0:0n}'.format(nr),xy=((s1+s0)/2.0,25-5), fontsize=20,ha='center',va='top',zorder=105)
