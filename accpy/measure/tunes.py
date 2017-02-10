@@ -7,7 +7,7 @@ from numpy import (linspace, zeros, nan, sqrt, shape, nanmean, nanstd, array,
                    nanargmax)
 from struct import unpack
 from time import sleep
-from ..dataio.hdf5 import load, save
+from ..dataio.hdf5 import h5load, h5save
 
 
 def get_fftdata(instr, t, f_span, f_cent):  # measurement
@@ -109,7 +109,7 @@ def measure_tunes(figs, tunestr, mode, filename, f_rf, h, bunch, steps):
 
     t = linspace(5, 90, steps)  # time in ms
     if mode == 'From File':
-        fftdata = load(filename, False, 'fftdata')[0]
+        fftdata = h5load(filename, False)['fftdata']
         points = shape(fftdata)[2]
     elif mode == 'Measurement':
         # test scope communication
@@ -164,5 +164,5 @@ def measure_tunes(figs, tunestr, mode, filename, f_rf, h, bunch, steps):
         sleep(.2)
     if mode == 'Measurement':
         instr.write('TIM:HOR:POS {}'.format(20/1e3))
-        save('syntuneramp', False, t=t, fs=fs[0, :], fse=fs[1, :])
+        h5save('syntuneramp', False, t=t, fs=fs[0, :], fse=fs[1, :])
     return figs

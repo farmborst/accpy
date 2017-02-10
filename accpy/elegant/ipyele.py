@@ -14,11 +14,6 @@ from . import sdds
 from ..visualize.stringformat import uc
 
 
-class struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
 def elegant(filename):
     processstring = "export RPN_DEFNS='/home/inp/defns.rpn' && elegant " + filename
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
