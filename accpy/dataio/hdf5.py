@@ -12,7 +12,7 @@ class struct(object):
         self.__dict__.update(entries)
 
 
-def h5save(filename, showinfo, **namesandvariables):
+def h5save(filename, verbose, **namesandvariables):
     ''' save dataset to hdf5 format
     input:
         - desired filename as string
@@ -26,10 +26,10 @@ def h5save(filename, showinfo, **namesandvariables):
                             'b' : 'foo',
                             'c' : 1.337,
                             'd' : [1, 2, 'c']}
-                save(filename, True. **datadict)
+                h5save(filename, True. **datadict)
         2.  alternative 
                 a=2, b='foo', c=1.337, d=[1, 2, 'c']
-                save(filename, True. a=a, b=b, c=c, d=d)
+                h5save(filename, True. a=a, b=b, c=c, d=d)
                 accepted datatypes:
                     - int   -> numpy.int64
                     - str   -> str
@@ -43,15 +43,15 @@ def h5save(filename, showinfo, **namesandvariables):
     timstamp = strftime('%Y%m%d%H%M%S')
     filename = ''.join([timstamp, '_', filename, '.hdf5'])
     hdf5_fid = h5pyFile(filename, 'w')              
-    if showinfo:
+    if verbose:
         print('\n==========================================================')
         print('Beginning to save to %s ...' % filename)
         print('\n----------------------------------------------------------')
     for key, value in namesandvariables.iteritems():
-            if showinfo:
+            if verbose:
                 print('Saving values in %s ... ' % key)
             hdf5_fid.create_dataset(key, data=value)
-    if showinfo:
+    if verbose:
         print('\n----------------------------------------------------------')
         print('... finished saving to %s !' % filename)
         print('\n==========================================================')
@@ -59,8 +59,8 @@ def h5save(filename, showinfo, **namesandvariables):
     return filename
 
 
-def h5load(filename, showinfo):
-    ''' load(filename,variables(e.g. 'a', 'b', ...))
+def h5load(filename, verbose):
+    ''' h5load(filename, verbose)
     input:
         - filename (as string)
         - names of variables and values to be loaded (as string)
@@ -73,7 +73,7 @@ def h5load(filename, showinfo):
         filename = ''.join([filename, '.hdf5'])
     fid = h5pyFile(filename, 'r')
     data = {}
-    if showinfo:
+    if verbose:
         print('\n==========================================================')
         print('Beginning to load from %s ...' % filename)
         print('\n----------------------------------------------------------')

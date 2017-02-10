@@ -12,6 +12,7 @@ from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, HPacker, VPacker
 from IPython.display import display, Javascript
 from . import sdds
 from ..visualize.stringformat import uc
+from ..dataio.hdf5 import h5save
 
 
 def elegant(filename):
@@ -56,11 +57,29 @@ def sddsload(filename, verbose=False):
         print(Ncols, "Columns:")
         [print('{0:} {1:}'.format(key, shape(val))) for key, val in coldict.items()]
         print()
+    
+    data = pardict
+    data.update(coldict)
+    return data
 
-    return pardict, coldict
-#    parstruct = struct(**pardict)
-#    colstruct = struct(**coldict)
-#    return parstruct, colstruct
+
+def sdds2hdf5(filename, verbose=False):
+    data = sdds.SDDS(0)
+    data.load(filename)
+
+    pars = data.parameterName
+    parvals = data.parameterData
+    datadict = dict(zip(pars, parvals))
+
+    cols = data.columnName
+    colvals = data.columnData
+    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :( 
+    if shape(colvals[0])[0]==1:
+        colvals = [array(val).T for val in colvals]
+    else:
+        colvals = [array(val) for val in colvals]
+    datadict.update(dict(zip(cols, colvals)))
+    h5save(filename, verbose, **datadict)        
 
 
 def eleplot(datadict, x, y, *args, **kwargs):
@@ -110,23 +129,23 @@ def trackplot2(datadict, abscissa='t'):
     eleplot(datadict, 'y', 'yp', '.')
 
 
-def twissplot(pardict, coldict):
-    L = npmax(coldict['s'])
+def twissplot(data):
+    L = npmax(data['s'])
     print('L = {:}'.format(L))
-    print('Qx = {:}'.format(pardict['nux'][0]))
-    print('Qy = {:}'.format(pardict['nuy'][0]))
-    print(uc.greek.alpha + 'p = {:e}'.format(pardict['alphac'][0]))
+    print('Qx = {:}'.format(data['nux'][0]))
+    print('Qy = {:}'.format(data['nuy'][0]))
+    print(uc.greek.alpha + 'p = {:e}'.format(data['alphac'][0]))
     
-    plot(coldict, 's', 'betax', '-g')
-    eleplot(coldict, 's', 'betay', '-b')
+    eleplot(data, 's', 'betax', '-g')
+    eleplot(data, 's', 'betay', '-b')
     twinx()
-    eleplot(coldict, 's', 'etax', '-r')
+    eleplot(data, 's', 'etax', '-r')
     
     # Latteice graphics vertical position and size (axis coordinates!)
     lypos = gca().get_ylim()[1]
     tp = Twissplot(lypos = lypos, lysize = lypos*0.12)
     tp.axislabels(yscale=0.5)
-    tp.paintlattice(coldict, 0, L, ec=False, fscale=2)
+    tp.paintlattice(data, 0, L, ec=False, fscale=2)
     xlim(0, L)
 
 
