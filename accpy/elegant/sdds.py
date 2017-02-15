@@ -1,4 +1,4 @@
-import sddsdata, sys, time
+import sddsdata, time
 
 class SDDS:
      """This class implements SDDS datasets."""
