@@ -6,7 +6,7 @@ author:
 from __future__ import division, print_function
 from numpy import (linspace, arange, concatenate, pi, complex128, zeros,
                    empty, angle, unwrap, diff, abs as npabs, ones, vstack, exp,
-                   sin, log, linalg, polyfit)
+                   sin, log, linalg, polyfit, shape)
 import scipy.optimize as scop
 import pyfftw
 try:
@@ -17,6 +17,7 @@ from ..math.specialfuns import hanning
 
 n = pyfftw.simd_alignment
 effort = ['FFTW_ESTIMATE', 'FFTW_MEASURE', 'FFTW_PATIENT', 'FFTW_EXHAUSTIVE']
+
 
 def init_pyfftw(x, effort=effort[0], wis=False):
     N = len(x)
@@ -32,15 +33,19 @@ def init_pyfftw(x, effort=effort[0], wis=False):
     return fft, ifft
 
 
+def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
+             dump=0):
+    beg, end = clip
+    counts = counts[:-dump, beg:end]
 
-def evaltswa(counts, bunchcurrents, effort='FFTW_MEASURE'):
-    fs = 1.2495*1e6  # sampling frequency in Hz
+    N = shape(counts)[1]      # number of points taken per measurement
+    n = len(bunchcurrents)    # number of measurements made
+    fs = 1.2495*1e6           # sampling frequency in Hz
     dt = 1/fs
-    t = arange(len(counts))*dt*1e3  # time in ms
+    t = arange(N)*dt*1e3  # time in ms
     bbfbcntsnorm = (counts.T/bunchcurrents).T
 
-    N = len(bbfbcntsnorm[0, :])
-    n = len(bbfbcntsnorm[:, 0])
+
     with open('calib_InterpolatedUnivariateSpline.pkl', 'rb') as fh:
         calib = pickle.load(fh)
     bbfbpos = [calib(bbfbcntsnorm[i, :]) for i in range(n)]
@@ -57,7 +62,7 @@ def evaltswa(counts, bunchcurrents, effort='FFTW_MEASURE'):
     # prepare frequency filter
     fcent, fsigm = 190, 50
     fleft, fright = fcent - fsigm, fcent + fsigm
-    pts_lft = sum(fd < fleft )
+    pts_lft = sum(fd < fleft)
     pts_rgt = sum(fd > fright)
     pts_roi = len(fd) - pts_lft - pts_rgt
     frequencyfilter = concatenate((zeros(pts_lft), hanning(pts_roi), zeros(pts_rgt+N/2)))
@@ -71,7 +76,7 @@ def evaltswa(counts, bunchcurrents, effort='FFTW_MEASURE'):
     instantaneous_phase = empty([n, N])
     instantaneous_frequency = empty([n, N-1])
 
-    for i in range(n): 
+    for i in range(n):
         # initialise pyfftw for both signals
         myfftw, myifftw = init_pyfftw(bbfbpos[i], wis=wisdom)
 
@@ -132,20 +137,19 @@ def evaltswa(counts, bunchcurrents, effort='FFTW_MEASURE'):
     amp(t) = fdamp -> tau
     f(t) = a*exp(2*-t/tau) + b
     '''
-    dump = 16
     fitfun = lambda t, a, b, c, f, d, tau: a + b*sin(c + t*f) - d*exp(2*-t/tau)
     f_instfreq = []
-    for i in range(n-dump):
+    for i in range(n):
         popt, pcov = scop.curve_fit(fitfun, t2, signal[i]/1e3, p0=[194.5, 0.6, 1, 44.5, 7, 1.3])
-        f_instfreq.append(lambda t, a=popt[0], d= popt[4], tau=popt[5]: a - d*exp(2*-t/tau))
-    
-    ''' Amolitude dependant tune shift
+        f_instfreq.append(lambda t, a=popt[0], d=popt[4], tau=popt[5]: a - d*exp(2*-t/tau))
+
+    ''' Amplitude dependant tune shift
     '''
-    tswa, b = empty(n-dump), empty(n-dump)
-    for i in range(n-dump):
+    tswa, b = empty(n), empty(n)
+    for i in range(n):
         ampl = fdamp[i](t2)
         freq = f_instfreq[i](t2)
         tswa[i], b[i] = polyfit(ampl**2, freq, 1)
         fitfun = lambda t: tswa[i]*t + b[i]
-    
+
     return t, t2, bbfbcntsnorm, amplit, fdamp, signal, f_instfreq
