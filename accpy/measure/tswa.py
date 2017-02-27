@@ -34,9 +34,13 @@ def init_pyfftw(x, effort=effort[0], wis=False):
 
 
 def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
-             dump=0):
+             dump=0, fitorder=1):
     beg, end = clip
-    counts = counts[:-dump, beg:end]
+    if dump > 0:
+        counts = counts[:-dump, beg:end]
+        bunchcurrents = bunchcurrents[:-dump]
+    else:
+        counts = counts[:, beg:end]
 
     N = shape(counts)[1]      # number of points taken per measurement
     n = len(bunchcurrents)    # number of measurements made
@@ -108,7 +112,6 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
     * head tail damping
         > analytic two particle modell shows directional interaction from head to tail and position interchange
     '''
-
     beg, end = 23, 6000
     t2 = linspace(0, t[-1], N-1)[beg:end]
     amplit = [amplitude_envelope[i, beg:end] for i in range(n)]
@@ -145,11 +148,10 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
 
     ''' Amplitude dependant tune shift
     '''
-    tswa, b = empty(n), empty(n)
+    tswa = []
     for i in range(n):
         ampl = fdamp[i](t2)
         freq = f_instfreq[i](t2)
-        tswa[i], b[i] = polyfit(ampl**2, freq, 1)
-        fitfun = lambda t: tswa[i]*t + b[i]
+        tswa.append(polyfit(ampl**2, freq, fitorder))
 
-    return t, t2, bbfbcntsnorm, amplit, fdamp, signal, f_instfreq
+    return t, t2, bbfbcntsnorm, amplit, fdamp, signal, f_instfreq, tswa
