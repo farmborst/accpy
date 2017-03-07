@@ -8,6 +8,7 @@ from numpy import (linspace, arange, concatenate, pi, complex128, zeros,
                    empty, angle, unwrap, diff, abs as npabs, ones, vstack, exp,
                    sin, log, linalg, polyfit, shape)
 import scipy.optimize as scop
+from scipy.signal import fftconvolve
 import pyfftw
 try:
     import cPickle as pickle
@@ -115,36 +116,45 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
     beg, end = 23, 6000
     t2 = linspace(0, t[-1], N-1)[beg:end]
     amplit = [amplitude_envelope[i, beg:end] for i in range(n)]
+
+#    def smooth(y, box_pts):
+#        box = ones(box_pts)/box_pts
+#        return fftconvolve(y, box, mode='same')
+#    signal = [smooth(instantaneous_frequency[i, :], 300)[beg:end] for i in range(n)]
+
     signal = [instantaneous_frequency[i, :][beg:end] for i in range(n)]
     fdamp = []
-    initialamp = empty(n)
+    initialamp, tau_coherent = empty(n), empty(n)
     for i in range(n):
         '''
-        ln[A*e^(dt)] = ln(A) + d*t
+        ln[A*e^(d*t)] = ln(A) + d*t
         from linear fit: y = m*t + c we gain:
                      A = e^c
                      d = m
         '''
         M = vstack([t2, ones(len(t2))]).T
         tau_inverse, const = linalg.lstsq(M, log(amplit[i]))[0]
-        tau_coherent = -1/tau_inverse
+        tau_coherent[i] = -1/tau_inverse
         initialamp[i] = exp(const)
-        fdamp.append(lambda t, Amplitude=initialamp[i], tau_coherent=tau_coherent: Amplitude*exp(-t/tau_coherent))
+        fdamp.append(lambda t, Amplitude=initialamp[i], tau_coherent=tau_coherent[i]: Amplitude*exp(-t/tau_coherent))
 
     ''' Instantaneous frequency
     * square increase over amplitude
     * frequency is overlayed with synchrotron frequency (~7kHz)
     * filter out synchrotron frequency with a bandstop filter -> tricky (bad snr in fft)
     * fit assumed square funtion -> wrong
-    f(amp) = a*amp**2 + b
-    amp(t) = fdamp -> tau
-    f(t) = a*exp(2*-t/tau) + b
+    f(amp) = a + b*amp**2 (+ c*amp**4 + d*amp**6)
+    amp(t) = A*exp(-t/tau) -> tau
+    f(t) = a + b*exp(-2*t/tau) (+ c*exp(-4*t/tau) + d*exp(-6*t/tau))
     '''
-    fitfun = lambda t, a, b, c, f, d, tau: a + b*sin(c + t*f) - d*exp(2*-t/tau)
-    f_instfreq = []
+    f_instfreq, f_instfreqfit, newfreq = [], [], []
     for i in range(n):
-        popt, pcov = scop.curve_fit(fitfun, t2, signal[i]/1e3, p0=[194.5, 0.6, 1, 44.5, 7, 1.3])
-        f_instfreq.append(lambda t, a=popt[0], d=popt[4], tau=popt[5]: a - d*exp(2*-t/tau))
+        fitfun = lambda t, a, b, c, f, d: a + b*sin(c + t*f) - d*exp(-2*t/tau_coherent[i])
+        popt, pcov = scop.curve_fit(fitfun, t2, signal[i]/1e3, p0=[194.5, 0.6, 1, 44.5, 7])
+        f_instfreqfit.append(fitfun(t2, *popt))
+        newfreq.append(signal[i]/1e3 - popt[1]*sin(popt[2] + t2*popt[3]))
+        f_instfreq.append(lambda t, a=popt[0], d=popt[4], tau=tau_coherent[i]: a - d*exp(-2*t/tau))
+
 
     ''' Amplitude dependant tune shift
     '''
@@ -154,4 +164,6 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
         freq = f_instfreq[i](t2)
         tswa.append(polyfit(ampl**2, freq, fitorder))
 
-    return t, t2, bbfbcntsnorm, amplit, fdamp, signal, f_instfreq, tswa
+    return (t, t2, bbfbcntsnorm, amplit, fdamp, signal, f_instfreq, tswa,
+            initialamp, tau_coherent, f_instfreqfit, newfreq)
+#    return t, t2, bbfbcntsnorm, amplit, fdamp, signal, initialamp, tau_coherent
