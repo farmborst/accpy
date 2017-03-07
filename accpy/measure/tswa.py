@@ -8,7 +8,7 @@ from numpy import (linspace, arange, concatenate, pi, complex128, zeros,
                    empty, angle, unwrap, diff, abs as npabs, ones, vstack, exp,
                    sin, log, linalg, polyfit, shape)
 import scipy.optimize as scop
-from scipy.signal import fftconvolve
+from numpy.fft import fft, fftfreq, ifft
 import pyfftw
 try:
     import cPickle as pickle
@@ -116,12 +116,6 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
     beg, end = 23, 6000
     t2 = linspace(0, t[-1], N-1)[beg:end]
     amplit = [amplitude_envelope[i, beg:end] for i in range(n)]
-
-#    def smooth(y, box_pts):
-#        box = ones(box_pts)/box_pts
-#        return fftconvolve(y, box, mode='same')
-#    signal = [smooth(instantaneous_frequency[i, :], 300)[beg:end] for i in range(n)]
-
     signal = [instantaneous_frequency[i, :][beg:end] for i in range(n)]
     fdamp = []
     initialamp, tau_coherent = empty(n), empty(n)
@@ -147,23 +141,32 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
     amp(t) = A*exp(-t/tau) -> tau
     f(t) = a + b*exp(-2*t/tau) (+ c*exp(-4*t/tau) + d*exp(-6*t/tau))
     '''
-    f_instfreq, f_instfreqfit, newfreq = [], [], []
+    dt = t2[1] - t2[0]   # ms
+    def filtersyn(f):
+        N = len(f)
+        window = hanning(N)
+        f *= window
+        fourier = fft(f)
+        freqs = fftfreq(N, d=dt)
+        fourier[abs(freqs) > 5] = 0
+        filtered = ifft(fourier)
+        filtered[1:-1] /= window[1:-1]
+        return abs(filtered)
+
+    instfreq = []
     for i in range(n):
-        fitfun = lambda t, a, b, c, f, d: a + b*sin(c + t*f) - d*exp(-2*t/tau_coherent[i])
-        popt, pcov = scop.curve_fit(fitfun, t2, signal[i]/1e3, p0=[194.5, 0.6, 1, 44.5, 7])
-        f_instfreqfit.append(fitfun(t2, *popt))
-        newfreq.append(signal[i]/1e3 - popt[1]*sin(popt[2] + t2*popt[3]))
-        f_instfreq.append(lambda t, a=popt[0], d=popt[4], tau=tau_coherent[i]: a - d*exp(-2*t/tau))
+        instfreq.append(filtersyn(signal[i]/1e3))
 
 
     ''' Amplitude dependant tune shift
     '''
     tswa = []
+    fitfun = lambda x, a, b: a + b*x
     for i in range(n):
-        ampl = fdamp[i](t2)
-        freq = f_instfreq[i](t2)
-        tswa.append(polyfit(ampl**2, freq, fitorder))
+        x = fdamp[i](t2[200:-4000])**2
+        y = instfreq[i][200:-4000]
+        popt, pcov = scop.curve_fit(fitfun, x, y)
+        tswa.append(popt)
 
-    return (t, t2, bbfbcntsnorm, amplit, fdamp, signal, f_instfreq, tswa,
-            initialamp, tau_coherent, f_instfreqfit, newfreq)
-#    return t, t2, bbfbcntsnorm, amplit, fdamp, signal, initialamp, tau_coherent
+    return (t, t2, bbfbcntsnorm, amplit, fdamp, signal, instfreq, tswa,
+            initialamp, tau_coherent)
