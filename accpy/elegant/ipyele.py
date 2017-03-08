@@ -273,8 +273,6 @@ class Twissplot():
     
     def axislabels(self,yscale=1,Dfac=10):
         xlabel('s / m')
-        #ylabel('beta function / m        dispertion / 0.1m')
-        #ylabel('$\\beta / \mathrm{m}$        $\\eta_x / 10\mathrm{cm}$')
 
         ybox3 = TextArea("       $\\eta_x / {0}".format(int(100/Dfac))+"\mathrm{cm}$", textprops=dict(color="r",rotation=90,ha='left',va='center'))
         ybox1 = TextArea("  $\\beta_y / \mathrm{m}$",     textprops=dict(color="b",rotation=90,ha='left',va='center'))
