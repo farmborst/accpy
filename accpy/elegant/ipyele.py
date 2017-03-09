@@ -16,13 +16,17 @@ from ..dataio.hdf5 import h5save
 
 
 def elegant(filename):
-    processstring = "export RPN_DEFNS='/home/inp/defns.rpn' && elegant " + filename
+    path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
+    path += '/defns.rpn'
+    processstring = "export RPN_DEFNS='" + path + "' && elegant " + filename
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
     return process.stdout.read()
 
 
-def Pelegant(filename, Ncores):
-    processstring = "export RPN_DEFNS='/home/inp/defns.rpn' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
+def Pelegant(filename, Ncores=2):
+    path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
+    path += '/defns.rpn'
+    processstring = "export RPN_DEFNS='" + path + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
     return process.stdout.read()
 
@@ -39,13 +43,13 @@ def sddsload(filename, verbose=False):
     cols = data.columnName
     Ncols = len(cols)
     colvals = data.columnData
-    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :( 
+    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :(
     if shape(colvals[0])[0]==1:
         colvals = [array(val).T for val in colvals]
     else:
         colvals = [array(val) for val in colvals]
     coldict = dict(zip(cols, colvals))
-    
+
 
     if verbose:
         # print information on loaded data
@@ -57,7 +61,7 @@ def sddsload(filename, verbose=False):
         print(Ncols, "Columns:")
         [print('{0:} {1:}'.format(key, shape(val))) for key, val in coldict.items()]
         print()
-    
+
     data = pardict
     data.update(coldict)
     return data
@@ -73,13 +77,13 @@ def sdds2hdf5(filename, verbose=False):
 
     cols = data.columnName
     colvals = data.columnData
-    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :( 
+    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :(
     if shape(colvals[0])[0]==1:
         colvals = [array(val).T for val in colvals]
     else:
         colvals = [array(val) for val in colvals]
     datadict.update(dict(zip(cols, colvals)))
-    h5save(filename, verbose, **datadict)        
+    h5save(filename, verbose, **datadict)
 
 
 def eleplot(datadict, x, y, *args, **kwargs):
@@ -135,12 +139,12 @@ def twissplot(data):
     print('Qx = {:}'.format(data['nux'][0]))
     print('Qy = {:}'.format(data['nuy'][0]))
     print(uc.greek.alpha + 'p = {:e}'.format(data['alphac'][0]))
-    
+
     eleplot(data, 's', 'betax', '-g')
     eleplot(data, 's', 'betay', '-b')
     twinx()
     eleplot(data, 's', 'etax', '-r')
-    
+
     # Latteice graphics vertical position and size (axis coordinates!)
     lypos = gca().get_ylim()[1]
     tp = Twissplot(lypos = lypos, lysize = lypos*0.12)
@@ -156,12 +160,12 @@ def b2twissplot(coldict, pardict):
     print('Qx = {:}'.format(pardict['nux'][0]))
     print('Qy = {:}'.format(pardict['nuy'][0]))
     print(uc.greek.alpha + 'p = {:e}'.format(pardict['alphac'][0]))
-    
+
     eleplot(coldict, 's', 'betax', '-g')
     eleplot(coldict, 's', 'betay', '-b')
     twinx()
     eleplot(coldict, 's', 'etax', '-r')
-    
+
     # Latteice graphics vertical position and size (axis coordinates!)
     lypos = gca().get_ylim()[1]
     tp = Twissplot(lypos = lypos, lysize = lypos*0.12)
@@ -193,11 +197,11 @@ class Twissplot():
     Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
     Tnames = ['Landau + BAM WLS7','MPW','U41','UE49','UE46','CPMU17 + UE48 (EMIL)','PSF WLS7','Cavities']
     names = {'D': Dnames, 'T' : Tnames, 'S' :  core.defchararray.add(Dnames,core.defchararray.add(' + ',Tnames))}
-            
+
     def __init__(self, lypos = 25, lysize = 3):
         self.lypos = lypos
         self.lysize = lysize
-    
+
 #    def getrolled(self,s,y,fmt=None): # access lattice from -120 to 120m
 #        x = array(s,dtype=float64)
 #        y = array(y,dtype=float64)
@@ -228,7 +232,7 @@ class Twissplot():
         en = d['ElementName']
         if rolled:
             s[s> 120] = s[s > 120] - 240.0
-            ishift = argmax(s < 0)    
+            ishift = argmax(s < 0)
             s = roll(s,-ishift)
             et = roll(et,-ishift)
             en = roll(en,-ishift)
@@ -259,18 +263,18 @@ class Twissplot():
             if et[i] == 'KSEXT':
                 col = 'green'
             if not ec:
-                ecol='none'           
+                ecol='none'
 
             if col != 'none':
                 gca().add_patch(patches.Rectangle((start, ycenter-0.5*ysize), l,ysize, ec=ecol, facecolor=col,clip_on=False, zorder = 101))
                 if labels:
                     fs = 80 / (s1-s0) * fscale
-                    if et[i] == 'KSEXT': 
+                    if et[i] == 'KSEXT':
                         annotate(en[i], xy=(start,ycenter), xytext=(start+0.5*l, ycenter - .55*ysize),fontsize=fs,va='top',ha='center',clip_on=False, zorder = 102)
                     else:
                         annotate(en[i], xy=(start,ycenter), xytext=(start+0.5*l, ycenter + .5*ysize),fontsize=fs,va='bottom',ha='center',clip_on=False, zorder = 102)
 
-    
+
     def axislabels(self,yscale=1,Dfac=10):
         xlabel('s / m')
 
@@ -278,7 +282,7 @@ class Twissplot():
         ybox1 = TextArea("  $\\beta_y / \mathrm{m}$",     textprops=dict(color="b",rotation=90,ha='left',va='center'))
         ybox2 = TextArea("$\\beta_x / \mathrm{m}$", textprops=dict(color="g",rotation=90,ha='left',va='center'))
         ybox = VPacker(children=[ybox3, ybox1, ybox2],align="bottom", pad=0, sep=5)
-        anchored_ybox = AnchoredOffsetbox(loc=8, child=ybox, pad=0., frameon=False, bbox_to_anchor=(-0.08*yscale, 0.15), 
+        anchored_ybox = AnchoredOffsetbox(loc=8, child=ybox, pad=0., frameon=False, bbox_to_anchor=(-0.08*yscale, 0.15),
                                           bbox_transform=gca().transAxes, borderpad=0.)
         gca().add_artist(anchored_ybox)
         ylim(-1)

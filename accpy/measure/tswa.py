@@ -61,7 +61,7 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
 
     if not avgpts:
         for i in range(n):
-            counts[i, :] = counts[i, :] - mean(counts[i, :])
+            #counts[i, :] = counts[i, :] - mean(counts[i, :])
             pass
     else:
         for i in range(n):
@@ -187,12 +187,12 @@ def evaltswa(counts, bunchcurrents, clip=[38460, 87440], effort='FFTW_MEASURE',
         popt, pcov = scop.curve_fit(fitfun, x, y)
         tswa.append(popt)
 
-    return (t, t2, bbfbcntsnorm, amplit, fdamp, signal, instfreq, tswa,
+    return (t, t2, bbfbpos, amplit, fdamp, signal, instfreq, tswa,
             initialamp, tau_coherent)
 
 
 def evaleletswa(bbfbpos, effort='FFTW_MEASURE', fitorder=1,  fitroi=None):
-    
+
     n, N = shape(bbfbpos)
     fs = 1.2495*1e6           # sampling frequency in Hz
     dt = 1/fs
@@ -244,14 +244,14 @@ def evaleletswa(bbfbpos, effort='FFTW_MEASURE', fitorder=1,  fitroi=None):
 
         # inverse fft of filtered and positive frequency only fft gives analytical signal
         analytic_signal[i, :] = myifftw(fftx_filtered[i, :])
-        
+
         # absolut value of analytic signal gives the amplitude envelope
         amplitude_envelope[i, :] = npabs(analytic_signal[i, :])[:-1]
-        
-        # 
+
+        #
         instantaneous_phase[i, :] = unwrap(angle(analytic_signal[i, :]))
-        
-        # 
+
+        #
         instantaneous_frequency[i, :] = diff(instantaneous_phase[i, :]) / (2*pi) * fs
 
     ''' Damping time
