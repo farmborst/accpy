@@ -15,10 +15,16 @@ from ..visualize.stringformat import uc
 from ..dataio.hdf5 import h5save
 
 
-def elegant(filename):
+def elegant(latticefile, runfile):
+    fh = open('lattice.lte', 'w')
+    fh.write(latticefile)
+    fh.close()
+    fh = open('track.ele', 'w')
+    fh.write(runfile)
+    fh.close()
     path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
     path += '/defns.rpn'
-    processstring = "export RPN_DEFNS='" + path + "' && elegant " + filename
+    processstring = "export RPN_DEFNS='" + path + "' && elegant " + 'track.ele'
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
     return process.stdout.read()
 
