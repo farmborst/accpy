@@ -4,37 +4,52 @@ author:     felix.kramer(at)physik.hu-berlin.de
 """
 from __future__ import print_function, division
 from subprocess import Popen, PIPE, STDOUT
-from numpy import shape, array, max as npmax, argmax, roll, float64, core, min
+from numpy import (shape, array, max as npmax, argmax, roll, float64, core, 
+                   min, linspace)
 from matplotlib.pylab import (plot, subplot, xlabel, ylabel, twinx, gca, xlim,
-                              ylim, annotate)
+                              ylim, annotate, tight_layout)
 import matplotlib.patches as patches
 from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, HPacker, VPacker
+from matplotlib import cm
 from IPython.display import display, Javascript
 from . import sdds
+from ..simulate import const
 from ..visualize.stringformat import uc
 from ..dataio.hdf5 import h5save
 
 
-def elegant(latticefile, runfile):
-    fh = open('lattice.lte', 'w')
-    fh.write(latticefile)
-    fh.close()
-    fh = open('track.ele', 'w')
-    fh.write(runfile)
-    fh.close()
+def elegant(runfile, verbose=False, macro=None):
     path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
     path += '/defns.rpn'
-    processstring = "export RPN_DEFNS='" + path + "' && elegant " + 'track.ele'
+    processstring = "export RPN_DEFNS='" + path + "' && elegant " + runfile
+    if macro:
+        processstring += ' -macro=' + macro
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
-    return process.stdout.read()
+    stdout, stderr = process.communicate()
+    if verbose:
+        print('-- STDOUT --')
+        print(stdout)
+        print('-- STDERR --')
+        print(stderr)
+        print('-- THEEND --')
+    return
 
 
-def Pelegant(filename, Ncores=2):
+def Pelegant(filename, Ncores=2, verbose=False, macro=None):
     path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
     path += '/defns.rpn'
     processstring = "export RPN_DEFNS='" + path + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
+    if macro:
+        processstring += ' -macro=' + macro
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
-    return process.stdout.read()
+    stdout, stderr = process.communicate()
+    if verbose:
+        print('-- STDOUT --')
+        print(stdout)
+        print('-- STDERR --')
+        print(stderr)
+        print('-- THEEND --')
+    return
 
 
 def sddsload(filename, verbose=False):
@@ -61,11 +76,11 @@ def sddsload(filename, verbose=False):
         # print information on loaded data
         print("SDDS description: ", data.description)
         print()
-        print(Npars, "Paramters:")
-        [print('{0:} = {1:}'.format(key, val[0])) for key, val in pardict.items()]
+        print(Npars, "Paramters: {0:>13}".format('shape'))
+        [print('{0:<20} {1:<}'.format(key, shape(val))) for key, val in pardict.items()]
         print()
-        print(Ncols, "Columns:")
-        [print('{0:} {1:}'.format(key, shape(val))) for key, val in coldict.items()]
+        print(Ncols, "Columns: {0:>15}".format('shape'))
+        [print('{0:<20} {1:<}'.format(key, shape(val))) for key, val in coldict.items()]
         print()
 
     data = pardict
@@ -124,19 +139,19 @@ def trackplot3(datadict, abscissa='Pass'):
     eleplot(datadict, 'dCt', 'Cdelta', '.')
 
 
-def trackplot2(datadict, abscissa='t'):
+def trackplot2(datadict, particles=8, abscissa='t'):
     subplot(321)
-    eleplot(datadict, abscissa, 'x', '.', sel=range(8))
+    eleplot(datadict, abscissa, 'x', '.b', sel=range(particles))
     subplot(323)
-    eleplot(datadict, abscissa, 'xp', '.')
+    eleplot(datadict, abscissa, 'xp', '.b', sel=range(particles))
     subplot(325)
-    eleplot(datadict, 'x', 'xp', '.')
+    eleplot(datadict, 'x', 'xp', '.', sel=range(particles))
     subplot(322)
-    eleplot(datadict, abscissa, 'y', '.', sel=range(8))
+    eleplot(datadict, abscissa, 'y', '.', sel=range(particles))
     subplot(324)
-    eleplot(datadict, abscissa, 'yp', '.')
+    eleplot(datadict, abscissa, 'yp', '.', sel=range(particles))
     subplot(326)
-    eleplot(datadict, 'y', 'yp', '.')
+    eleplot(datadict, 'y', 'yp', '.', sel=range(particles))
 
 
 def twissplot(data):
@@ -324,3 +339,110 @@ class Twissplot():
         self.paintlattice(d,s0,s1, self.lypos, self.lysize, ec=True,rolled=rolled)
         self.axislabels()
         xlim(s0,s1)
+
+
+def trackplot(datadict, turns=False):
+    try:  # centroid watch point
+        x = ['Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Cx', 'Cy', 'dCt']
+        y = ['Cx', 'Cy', 'dCt', 'Cxp', 'Cyp', 'Cdelta', 'Cxp', 'Cyp', 'Cdelta']
+        for i, (x, y) in enumerate(zip(x, y)):
+            subplot(3, 3, i+1)
+            if turns:
+                plot(datadict[x][:turns, ], datadict[y][:turns, ], '.')
+            else:
+                plot(datadict[x][:, ], datadict[y][:, ], '.')
+            xlabel(x)
+            ylabel(y)
+    except:  # coordinate watch point
+        x = ['t', 't', 't', 't', 't', 't', 'x', 'y', 'dt']
+        y = ['x', 'y', 'dt', 'xp', 'yp', 'p', 'xp', 'yp', 'p']
+        colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
+        for i, (x, y) in enumerate(zip(x, y)):
+            subplot(3, 3, i+1)
+            if turns:
+                if x == 't':
+                    [plot(datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
+                    xlabel('Pass')
+                else:
+                    [plot(datadict[x][:turns, part], datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
+                    xlabel(x)
+            else:
+                if x == 't':
+                    [plot(datadict[y][:, part], '.', color=col) for part, col in enumerate(colors)]
+                    xlabel('Pass')
+                else:
+                    [plot(datadict[x][:, part], datadict[y][:, part], '.', color=col) for part, col in enumerate(colors)]
+                    xlabel(x)
+            ylabel(y)   
+            tight_layout()
+    return
+
+
+def showbun(datadict):
+    x = ['', '', '', '', '', '', 'x', 'y', 't']
+    y = ['x', 'y', 't', 'xp', 'yp', 'p', 'xp', 'yp', 'p']
+    colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
+    for i, (x, y) in enumerate(zip(x, y)):
+        subplot(3, 3, i+1)
+        if x == '':
+            [plot(datadict[y][part, ], '.', color=col) for part, col in enumerate(colors)]
+            xlabel('Pass')
+        else:
+            [plot(datadict[x][part, ], datadict[y][part, ], '.', color=col) for part, col in enumerate(colors)]
+            xlabel(x)
+        ylabel(y)
+    tight_layout()
+    return
+
+
+def mybunch(bunchname, ranges, E_mev):
+    
+    cl = const.cl
+    qe = const.qe
+    me = const.me
+    E0 = me*cl**2/qe  # eV
+    gamma = 1 + E_mev*1e6/E0
+    print('gamma = {}'.format(gamma))
+    
+    N = len(ranges['x'])
+    bunch = sdds.SDDS(0)  # what does the index mean?
+    bunch.setDescription('my predefined bunch', 'bunched-beam phase space')
+    bunch.mode = 1  # 1 is binary, 2 is ascii
+
+    parnames = ['Particles', 'pCentral', 'IDSlotsPerBunch']
+    parsymbs = ['', 'p$bcen$n', '']
+    parunits = ['', 'm$be$nc', '']
+    pardescr = ['Number of particles before sampling', 'Reference beta*gamma', 'Number of particle ID slots reserved to a bunch']
+    parforms = ['', '', '']
+    parfixva = ['', '', '']
+    partypes = [bunch.SDDS_LONG, bunch.SDDS_DOUBLE, bunch.SDDS_LONG]
+    pardatas = [[N], [gamma], [N]]
+    parstuff = zip(parnames, parsymbs, parunits, pardescr, parforms, partypes, parfixva, pardatas)
+
+    for name, symbol, units, description, formatString, typ, fixedValue, data in parstuff:
+        bunch.defineParameter(name, symbol, units, description, formatString, typ, fixedValue)
+        bunch.setParameterValueList(name, data)
+
+    colnames = ['x', 'xp', 'y', 'yp', 't', 'p', 'particleID']
+    colsymbs = ['']*7
+    colunits = ['m', '', 'm', '', 's', 'm$be$nc', '']
+    coldescr = ['']*7
+    colforms = ['']*7
+    coltypes = [bunch.SDDS_DOUBLE]*6 + [bunch.SDDS_LONG]
+    colfleng = [1]*7
+    coldatas = [[list(ranges['x'])],
+                [list(ranges['xp'])],
+                [list(ranges['y'])],
+                [list(ranges['yp'])],
+                [list(ranges['t'])],
+                [list(1 + ranges['p']*1e6/E0)],
+                [range(1, 1 + N)]]
+    colstuff = zip(colnames, colsymbs, colunits, coldescr, colforms, coltypes, colfleng, coldatas)
+
+    for name, symbol, units, description, formatString, typ, fieldLength, data in colstuff:
+        bunch.defineColumn(name, symbol, units, description, formatString, typ, fieldLength)
+        bunch.setColumnValueLists(name, data)
+
+
+    bunch.save(bunchname)
+    return
