@@ -9,7 +9,7 @@ from numpy import (shape, array, max as npmax, argmax, roll, float64, core,
 from matplotlib.pylab import (plot, subplot, xlabel, ylabel, twinx, gca, xlim,
                               ylim, annotate, tight_layout)
 import matplotlib.patches as patches
-from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, HPacker, VPacker
+from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib import cm
 from IPython.display import display, Javascript
 from . import sdds
@@ -113,9 +113,15 @@ def eleplot(datadict, x, y, *args, **kwargs):
         del(kwargs['sel'])
     except:
         selected = [0]
+    try:
+        label = kwargs['label']
+        del(kwargs['label'])
+    except:
+        label = True
     [plot(datadict[x][:, sel], datadict[y][:, sel], *args, **kwargs) for sel in selected]
-    xlabel(x)
-    ylabel(y)
+    if label:
+        xlabel(x)
+        ylabel(y)
 
 
 def trackplot3(datadict, abscissa='Pass'):
@@ -156,15 +162,50 @@ def trackplot2(datadict, particles=8, abscissa='t'):
 
 def twissplot(data):
     L = npmax(data['s'])
-    print('L = {:}'.format(L))
-    print('Qx = {:}'.format(data['nux'][0]))
-    print('Qy = {:}'.format(data['nuy'][0]))
-    print(uc.greek.alpha + 'p = {:e}'.format(data['alphac'][0]))
+    print('General:')
+    print('    L = {:}'.format(L))
+    print('    E = {:}'.format(data['pCentral'][0]))
+    print('    Eloss = {:}'.format(data['U0'][0]))
+    
+    print('\nTunes:')
+    print('    Qx = {:.6}'.format(data['nux'][0]))
+    print('    Qy = {:.6}'.format(data['nuy'][0]))
+    
+    print('\nChromaticities:')
+    print('    ' + uc.greek.xi + 'x = {:.6}'.format(data['dnux/dp'][0]))
+    print('    ' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy/dp'][0]))
+    
+    print('\nMomentum Compaction Factor:')
+    print('    ' + uc.greek.alpha + 'p = {:.5e}'.format(data['alphac'][0]))
+    
+    print('\nRadiation Damping times:')
+    print('    ' + uc.greek.tau + 'x = {:.6} ms'.format(1e3*data['taux'][0]))
+    print('    ' + uc.greek.tau + 'y = {:.6} ms'.format(1e3*data['tauy'][0]))
+    print('    ' + uc.greek.tau + uc.greek.delta + ' = {:.6} ms'.format(1e3*data['taudelta'][0]))
+    
+    print('\nDamping partition factors:')
+    print('    Jx = {:.6}'.format(data['Jx'][0]))
+    print('    Jy = {:.6}'.format(data['Jy'][0]))
+    print('    J' + uc.greek.delta + ' = {:.6}'.format(data['Jdelta'][0]))
+    
+    print('\nHorizontal equilibrium geometric and normalized emittances:')
+    print('    ' + uc.greek.epsilon + 'x = {:.6}'.format(data['ex0'][0]))
+    print('    ' + uc.greek.epsilon + 'x* = {:.6}'.format(data['enx0'][0]))
+    
+    print('\nEquilibrium fractional rms energy spread:')
+    print('    ' + uc.greek.epsilon + uc.greek.delta + ' = {:.6e}'.format(data['Sdelta0'][0]))
+    
+    print('\nHigher Order::')
+    print('    ' + uc.greek.xi + 'x2 = {:}'.format(data['dnux/dp2'][0]))
+    print('    ' + uc.greek.xi + 'y2 = {:}'.format(data['dnuy/dp2'][0]))
+    print('    ' + uc.greek.xi + 'x3 = {:}'.format(data['dnux/dp3'][0]))
+    print('    ' + uc.greek.xi + 'y3 = {:}'.format(data['dnuy/dp3'][0]))
+    print('    ' + uc.greek.alpha + 'p2 = {:e}'.format(data['alphac2'][0]))
 
-    eleplot(data, 's', 'betax', '-g')
-    eleplot(data, 's', 'betay', '-b')
+    eleplot(data, 's', 'betax', '-g', label=False)
+    eleplot(data, 's', 'betay', '-b', label=False)
     twinx()
-    eleplot(data, 's', 'etax', '-r')
+    eleplot(data, 's', 'etax', '-r', label=False)
 
     # Latteice graphics vertical position and size (axis coordinates!)
     lypos = gca().get_ylim()[1]
