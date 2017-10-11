@@ -166,7 +166,7 @@ def drawlatt(ax, data):
     ax.set_xlim(npmin(s), npmax(s))
 
     yl = ax.get_ylim()[1]
-    dy = yl*0.1
+    dy = abs(ax.get_ylim()[1] - ax.get_ylim()[0])*0.1
     yc = yl+dy/2
 
     i = 0
