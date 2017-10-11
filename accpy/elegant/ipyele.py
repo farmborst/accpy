@@ -165,9 +165,11 @@ def drawlatt(ax, data):
     s = data['s']
     ax.set_xlim(npmin(s), npmax(s))
 
-    yl = ax.get_ylim()[1]
-    dy = abs(ax.get_ylim()[1] - ax.get_ylim()[0])*0.1
-    yc = yl+dy/2
+    yi, yf = ax.get_ylim()[0], ax.get_ylim()[1]
+    dy = abs(yf - yi)*0.1
+    ax.set_ylim(yi, yf + dy)
+    dy = dy*.8
+    yl = ax.get_ylim()[1] - dy/2  # lower edge of element
 
     i = 0
     while i < len(s):
@@ -185,19 +187,67 @@ def drawlatt(ax, data):
         dx = sf - si
         i += li
 
-        if et == 'DRIF':
-            ax.add_patch(Polygon(xy=array([[si, yc], [sf, yc]]), closed=False, color='w', clip_on=False, lw=2, zorder=110))
-            continue
-        elif et == 'CSBEND':
-            c = 'yellow'
+        if et == 'CSBEND':
+            mypatch(ax, 'yellow', si, yl, dx, dy)
         elif et == 'KQUAD':
-            c = 'red'
+            if data['ElementName'][i - li, 0][-2:] == '_F':
+                mypatch(ax, 'red', si, yl, dx, dy, typ='focus')
+            elif data['ElementName'][i - li, 0][-2:] == '_D':
+                mypatch(ax, 'red', si, yl, dx, dy, typ='defocus')
+            else:
+                mypatch(ax, 'red', si, yl, dx, dy)
         elif et == 'KSEXT':
-            c = 'green'
-        else:
-            c = 'none'
-        if c != 'none':
-            ax.add_patch(Rectangle(xy=(si, yl), width=dx, height=dy, ec=None, facecolor=c, clip_on=False, zorder=111))
+            if data['ElementName'][i - li, 0][-2:] == '_F':
+                mypatch(ax, 'green', si, yl, dx, dy, typ='sextfocus')
+            elif data['ElementName'][i - li, 0][-2:] == '_D':
+                mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
+            else:
+                mypatch(ax, 'green', si, yl, dx, dy)
+                                   
+
+def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
+    opts = {'fc': col,
+            'ec': None,
+            'clip_on': False,
+            'zorder': 111}
+    if typ == 'rectangle':
+        ax.add_patch(Rectangle(xy=(si, yl), width=dx, height=dy, **opts))
+    elif typ == 'focus':
+        xy = array([[si, yl + dy/2],
+                    [si + dx/2, yl + dy],
+                    [si + dx, yl + dy/2],
+                    [si + dx/2, yl]])
+        ax.add_patch(Polygon(xy, **opts))
+    elif typ == 'defocus':
+        xy = array([[si, yl + dy],
+                    [si + dx, yl + dy],
+                    [si, yl],
+                    [si + dx, yl]])
+        ax.add_patch(Polygon(xy, **opts))
+    elif typ == 'sextfocus':
+        xy = array([[si, yl + dy*0.2],
+                    [si + dx/2, yl + dy*0.4],
+                    [si + dx, yl + dy*0.2],
+                    [si + dx/2, yl]])
+        ax.add_patch(Polygon(xy + array([0, dy/2 + dy/10]), **opts))
+        xy = array([[si, yl + dy*0.4],
+                    [si + dx, yl + dy*0.4],
+                    [si, yl],
+                    [si + dx, yl]])
+        ax.add_patch(Polygon(xy, **opts))
+    elif typ == 'sextdefocus':
+        xy = array([[si, yl + dy*0.4],
+                    [si + dx, yl + dy*0.4],
+                    [si, yl],
+                    [si + dx, yl]])
+        ax.add_patch(Polygon(xy + array([0, dy/2 + dy/10]), **opts))
+        xy = array([[si, yl + dy*0.2],
+                    [si + dx/2, yl + dy*0.4],
+                    [si + dx, yl + dy*0.2],
+                    [si + dx/2, yl]])
+        ax.add_patch(Polygon(xy, **opts))
+    return
+            
 
 
 def multicolorylab(ax, lablist, collist):
@@ -264,34 +314,25 @@ def twissplot(data, zoom=False, fs=[16, 9]):
     if zoom:
         starti, endi = argmax(data['s'] >= zoom[0]), argmax(data['s'] >= zoom[1])
         clipdata = {}
-        for clip in ['s', 'betax', 'betay', 'etax', 'ElementType']:
+        for clip in ['s', 'betax', 'betay', 'etax', 'ElementType', 'ElementName']:
             clipdata[clip] = data[clip][starti:endi]
         fig = drawtwiss(clipdata, fs)
         return fig
     fig = drawtwiss(data, fs)
     return fig
+    
+#Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
+#Tnames = ['Landau + BAM WLS7','MPW','U41','UE49','UE46','CPMU17 + UE48 (EMIL)','PSF WLS7','Cavities']
+#names = {'D': Dnames, 'T' : Tnames, 'S' :  core.defchararray.add(Dnames,core.defchararray.add(' + ',Tnames))}
 
 
-def b2twissplot(coldict, pardict):
-    L = npmax(coldict['s'])
-    print('L = {:}'.format(L))
-    print('Qx = {:}'.format(pardict['nux'][0]))
-    print('Qx = {:}'.format(pardict['nux'][0]))
-    print('Qy = {:}'.format(pardict['nuy'][0]))
-    print(uc.greek.alpha + 'p = {:e}'.format(pardict['alphac'][0]))
-
-    eleplot(coldict, 's', 'betax', '-g')
-    eleplot(coldict, 's', 'betay', '-b')
-    twinx()
-    eleplot(coldict, 's', 'etax', '-r')
-
-    # Latteice graphics vertical position and size (axis coordinates!)
-    lypos = gca().get_ylim()[1]
-    tp = Twissplot(lypos = lypos, lysize = lypos*0.12)
-    tp.axislabels(yscale=0.5)
-    tp.paintlattice(coldict, 0, L, ec=False, fscale=2)
-    xlim(0, L)
-
+def biizoom(sectyp, num):
+    if sectyp == 'achromat':
+        return list(array([0, 240/16]) + (num - 1)*240/16)
+    elif sectyp == 'duplet':
+        return list(array([3*240/32, 5*240/32]) + (num - 2)*240/8)
+    elif sectyp == 'triplet':
+        return list(array([240/32, 3*240/32]) + (num - 1)*240/8)
 
 
 def autoscroll(threshhold):
@@ -310,133 +351,6 @@ def autoscroll(threshhold):
     else:
         javastring = 'IPython.OutputArea.auto_scroll_threshold = ' + str(threshhold)
     display(Javascript(javastring))
-
-
-class Twissplot():
-    Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
-    Tnames = ['Landau + BAM WLS7','MPW','U41','UE49','UE46','CPMU17 + UE48 (EMIL)','PSF WLS7','Cavities']
-    names = {'D': Dnames, 'T' : Tnames, 'S' :  core.defchararray.add(Dnames,core.defchararray.add(' + ',Tnames))}
-
-    def __init__(self, lypos = 25, lysize = 3):
-        self.lypos = lypos
-        self.lysize = lysize
-
-#    def getrolled(self,s,y,fmt=None): # access lattice from -120 to 120m
-#        x = array(s,dtype=float64)
-#        y = array(y,dtype=float64)
-#        x[x > 120] = x[x > 120] - 240.0
-#        ishift = argmax(x < 0)
-#        x = roll(x,-ishift)
-#        y = roll(y,-ishift)
-#        if fmt:
-#            return x,y,fmt
-#        else:
-#            return x,y
-
-    # Note:
-    # It seem elegant twiss-ouput always prints the length, type and name
-    # at the END of the element (!)
-    #
-    # Check element list
-    # print np.unique(twi.ElementType)
-    # ['CSBEND' 'DRIF' 'KQUAD' 'KSEXT' 'MALIGN' 'MARK' 'RECIRC' 'WATCH']
-    #
-    def paintlattice(self,d,s0,s1,ycenter=None,ysize=None,ec=True,labels=True,rolled=False, fscale=1.0):
-        if ycenter is None:
-            ycenter = self.lypos
-        if ysize is None:
-            ysize = self.lysize
-        s = d['s']
-        et = d['ElementType']
-        en = d['ElementName']
-        if rolled:
-            s[s> 120] = s[s > 120] - 240.0
-            ishift = argmax(s < 0)
-            s = roll(s,-ishift)
-            et = roll(et,-ishift)
-            en = roll(en,-ishift)
-
-        i0 = argmax(s >= s0)
-        i1 = argmax(s >= s1)
-        #print i0,i1
-        start = s0
-        for i in range(i0,i1 + 1):
-            # save start if previous element was something else
-            if i > i0:
-                if et[i] != et[i-1]:
-                    start = s[i-1]
-            # skip if next element of same type
-            if i < i1:
-                if et[i] == et[i+1]:
-                    continue
-            end = min((s[i],s1))
-            l = end - start
-            #print i, s[i], et[i], en[i], '    length of element:', l
-            col = 'none'
-            ecol='k'
-            if et[i] == 'CSBEND':
-                col = 'yellow'
-                ecol='black'
-            if et[i] == 'KQUAD':
-                col = 'red'
-            if et[i] == 'KSEXT':
-                col = 'green'
-            if not ec:
-                ecol='none'
-
-            if col != 'none':
-                gca().add_patch(Rectangle((start, ycenter-0.5*ysize), l,ysize, ec=ecol, facecolor=col,clip_on=False, zorder = 101))
-                if labels:
-                    fs = 80 / (s1-s0) * fscale
-                    if et[i] == 'KSEXT':
-                        annotate(en[i], xy=(start,ycenter), xytext=(start+0.5*l, ycenter - .55*ysize),fontsize=fs,va='top',ha='center',clip_on=False, zorder = 102)
-                    else:
-                        annotate(en[i], xy=(start,ycenter), xytext=(start+0.5*l, ycenter + .5*ysize),fontsize=fs,va='bottom',ha='center',clip_on=False, zorder = 102)
-
-
-    def axislabels(self,yscale=1,Dfac=10):
-        xlabel('s / m')
-
-        ybox3 = TextArea("       $\\eta_x / {0}".format(int(100/Dfac))+"\mathrm{cm}$", textprops=dict(color="r",rotation=90,ha='left',va='center'))
-        ybox1 = TextArea("  $\\beta_y / \mathrm{m}$",     textprops=dict(color="b",rotation=90,ha='left',va='center'))
-        ybox2 = TextArea("$\\beta_x / \mathrm{m}$", textprops=dict(color="g",rotation=90,ha='left',va='center'))
-        ybox = VPacker(children=[ybox3, ybox1, ybox2],align="bottom", pad=0, sep=5)
-        anchored_ybox = AnchoredOffsetbox(loc=8, child=ybox, pad=0., frameon=False, bbox_to_anchor=(-0.08*yscale, 0.15),
-                                          bbox_transform=gca().transAxes, borderpad=0.)
-        gca().add_artist(anchored_ybox)
-        ylim(-1)
-
-
-    def plotsection(self,d,stype,nr):
-        s0 = (nr-1)*30.0 - 7.5
-        if stype == 'T':
-            s0 += 15.0
-        if stype == 'S':
-            s1 = s0 + 30.0
-        else:
-            s1 = s0 + 15.0
-
-        if stype == 'D' and nr == 1:
-            plot(*self.getrolled(d.s, d.betax,'g-'))
-            plot(*self.getrolled(d.s, d.betay,'b-'))
-            x, y, = self.getrolled(d.s, d.etax)
-            plot(x,10*y,'r-')
-            rolled=True
-        else:
-            plot(d.s, d.betax,'g-')
-            plot(d.s, d.betay,'b-')
-            plot(d.s, 10* array(d.etax,dtype=float64) ,'r-')
-            rolled=False
-
-        annotate(stype+'{0:0n}'.format(nr),xy=((s1+s0)/2.0,25-5), fontsize=20,ha='center',va='top',zorder=105)
-        gca().yaxis.grid(alpha=0.3, zorder=0)
-
-        #    print stype, names[stype][nr-1], names[stype]
-        annotate(''+self.names[stype][nr-1]+'',xy=((s1+s0)/2.0,25-9), fontsize=8,ha='center',va='top',zorder=105)
-
-        self.paintlattice(d,s0,s1, self.lypos, self.lysize, ec=True,rolled=rolled)
-        self.axislabels()
-        xlim(s0,s1)
 
 
 def trackplot(datadict, turns=False):
