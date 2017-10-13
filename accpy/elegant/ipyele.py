@@ -8,11 +8,11 @@ from numpy import (shape, array, max as npmax, argmax, roll, float64, core,
                    min as npmin, linspace, where)
 from matplotlib.pylab import (plot, subplot, xlabel, ylabel, twinx, gca, xlim,
                               ylim, annotate, tight_layout)
-from matplotlib.patches import Polygon, Rectangle
+from matplotlib.patches import Polygon, Rectangle, PathPatch
+from matplotlib.path import Path
 from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib import cm
 from pylab import figure
-from IPython.display import display, Javascript
 from . import sdds
 from ..simulate import const
 from ..visualize.stringformat import uc
@@ -203,7 +203,7 @@ def drawlatt(ax, data):
                 mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
             else:
                 mypatch(ax, 'green', si, yl, dx, dy)
-                                   
+
 
 def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
     opts = {'fc': col,
@@ -225,37 +225,57 @@ def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
                     [si + dx, yl]])
         ax.add_patch(Polygon(xy, **opts))
     elif typ == 'sextfocus':
-        xy = array([[si, yl + dy*0.2],
-                    [si + dx/2, yl + dy*0.4],
-                    [si + dx, yl + dy*0.2],
-                    [si + dx/2, yl]])
-        ax.add_patch(Polygon(xy + array([0, dy/2 + dy/10]), **opts))
-        xy = array([[si, yl + dy*0.4],
-                    [si + dx, yl + dy*0.4],
-                    [si, yl],
-                    [si + dx, yl]])
-        ax.add_patch(Polygon(xy, **opts))
+        xy = array([[si, yl],
+                    [si + dx/4, yl],
+                    [si + dx/2, yl + dy*0.45],
+                    [si + 3*dx/4, yl],
+                    [si + dx, yl],
+                    [si, yl]])
+        path = Path(xy, [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.LINETO])
+        ax.add_patch(PathPatch(path, **opts))
+        path = Path(xy + array([0, dy/2 + dy/20]), [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.LINETO])
+        ax.add_patch(PathPatch(path, **opts))
+#        xy = array([[si, yl + dy*0.2],
+#                    [si + dx/2, yl + dy*0.4],
+#                    [si + dx, yl + dy*0.2],
+#                    [si + dx/2, yl]])
+#        ax.add_patch(Polygon(xy + array([0, dy/2 + dy/10]), **opts))
+#        xy = array([[si, yl + dy*0.4],
+#                    [si + dx, yl + dy*0.4],
+#                    [si, yl],
+#                    [si + dx, yl]])
+#        ax.add_patch(Polygon(xy, **opts))
     elif typ == 'sextdefocus':
-        xy = array([[si, yl + dy*0.4],
-                    [si + dx, yl + dy*0.4],
-                    [si, yl],
-                    [si + dx, yl]])
-        ax.add_patch(Polygon(xy + array([0, dy/2 + dy/10]), **opts))
-        xy = array([[si, yl + dy*0.2],
-                    [si + dx/2, yl + dy*0.4],
-                    [si + dx, yl + dy*0.2],
-                    [si + dx/2, yl]])
-        ax.add_patch(Polygon(xy, **opts))
+        xy = array([[si, yl + dy*0.45],
+                    [si + dx/4, yl + dy*0.45],
+                    [si + dx/2, yl],
+                    [si + 3*dx/4, yl + dy*0.45],
+                    [si + dx, yl + dy*0.45],
+                    [si, yl + dy*0.45],])
+        path = Path(xy, [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.LINETO])
+        ax.add_patch(PathPatch(path, **opts))
+        path = Path(xy + array([0, dy/2 + dy/20]), [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.LINETO])
+        ax.add_patch(PathPatch(path, **opts))
+#        xy = array([[si, yl + dy*0.4],
+#                    [si + dx, yl + dy*0.4],
+#                    [si, yl],
+#                    [si + dx, yl]])
+#        ax.add_patch(Polygon(xy + array([0, dy/2 + dy/10]), **opts))
+#        xy = array([[si, yl + dy*0.2],
+#                    [si + dx/2, yl + dy*0.4],
+#                    [si + dx, yl + dy*0.2],
+#                    [si + dx/2, yl]])
+#        ax.add_patch(Polygon(xy, **opts))
     return
-            
+
 
 
 def multicolorylab(ax, lablist, collist):
-    boxs = [TextArea(l, textprops=dict(color=c, rotation=90, ha='center', va='bottom')) for l, c in zip(lablist, collist)]
+    boxs = [TextArea(l, textprops=dict(color=c, rotation=90, ha='right', va='bottom')) for l, c in zip(lablist, collist)]
     ybox = VPacker(children=boxs[::-1], pad=0, sep=5)
-    anchored_ybox = AnchoredOffsetbox(loc=8, child=ybox, pad=0., frameon=False,
-                                      bbox_to_anchor=(-.045, 0.41),
-                                      bbox_transform=ax.transAxes, borderpad=0.)
+    anchored_ybox = AnchoredOffsetbox(loc=6, child=ybox, pad=-2.4, frameon=False,
+                                      bbox_to_anchor=(.0, .5),
+                                      bbox_transform=ax.transAxes, borderpad=.4)
     ax.add_artist(anchored_ybox)
 
 
@@ -310,6 +330,15 @@ def twissdata(data):
     return
 
 
+def tunechrom(ax, data, props=dict(boxstyle='round', alpha=0.5)):
+    string = 'Qx = {:.6}'.format(data['nux'][0])
+    string += '\nQy = {:.6}'.format(data['nuy'][0])
+    string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux/dp'][0])
+    string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy/dp'][0])
+    ax.text(9/16*0.05, 0.95, string, transform=ax.transAxes, va='top', ha='left', bbox=props)
+    return
+
+
 def twissplot(data, zoom=False, fs=[16, 9]):
     if zoom:
         starti, endi = argmax(data['s'] >= zoom[0]), argmax(data['s'] >= zoom[1])
@@ -320,7 +349,7 @@ def twissplot(data, zoom=False, fs=[16, 9]):
         return fig
     fig = drawtwiss(data, fs)
     return fig
-    
+
 #Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
 #Tnames = ['Landau + BAM WLS7','MPW','U41','UE49','UE46','CPMU17 + UE48 (EMIL)','PSF WLS7','Cavities']
 #names = {'D': Dnames, 'T' : Tnames, 'S' :  core.defchararray.add(Dnames,core.defchararray.add(' + ',Tnames))}
@@ -335,25 +364,20 @@ def biizoom(sectyp, num):
         return list(array([240/32, 3*240/32]) + (num - 1)*240/8)
 
 
-def autoscroll(threshhold):
-    if threshhold==0:  # alway scroll !not good
-        javastring = '''
-        IPython.OutputArea.prototype._should_scroll = function(lines) {
-            return true;
-        }
-        '''
-    elif threshhold==-1:  # never scroll !not good
-        javastring = '''
-        IPython.OutputArea.prototype._should_scroll = function(lines) {
-            return false;
-        }
-        '''
-    else:
-        javastring = 'IPython.OutputArea.auto_scroll_threshold = ' + str(threshhold)
-    display(Javascript(javastring))
-
-
-def trackplot(datadict, turns=False):
+def trackplot(datadict, turns=False, xy=False, fs=[16, 9]):
+    if xy:
+        fig = figure(figsize=fs)
+        ax = fig.add_subplot(111)
+        x, y = xy
+        colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
+        if turns:
+            [plot(datadict[x][:turns, part], datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
+        else:
+            [plot(datadict[x][:, part], datadict[y][:, part], '.', color=col) for part, col in enumerate(colors)]
+        xlabel(x)
+        ylabel(y)
+        tight_layout()
+        return fig, ax
     try:  # centroid watch point
         x = ['Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Cx', 'Cy', 'dCt']
         y = ['Cx', 'Cy', 'dCt', 'Cxp', 'Cyp', 'Cdelta', 'Cxp', 'Cyp', 'Cdelta']
