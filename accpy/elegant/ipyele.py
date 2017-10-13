@@ -335,7 +335,7 @@ def tunechrom(ax, data, props=dict(boxstyle='round', alpha=0.5)):
     string += '\nQy = {:.6}'.format(data['nuy'][0])
     string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux/dp'][0])
     string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy/dp'][0])
-    ax.text(9/16*0.05, 0.95, string, transform=ax.transAxes, va='top', ha='left', bbox=props)
+    ax.text(9/16*0.02, 0.98, string, transform=ax.transAxes, va='top', ha='left', bbox=props)
     return
 
 
@@ -364,20 +364,22 @@ def biizoom(sectyp, num):
         return list(array([240/32, 3*240/32]) + (num - 1)*240/8)
 
 
-def trackplot(datadict, turns=False, xy=False, fs=[16, 9]):
-    if xy:
+def trackplot(datadict, turns=False, xy=False, fs=[16, 9], ax=False):
+    if not ax:
         fig = figure(figsize=fs)
-        ax = fig.add_subplot(111)
+    if xy:
+        if not ax:
+            ax = fig.add_subplot(111)
         x, y = xy
         colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
         if turns:
-            [plot(datadict[x][:turns, part], datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
+            [ax.plot(datadict[x][:turns, part], datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
         else:
-            [plot(datadict[x][:, part], datadict[y][:, part], '.', color=col) for part, col in enumerate(colors)]
-        xlabel(x)
-        ylabel(y)
-        tight_layout()
-        return fig, ax
+            [ax.plot(datadict[x][:, part], datadict[y][:, part], '.', color=col) for part, col in enumerate(colors)]
+        ax.set_xlabel(x)
+        ax.set_ylabel(y)
+        #tight_layout()
+        return
     try:  # centroid watch point
         x = ['Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Cx', 'Cy', 'dCt']
         y = ['Cx', 'Cy', 'dCt', 'Cxp', 'Cyp', 'Cdelta', 'Cxp', 'Cyp', 'Cdelta']

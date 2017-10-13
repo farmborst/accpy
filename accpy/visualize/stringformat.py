@@ -59,6 +59,8 @@ class uc:
     class math:
         permille = u'\u2030'
         squared  = u'\u00B2'
+        pm = u'\u00B1'
+        
     pi = u'\u03c0'
     ppt = u'\u2030'
     squared = u'\u00B2'
