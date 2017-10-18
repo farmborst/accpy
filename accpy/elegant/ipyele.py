@@ -375,7 +375,13 @@ def trackplot(datadict, turns=False, xy=False, fs=[16, 9], ax=False):
         if turns:
             [ax.plot(datadict[x][:turns, part], datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
         else:
-            [ax.plot(datadict[x][:, part], datadict[y][:, part], '.', color=col) for part, col in enumerate(colors)]
+            for part, col in enumerate(colors):
+                missing = []
+                try:
+                    ax.plot(datadict[x][:, part], datadict[y][:, part], '.', color=col)
+                except:
+                    missing.append(part)
+            print('missing particles: ', missing)
         ax.set_xlabel(x)
         ax.set_ylabel(y)
         #tight_layout()
