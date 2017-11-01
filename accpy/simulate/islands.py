@@ -2,9 +2,11 @@
 """accpy.simulate.islands
 author:     felix.kramer(at)physik.hu-berlin.de
 """
-from pyfftw import FFTW, empty_aligned, interfaces
-from numpy import (abs, dot, roll, shape, zeros, empty, array, mean, where,
-                   sort, diff, argmax, linspace, concatenate, isnan,
+from __future__ import division, print_function
+from pyfftw import empty_aligned, interfaces
+from pyfftw.pyfftw import FFTW
+from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
+                   where, sort, diff, argmax, linspace, concatenate, isnan,
                    logical_or, delete, nanmin, nanmax)
 from matplotlib.mlab import dist, find
 from matplotlib.cm import rainbow, ScalarMappable
@@ -14,13 +16,13 @@ from matplotlib.gridspec import GridSpec
 
 
 ###############################################################################
-# POST PROCESSING    
+# POST PROCESSING
 ###############################################################################
 
 def PolyArea(x, y):
-    # shoelace formula from 
+    # shoelace formula from
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
-    return abs(dot(x, roll(y,1)) - dot(y, roll(x, 1)))/2
+    return npabs(dot(x, roll(y,1)) - dot(y, roll(x, 1)))/2
 
 
 def islandsloc(data, resonance, minsep=5e-3):
@@ -61,10 +63,9 @@ def getmyfft(turns, frev):
     return dQ, fd, fdn, myfft
 
 def getfreq(data, myfft, turns):
-    return abs(myfft(data)[:int(turns/2)])
+    return npabs(myfft(data)[:int(turns/2)])
 
 def tunes(data, frev):
-    interfaces.cache.enable()
     dQ, fd, fdn, myfft = getmyfft(data['turns'], frev)
     data['Q'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, data['turns']))] for i in data['allIDs']])
     return
@@ -72,11 +73,11 @@ def tunes(data, frev):
 def evaltrackdat(data, resonance, frev):
     islandsloc(data, resonance)
     tunes(data, frev)
-    return data
-    
-    
+    return
+
+
 ###############################################################################
-# VISUALIZATION    
+# VISUALIZATION
 ###############################################################################
 
 
@@ -103,19 +104,19 @@ def getquadsext(ax, latticename):
     return
 
 def getrdts(ax, twissdat):
-    rdts = ['h11001', 'h00111', 'h20001', 'h00201', 'h10002', 'h21000', 'h30000', 'h10110', 'h10020', 'h10200','h22000', 
+    rdts = ['h11001', 'h00111', 'h20001', 'h00201', 'h10002', 'h21000', 'h30000', 'h10110', 'h10020', 'h10200','h22000',
             'h11110', 'h00220', 'h31000', 'h40000', 'h20110', 'h11200', 'h20020', 'h20200', 'h00310', 'h00400']
     string = ''
     for rdt in rdts:
         string += rdt + ' = {:<+9.4}'.format(twissdat['Re' + rdt][0])
         imp = twissdat['Im' + rdt][0]
-        if abs(imp) < 1e-10:
+        if npabs(imp) < 1e-10:
             string += '\n'
             continue
         if imp < 0:
-            string += ' - i * {:.4}\n'.format(abs(imp))
+            string += ' - i * {:.4}\n'.format(npabs(imp))
         else:
-            string += ' + i * {:.4}\n'.format(abs(imp))
+            string += ' + i * {:.4}\n'.format(npabs(imp))
     props=dict(boxstyle='round', alpha=0.5)
     ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
     return
