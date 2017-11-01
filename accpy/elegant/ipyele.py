@@ -5,7 +5,7 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import print_function, division
 from subprocess import Popen, PIPE, STDOUT
 from numpy import (shape, array, max as npmax, argmax, roll, float64, core,
-                   min as npmin, linspace, where)
+                   min as npmin, linspace, where, empty, nan)
 from matplotlib.pylab import (plot, subplot, xlabel, ylabel, twinx, gca, xlim,
                               ylim, annotate, tight_layout)
 from matplotlib.patches import Polygon, Rectangle, PathPatch
@@ -19,7 +19,7 @@ from ..visualize.stringformat import uc
 from ..dataio.hdf5 import h5save
 
 
-def elegant(runfile, verbose=False, macro=None):
+def elegant(runfile, macro=None):
     path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
     path += '/defns.rpn'
     processstring = "export RPN_DEFNS='" + path + "' && elegant " + runfile
@@ -27,16 +27,11 @@ def elegant(runfile, verbose=False, macro=None):
         processstring += ' -macro=' + macro
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
     stdout, stderr = process.communicate()
-    if verbose:
-        print('-- STDOUT --')
-        print(stdout)
-        print('-- STDERR --')
-        print(stderr)
-        print('-- THEEND --')
-    return
+    out = '-- STDOUT --\n\n{0}\n\n-- STDERR --\n\n{1}'.format(stdout, stderr)
+    return out
 
 
-def Pelegant(filename, Ncores=2, verbose=False, macro=None):
+def Pelegant(filename, Ncores=2, macro=None):
     path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
     path += '/defns.rpn'
     processstring = "export RPN_DEFNS='" + path + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
@@ -44,34 +39,58 @@ def Pelegant(filename, Ncores=2, verbose=False, macro=None):
         processstring += ' -macro=' + macro
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
     stdout, stderr = process.communicate()
-    if verbose:
-        print('-- STDOUT --')
-        print(stdout)
-        print('-- STDERR --')
-        print(stderr)
-        print('-- THEEND --')
-    return
+    out = '-- STDOUT --\n\n{0}\n\n-- STDERR --\n\n{1}'.format(stdout, stderr)
+    return out
+
+
+def loadwpcols(filename):
+    ''' desired output: shape(dict['x' or 'Cx']) = (turns, particles)
+    with nan when particle gets lost in coo mode
+    Problems:
+        - when particles are lost the sddsfile does not carry the NANs around
+            -> every turn the particleIDs need to be checked
+        - shape of colvals opposite for tracking of
+          coordinates (turns, particles) and other (1, turns)
+    '''
+    data = sdds.SDDS(0)
+    data.load(filename)
+    colkeys = data.columnName
+    colvals = data.columnData
+    if filename[-3:] == 'coo':
+        IDsindex = colkeys.index('particleID')
+        colkeys.remove('particleID')
+        IDs = colvals.pop(IDsindex)
+        Nturns, Nparts = len(IDs), len(IDs[0])
+        tmp = empty([Nturns, Nparts])
+        tmp.fill(nan)
+        newcolvals = []
+        for i, val in enumerate(colvals):  # loop over x,xp,y,yp,...
+            newcolvals.append(tmp.copy())
+            for t in range(Nturns):
+                newcolvals[i][t, array(IDs[t]) - 1] = array(val[t])
+    else: # filename[-3:] == 'cen' or '.twiss'
+        newcolvals = [array(val).T for val in colvals]
+    return data, dict(zip(colkeys, newcolvals))
 
 
 def sddsload(filename, verbose=False):
-    data = sdds.SDDS(0)
-    data.load(filename)
+    data, coldict = loadwpcols(filename)
 
     pars = data.parameterName
     Npars = len(pars)
     parvals = data.parameterData
     pardict = dict(zip(pars, parvals))
 
-    cols = data.columnName
-    Ncols = len(cols)
-    colvals = data.columnData
-    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :(
-    if shape(colvals[0])[0]==1:
-        colvals = [array(val).T for val in colvals]
-    else:
-        colvals = [array(val) for val in colvals]
-    coldict = dict(zip(cols, colvals))
-
+    Ncols = len(coldict)
+#    cols = data.columnName
+#    Ncols = len(cols)
+#    colvals = data.columnData
+#    # shape of colvals opposite for tracking of coordinates (points, particles) and other (1, points)  :(
+#    if shape(colvals[0])[0]==1:
+#        colvals = [array(val).T for val in colvals]
+#    else:
+#        colvals = [array(val) for val in colvals]
+#    coldict = dict(zip(cols, colvals))
 
     if verbose:
         # print information on loaded data
@@ -440,7 +459,7 @@ def mybunch(bunchname, ranges, E_mev):
     me = const.me
     E0 = me*cl**2/qe  # eV
     gamma = 1 + E_mev*1e6/E0
-    print('gamma = {}'.format(gamma))
+    #print('gamma = {}'.format(gamma))
 
     N = len(ranges['x'])
     bunch = sdds.SDDS(0)  # what does the index mean?
