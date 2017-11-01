@@ -12,7 +12,7 @@ class struct(object):
         self.__dict__.update(entries)
 
 
-def h5save(filename, verbose, **namesandvariables):
+def h5save(filename, verbose=False, timestamp=True, **namesandvariables):
     ''' save dataset to hdf5 format
     input:
         - desired filename as string
@@ -40,17 +40,21 @@ def h5save(filename, verbose, **namesandvariables):
                                 - np.int64      if only ints
         
     '''
-    timstamp = strftime('%Y%m%d%H%M%S')
-    filename = ''.join([timstamp, '_', filename, '.hdf5'])
+    if timestamp:
+        filename = strftime('%Y%m%d%H%M%S') + '_' + filename + '.hdf5'
+    else:
+        filename += '.hdf5'
     hdf5_fid = h5pyFile(filename, 'w')              
     if verbose:
         print('\n==========================================================')
         print('Beginning to save to %s ...' % filename)
         print('\n----------------------------------------------------------')
+    i = 0
     for key, value in namesandvariables.iteritems():
-            if verbose:
-                print('Saving values in %s ... ' % key)
-            hdf5_fid.create_dataset(key, data=value)
+        i += 1
+        if verbose:
+            print('{1:0>3} Saving values in {0:} ... '.format(key, i))
+        hdf5_fid.create_dataset(key.encode('utf8').replace('/', '|'), data=value)
     if verbose:
         print('\n----------------------------------------------------------')
         print('... finished saving to %s !' % filename)
@@ -70,23 +74,30 @@ def h5load(filename, verbose):
         use with files saved with accpy.dataio.save
     '''
     if filename[-5:] != '.hdf5':
-        filename = ''.join([filename, '.hdf5'])
+        filename += '.hdf5'
     fid = h5pyFile(filename, 'r')
     data = {}
     if verbose:
         print('\n==========================================================')
         print('Beginning to load from %s ...' % filename)
         print('\n----------------------------------------------------------')
-        for key in fid:
+    i = 0
+    for key in fid:
+        i += 1
+        try:
             data[key] = fid[key].value
-            print('Loading values from {0:} {1:} ... '.format(key, type(data[key])))
+        except:
+            subdata = {}
+            for subkey in fid[key]:
+                subdata[subkey] = fid[key][subkey].value
+            data[key] = subdata
+        if verbose:
+            print('{2:0>3} Loading values from {0:} {1:} ... '.format(key, type(data[key]), i))
+    fid.close()
+    if verbose:
         print('\n----------------------------------------------------------')
         print('... finished loading from %s !' % filename)
         print('\n==========================================================')
-    else:
-        for key in fid:
-            data[key] = fid[key].value
-    fid.close()
     return data
 
 

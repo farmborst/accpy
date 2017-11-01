@@ -323,8 +323,8 @@ def twissdata(data):
     print('    Qx = {:.6}'.format(data['nux'][0]))
     print('    Qy = {:.6}'.format(data['nuy'][0]))
     print('\nChromaticities:')
-    print('    ' + uc.greek.xi + 'x = {:.6}'.format(data['dnux/dp'][0]))
-    print('    ' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy/dp'][0]))
+    print('    ' + uc.greek.xi + 'x = {:.6}'.format(data['dnux|dp'][0]))
+    print('    ' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy|dp'][0]))
     print('\nMomentum Compaction Factor:')
     print('    ' + uc.greek.alpha + 'p = {:.5e}'.format(data['alphac'][0]))
     print('\nRadiation Damping times:')
@@ -341,10 +341,10 @@ def twissdata(data):
     print('\nEquilibrium fractional rms energy spread:')
     print('    ' + uc.greek.epsilon + uc.greek.delta + ' = {:.6e}'.format(data['Sdelta0'][0]))
     print('\nHigher Order::')
-    print('    ' + uc.greek.xi + 'x2 = {:}'.format(data['dnux/dp2'][0]))
-    print('    ' + uc.greek.xi + 'y2 = {:}'.format(data['dnuy/dp2'][0]))
-    print('    ' + uc.greek.xi + 'x3 = {:}'.format(data['dnux/dp3'][0]))
-    print('    ' + uc.greek.xi + 'y3 = {:}'.format(data['dnuy/dp3'][0]))
+    print('    ' + uc.greek.xi + 'x2 = {:}'.format(data['dnux|dp2'][0]))
+    print('    ' + uc.greek.xi + 'y2 = {:}'.format(data['dnuy|dp2'][0]))
+    print('    ' + uc.greek.xi + 'x3 = {:}'.format(data['dnux|dp3'][0]))
+    print('    ' + uc.greek.xi + 'y3 = {:}'.format(data['dnuy|dp3'][0]))
     print('    ' + uc.greek.alpha + 'p2 = {:e}'.format(data['alphac2'][0]))
     return
 
@@ -352,8 +352,8 @@ def twissdata(data):
 def tunechrom(ax, data, props=dict(boxstyle='round', alpha=0.5)):
     string = 'Qx = {:.6}'.format(data['nux'][0])
     string += '\nQy = {:.6}'.format(data['nuy'][0])
-    string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux/dp'][0])
-    string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy/dp'][0])
+    string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux|dp'][0])
+    string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy|dp'][0])
     ax.text(9/16*0.02, 0.98, string, transform=ax.transAxes, va='top', ha='left', bbox=props)
     return
 
