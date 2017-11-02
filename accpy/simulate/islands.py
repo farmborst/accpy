@@ -3,16 +3,16 @@
 author:     felix.kramer(at)physik.hu-berlin.de
 """
 from __future__ import division, print_function
-from pyfftw import empty_aligned, interfaces
+from pyfftw import empty_aligned
 from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan,
-                   logical_or, delete, nanmin, nanmax)
+                   logical_or, delete, nanmin, nanmax, add)
 from matplotlib.mlab import dist, find
 from matplotlib.cm import rainbow, ScalarMappable
-from matplotlib.pyplot import subplots, figure, subplot, colorbar, tight_layout
+from matplotlib.pyplot import colorbar, tight_layout
 from matplotlib.colors import Normalize
-from matplotlib.gridspec import GridSpec
+
 
 
 ###############################################################################
@@ -90,14 +90,18 @@ def getquadsext(ax, latticename):
         for line in fh:
             for quad in quads:
                 if line.startswith(quad) or line.startswith('"' + quad + '"'):
-                    i = line.find('K1=') + 3
-                    j = min([j for j in [line[i:].find('\n'), line[i:].find(' ')] if j != -1]) + i
-                    quadstr += '{:<5}  K1={:<+.4}\n'.format(quad, float(line[i:j].split(',')[0]))
+                    try:
+                        K1 = float(line.split('K1=')[1].split(',')[0])
+                    except:
+                        K1 = 0.0
+                    quadstr += '{:<5}  K1={:<+.4}\n'.format(quad, K1)
             for sext in sexts:
                 if line.startswith(sext) or line.startswith('"' + sext + '"'):
-                    i = line.find('K2=') + 3
-                    j = min([j for j in [line[i:].find('\n'), line[i:].find(' ')] if j != -1]) + i
-                    sextstr += '{:<5}  K2={:<+.4}\n'.format(sext, float(line[i:j].split(',')[0]))
+                    try:
+                        K2 = float(line.split('K2=')[1].split(',')[0])
+                    except:
+                        K2 = 0.0
+                    sextstr += '{:<5}  K2={:<+.4}\n'.format(sext, K2)
     props=dict(boxstyle='round', alpha=0.5)
     ax.text(1.02, 1, quadstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='r', transform=ax.transAxes)
     ax.text(1.02, .76, sextstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='g', transform=ax.transAxes)
@@ -121,66 +125,92 @@ def getrdts(ax, twissdat):
     ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
     return
 
-def trackplot(datadict, turns=False, xy=False, fs=[16, 9], ax=False):
+def trackplot(ax, datadict, turns=False, xy=False, fs=[16, 9], showlost=False,
+              everyxturn=[0, 1]):
     x, y = xy
     colors = rainbow(linspace(0, 1, datadict['Particles'][0]))
     lost = []
     for part, col in enumerate(colors):
-        xdat, ydat = datadict[x][:, part], datadict[y][:, part]
-        ax.plot(xdat, ydat, '.', color=col)
+        i, f = everyxturn
+        xdat, ydat = datadict[x][i::f, part], datadict[y][i::f, part]
         nansat = isnan(xdat)
         if nansat.any():
             lostat = where(nansat)[0][0]
-            lost.append([part, lostat])
-    if len(lost) > 0:
-        print('lost particles: ', lost)
-    ax.set_xlabel(x)
-    ax.set_ylabel(y)
-    return
-
-def islandsplot(data):
-    fig, ax  = subplots(1, 1, figsize=(16, 9))
-    for ID in data['islandIDs']:
-        ax.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.r')
-    for ID in data['centerIDs']:
-        ax.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.b')
-    for ID in data['enclosingIDs']:
-        ax.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.g')
+            lost.append(array([part, lostat]))
+            if showlost:
+                ax.plot(xdat*1e3, ydat*1e3, '.', color=col)
+        else:
+            ax.plot(xdat*1e3, ydat*1e3, '.', color=col)
     ax.set_xlabel('x / (mm)')
     ax.set_ylabel('x\' / (mrad)')
+    datadict['lost'] = array(lost)
+    return
 
-def tuneplot(data, particleIDs='allIDs'):
+def islandsplot(ax, data, showlost=False):
+    datx, daty = data['x'].copy(), data['xp'].copy()
+    if showlost:
+        for ID in data['islandIDs']:
+            ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.r')
+        for ID in data['centerIDs']:
+            ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.b')
+        for ID in data['enclosingIDs']:
+            ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.g')
+    else:
+        lost = data['lost'][:, 0]
+        for ID in data['islandIDs']:
+            if ID not in lost:
+                ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.r')
+        for ID in data['centerIDs']:
+            if ID not in lost:
+                ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.b')
+        for ID in data['enclosingIDs']:
+            if ID not in lost:
+                ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.g')
+    ax.set_xlabel('x / (mm)')
+    ax.set_ylabel('x\' / (mrad)')
+    return
+
+def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
+             clipint=True, showlost=False):
     particleIDs = data[particleIDs]
-    Q = data['Q'][particleIDs]
-    zeroQ = find(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))
-    if len(zeroQ) > 0:  # trim reference particle with zero tune
-        Q = delete(Q, zeroQ)
-        particleIDs = delete(particleIDs, zeroQ)
+    Q = addsub(integer, data['Q'][particleIDs])
+    if clipint:
+        zeroQ = find(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))
+        if len(zeroQ) > 0:  # trim reference particle with zero tune
+            Q = delete(Q, zeroQ)
+            particleIDs = delete(particleIDs, zeroQ)
     Qmin, Qmax = nanmin(Q), nanmax(Q)
     Qdif = Qmax - Qmin
-    fmt = '%.3f'
+#    fmt = '%.3f'
     if Qdif == 0.0:
         Qmin -= Qmin/1e4
         Qmax += Qmax/1e4
         Qdif = Qmax - Qmin
-        fmt = '%.5f'
-    figure(figsize=(16, 9))
-    G = GridSpec(1, 3)
-    ax1, ax2 = subplot(G[0, :2]), subplot(G[0, 2:])
+#        fmt = '%.5f'
     colors = rainbow((Q - Qmin) / Qdif)
-    for i, ID in enumerate(particleIDs):
-        ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
+    if showlost:
+        for i, ID in enumerate(particleIDs):
+            ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
+    else:
+        lost = data['lost'][:, 0]
+        for i, ID in enumerate(particleIDs):
+            if ID not in lost:
+                ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
     sm = ScalarMappable(cmap=rainbow, norm=Normalize(vmin=Qmin, vmax=Qmax))
     sm._A = []
-    cb = colorbar(sm, ax=ax2, format=fmt)
-    cb.set_label('dQ')
+#    cb = colorbar(sm, ax=ax2, format=fmt, ticks=[])
+#    cb = colorbar(sm, ax=ax2, ticks=[])
+#    cb.set_label('dQ')
     ax1.set_xlabel('x / (mm)')
     ax1.set_ylabel('x\' / (mrad)')
     for i, ID in enumerate(particleIDs):
         initialamp = data['x'][0, ID]
         ax2.plot(initialamp*1e3, Q[i], 'o', c=colors[i])
-    ax2.yaxis.set_ticklabels([])
+#    ax2.yaxis.set_ticklabels([])
     ax2.set_ylim([Qmin, Qmax])
+    ax2.yaxis.tick_right()
+    ax2.set_ylabel('dQ / (a.u.)')
+    ax2.yaxis.set_label_position("right")
     ax2.set_xlabel('Initial amplitude x / (mm)')
     tight_layout()
     return

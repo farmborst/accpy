@@ -31,7 +31,7 @@ def elegant(runfile, macro=None):
     return out
 
 
-def Pelegant(filename, Ncores=2, macro=None):
+def Pelegant(filename, Ncores=4, macro=None):
     path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
     path += '/defns.rpn'
     processstring = "export RPN_DEFNS='" + path + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
@@ -75,6 +75,7 @@ def loadwpcols(filename):
 
 def sddsload(filename, verbose=False):
     data, coldict = loadwpcols(filename)
+    description = data.description
 
     pars = data.parameterName
     Npars = len(pars)
@@ -94,7 +95,7 @@ def sddsload(filename, verbose=False):
 
     if verbose:
         # print information on loaded data
-        print("SDDS description: ", data.description)
+        print("SDDS description: ", )
         print()
         print(Npars, "Paramters: {0:>13}".format('shape'))
         [print('{0:<20} {1:<}'.format(key, shape(val))) for key, val in pardict.items()]
@@ -104,6 +105,7 @@ def sddsload(filename, verbose=False):
         print()
 
     data = pardict
+    data['description'] = description
     data.update(coldict)
     return data
 
