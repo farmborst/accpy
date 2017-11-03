@@ -7,10 +7,10 @@ from pyfftw import empty_aligned
 from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan,
-                   logical_or, delete, nanmin, nanmax, add)
+                   logical_or, delete, nanmin, nanmax, add, nan)
 from matplotlib.mlab import dist, find
 from matplotlib.cm import rainbow, ScalarMappable
-from matplotlib.pyplot import colorbar, tight_layout
+from matplotlib.pyplot import tight_layout
 from matplotlib.colors import Normalize
 
 
@@ -62,12 +62,19 @@ def getmyfft(turns, frev):
     myfft = FFTW(a, b, threads=2)
     return dQ, fd, fdn, myfft
 
-def getfreq(data, myfft, turns):
-    return npabs(myfft(data)[:int(turns/2)])
+def getfreq(data, myfft, clip):
+    return npabs(myfft(data)[1:clip])
 
 def tunes(data, frev):
     dQ, fd, fdn, myfft = getmyfft(data['turns'], frev)
-    data['Q'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, data['turns']))] for i in data['allIDs']])
+    clip = int(data['turns']/2)
+    data['Q'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in data['allIDs']])
+#    for res in [3]:
+#        N = int(data['turns']/res)
+#        dQ, fd, fdn, myfft = getmyfft(N, frev)
+#        for island in range(res):
+#            Qstr = 'Q{}_{}'.format(res, island + 1)
+#            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in data['allIDs']])
     return
 
 def evaltrackdat(data, resonance, frev):
@@ -192,7 +199,9 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
         for i, ID in enumerate(particleIDs):
             ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
     else:
-        lost = data['lost'][:, 0]
+        lost = data['lost']
+        if len(lost) > 0:
+            lost = lost[:, 0]
         for i, ID in enumerate(particleIDs):
             if ID not in lost:
                 ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
