@@ -7,7 +7,7 @@ from pyfftw import empty_aligned
 from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan,
-                   logical_or, delete, nanmin, nanmax, add, nan)
+                   logical_or, delete, nanmin, nanmax, add, nan, int32, arange)
 from matplotlib.mlab import dist, find
 from matplotlib.cm import rainbow, ScalarMappable
 from matplotlib.pyplot import tight_layout
@@ -27,7 +27,7 @@ def PolyArea(x, y):
 
 def islandsloc(data, resonance, minsep=5e-3):
     data['turns'], data['particles'] = shape(data['x'])
-    data['allIDs'] = range(data['particles'])
+    data['allIDs'] = arange(data['particles'], dtype=int32)
     data['A'], C, T = zeros(data['particles']), empty([data['particles'], 2]), zeros(data['particles'])
     for i in data['allIDs']:  # [0, 9, 21, 22, 92]
         x = data['x'][::3, i]
@@ -77,9 +77,23 @@ def tunes(data, frev):
 #            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in data['allIDs']])
     return
 
+def findlost(data):
+    lost = []
+    lostIDs = []
+    for part in range(data['Particles'][0]):
+        nansat = isnan(data['x'][:, part])
+        if nansat.any():
+            lostat = where(nansat)[0][0]
+            lost.append(array([part, lostat], dtype=int32))
+            lostIDs.append(part)
+    data['lost'] = array(lost, dtype=int32)
+    data['lostIDs'] = array(lostIDs, dtype=int32)
+    return
+
 def evaltrackdat(data, resonance, frev):
     islandsloc(data, resonance)
     tunes(data, frev)
+    findlost(data)
     return
 
 
@@ -109,7 +123,7 @@ def getquadsext(ax, latticename):
                     except:
                         K2 = 0.0
                     sextstr += '{:<5}  K2={:<+.4}\n'.format(sext, K2)
-    props=dict(boxstyle='round', alpha=0.5)
+    props=dict(boxstyle='round', alpha=1)
     ax.text(1.02, 1, quadstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='r', transform=ax.transAxes)
     ax.text(1.02, .76, sextstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='g', transform=ax.transAxes)
     return
@@ -128,29 +142,23 @@ def getrdts(ax, twissdat):
             string += ' - i * {:.4}\n'.format(npabs(imp))
         else:
             string += ' + i * {:.4}\n'.format(npabs(imp))
-    props=dict(boxstyle='round', alpha=0.5)
+    props=dict(boxstyle='round', alpha=1)
     ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
     return
 
-def trackplot(ax, datadict, turns=False, xy=False, fs=[16, 9], showlost=False,
+def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
               everyxturn=[0, 1]):
     x, y = xy
-    colors = rainbow(linspace(0, 1, datadict['Particles'][0]))
-    lost = []
-    for part, col in enumerate(colors):
+    colors = rainbow(linspace(0, 1, data['Particles'][0]))
+    IDs = data['allIDs'].copy()
+    if not showlost:
+        IDs = delete(IDs, data['lostIDs'])
+    for part, col in zip(IDs, colors):
         i, f = everyxturn
-        xdat, ydat = datadict[x][i::f, part], datadict[y][i::f, part]
-        nansat = isnan(xdat)
-        if nansat.any():
-            lostat = where(nansat)[0][0]
-            lost.append(array([part, lostat]))
-            if showlost:
-                ax.plot(xdat*1e3, ydat*1e3, '.', color=col)
-        else:
-            ax.plot(xdat*1e3, ydat*1e3, '.', color=col)
+        xdat, ydat = data[x][i::f, part], data[y][i::f, part]
+        ax.plot(xdat*1e3, ydat*1e3, '.', color=col)
     ax.set_xlabel('x / (mm)')
     ax.set_ylabel('x\' / (mrad)')
-    datadict['lost'] = array(lost)
     return
 
 def islandsplot(ax, data, showlost=False):
@@ -163,7 +171,7 @@ def islandsplot(ax, data, showlost=False):
         for ID in data['enclosingIDs']:
             ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.g')
     else:
-        lost = data['lost'][:, 0]
+        lost = data['lostIDs']
         for ID in data['islandIDs']:
             if ID not in lost:
                 ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.r')
