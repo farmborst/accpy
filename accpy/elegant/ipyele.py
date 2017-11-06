@@ -356,8 +356,8 @@ def tunechrom(ax, data, props=dict(boxstyle='round', alpha=0.5)):
     string += '\nQy = {:.6}'.format(data['nuy'][0])
     string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux|dp'][0])
     string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy|dp'][0])
-    ax.text(9/16*0.02, 0.98, string, transform=ax.transAxes, va='top', ha='left', bbox=props)
-    return
+    line = ax.text(9/16*0.02, 0.98, string, transform=ax.transAxes, va='top', ha='left', bbox=props)
+    return line
 
 
 def twissplot(data, zoom=False, fs=[16, 9]):

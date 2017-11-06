@@ -124,9 +124,9 @@ def getquadsext(ax, latticename):
                         K2 = 0.0
                     sextstr += '{:<5}  K2={:<+.4}\n'.format(sext, K2)
     props=dict(boxstyle='round', alpha=1)
-    ax.text(1.02, 1, quadstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='r', transform=ax.transAxes)
-    ax.text(1.02, .76, sextstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='g', transform=ax.transAxes)
-    return
+    l1 = ax.text(1.02, 1, quadstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='r', transform=ax.transAxes)
+    l2 = ax.text(1.02, .76, sextstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='g', transform=ax.transAxes)
+    return [l1, l2]
 
 def getrdts(ax, twissdat):
     rdts = ['h11001', 'h00111', 'h20001', 'h00201', 'h10002', 'h21000', 'h30000', 'h10110', 'h10020', 'h10200','h22000',
@@ -143,8 +143,8 @@ def getrdts(ax, twissdat):
         else:
             string += ' + i * {:.4}\n'.format(npabs(imp))
     props=dict(boxstyle='round', alpha=1)
-    ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
-    return
+    line = ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
+    return line
 
 def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
               everyxturn=[0, 1]):
