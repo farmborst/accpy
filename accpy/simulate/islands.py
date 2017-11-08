@@ -68,7 +68,8 @@ def getfreq(data, myfft, clip):
 def tunes(data, frev):
     dQ, fd, fdn, myfft = getmyfft(data['turns'], frev)
     clip = int(data['turns']/2)
-    data['Q'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in data['allIDs']])
+    data['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in data['allIDs']])
+    data['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in data['allIDs']])
 #    for res in [3]:
 #        N = int(data['turns']/res)
 #        dQ, fd, fdn, myfft = getmyfft(N, frev)
@@ -90,7 +91,10 @@ def findlost(data):
     data['lostIDs'] = array(lostIDs, dtype=int32)
     return
 
-def evaltrackdat(data, resonance, frev):
+def evaltrackdat(data, resonance):
+    L = data['PassLength'][0]
+    Trev = L/299792458
+    frev = 1/Trev
     islandsloc(data, resonance)
     tunes(data, frev)
     findlost(data)
@@ -186,9 +190,9 @@ def islandsplot(ax, data, showlost=False):
     return
 
 def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
-             clipint=True, showlost=False):
+             clipint=True, showlost=False, QQ='Qx'):
     particleIDs = data[particleIDs]
-    Q = addsub(integer, data['Q'][particleIDs])
+    Q = addsub(integer, data[QQ][particleIDs])
     if clipint:
         zeroQ = find(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))
         if len(zeroQ) > 0:  # trim reference particle with zero tune
@@ -221,7 +225,7 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     ax1.set_xlabel('x / (mm)')
     ax1.set_ylabel('x\' / (mrad)')
     for i, ID in enumerate(particleIDs):
-        initialamp = data['x'][0, ID]
+        initialamp = nanmax(data['x'][:, ID])
         ax2.plot(initialamp*1e3, Q[i], 'o', c=colors[i])
 #    ax2.yaxis.set_ticklabels([])
     ax2.set_ylim([Qmin, Qmax])
