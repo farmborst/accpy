@@ -16,7 +16,7 @@ def h5save(filename, verbose=False, timestamp=True, **namesandvariables):
     ''' save dataset to hdf5 format
     input:
         - desired filename as string
-        - names = values of variables to be saved
+        - dictionary
     return:
         - saves data to "timestamp_filename.hdf5 in working directory"
         - complete filename is returned
@@ -30,19 +30,10 @@ def h5save(filename, verbose=False, timestamp=True, **namesandvariables):
         2.  alternative 
                 a=2, b='foo', c=1.337, d=[1, 2, 'c']
                 h5save(filename, True. a=a, b=b, c=c, d=d)
-                accepted datatypes:
-                    - int   -> numpy.int64
-                    - str   -> str
-                    - float -> numpy.float64
-                    - list  -> numpy.ndarray of:
-                                - np.string__   if >0 string
-                                - np.float64    if >0 float
-                                - np.int64      if only ints
-        
     '''
     if timestamp:
-        filename = strftime('%Y%m%d%H%M%S') + '_' + filename + '.hdf5'
-    else:
+        filename = strftime('%Y%m%d%H%M%S') + '_' + filename
+    if filename[-5:] != '.hdf5':
         filename += '.hdf5'
     hdf5_fid = h5pyFile(filename, 'w')              
     if verbose:
@@ -63,15 +54,15 @@ def h5save(filename, verbose=False, timestamp=True, **namesandvariables):
     return filename
 
 
-def h5load(filename, verbose):
+def h5load(filename, verbose=False):
     ''' h5load(filename, verbose)
     input:
         - filename (as string)
-        - names of variables and values to be loaded (as string)
+        - desired verbosity
     return:
         - dictionary of saved data
     notice:
-        use with files saved with accpy.dataio.save
+        use with files saved with accpy.dataio.h5save
     '''
     if filename[-5:] != '.hdf5':
         filename += '.hdf5'
