@@ -116,3 +116,25 @@ def plotstandard(purpose, scalex=1, scaley=1, defaults=True):
                   'ytick.labelsize': 8}
     rcParams.update(params)
     return
+    
+def rctablet():
+    jtplot.style('monokai')
+    fs = [2048/256, 1536/256]
+    rcParams['savefig.format'] = 'png'
+    rcParams['savefig.dpi'] = 256
+    rcParams['savefig.facecolor'] = '#232323'
+    rcParams['savefig.edgecolor'] = '#232323'
+    rcParams['savefig.transparent'] = False
+    rcParams['nbagg.transparent'] = False
+    rcParams['savefig.pad_inches'] = 0.0
+    return fs
+
+def rcpof():
+    rcdefaults()
+    dpi = 256
+    fs = [7.12, 4.04]
+    params = {'savefig.dpi'          : dpi,
+              'savefig.format'       : 'png',
+              'axes.formatter.limits': [-3, 3]}
+    rcParams.update(params)
+    return fs
