@@ -151,7 +151,7 @@ def getrdts(ax, twissdat):
     return line
 
 def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
-              everyxturn=[0, 1]):
+              everyxturn=[0, 1], ms=1):
     x, y = xy
     colors = rainbow(linspace(0, 1, data['Particles'][0]))
     IDs = data['allIDs'].copy()
@@ -160,7 +160,7 @@ def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
     for part, col in zip(IDs, colors):
         i, f = everyxturn
         xdat, ydat = data[x][i::f, part], data[y][i::f, part]
-        ax.plot(xdat*1e3, ydat*1e3, '.', color=col)
+        ax.plot(xdat*1e3, ydat*1e3, '.', color=col, ms=ms)
     ax.set_xlabel('x / (mm)')
     ax.set_ylabel('x\' / (mrad)')
     return
