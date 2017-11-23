@@ -106,7 +106,10 @@ def evaltrackdat(data, resonance):
 ###############################################################################
 
 
-def getquadsext(ax, latticename):
+def getquadsext(lines, latticename):
+#    props=dict(boxstyle='round', alpha=1)
+#    line1 = ax.text(1.02, 1, '', va='top', ha='left', fontproperties='monospace', bbox=props, color='r', transform=ax.transAxes)
+#    line2 = ax.text(1.02, .76, '', va='top', ha='left', fontproperties='monospace', bbox=props, color='g', transform=ax.transAxes)
     quads = ['Q1_F', 'Q2_D', 'Q3D_D', 'Q4D_F', 'Q3T_D', 'Q4T_F', 'Q5T_D']
     sexts = ['S1_F', 'S2_D', 'S3D_D', 'S4D_F', 'S3T_D', 'S4T_F']
 
@@ -127,12 +130,13 @@ def getquadsext(ax, latticename):
                     except:
                         K2 = 0.0
                     sextstr += '{:<5}  K2={:<+.4}\n'.format(sext, K2)
-    props=dict(boxstyle='round', alpha=1)
-    l1 = ax.text(1.02, 1, quadstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='r', transform=ax.transAxes)
-    l2 = ax.text(1.02, .76, sextstr.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='g', transform=ax.transAxes)
-    return [l1, l2]
+    lines[0].set_text(quadstr.rstrip('\n'))
+    lines[1].set_text(sextstr.rstrip('\n'))
+    return
 
-def getrdts(ax, twissdat):
+def getrdts(line, twissdat):
+#    props=dict(boxstyle='round', alpha=1)
+#    line = ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
     rdts = ['h11001', 'h00111', 'h20001', 'h00201', 'h10002', 'h21000', 'h30000', 'h10110', 'h10020', 'h10200','h22000',
             'h11110', 'h00220', 'h31000', 'h40000', 'h20110', 'h11200', 'h20020', 'h20200', 'h00310', 'h00400']
     string = ''
@@ -146,9 +150,8 @@ def getrdts(ax, twissdat):
             string += ' - i * {:.4}\n'.format(npabs(imp))
         else:
             string += ' + i * {:.4}\n'.format(npabs(imp))
-    props=dict(boxstyle='round', alpha=1)
-    line = ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
-    return line
+    line.set_text(string.rstrip('\n'))
+    return
 
 def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
               everyxturn=[0, 1], ms=1):
