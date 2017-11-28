@@ -207,23 +207,53 @@ def drawlatt(ax, data):
         sf = s[i + li - 1]
         dx = sf - si
         i += li
+        
+        # get dict of nagnets and strengths
+        latticename = data['description'][0].split('lattice: ')[1]
+        magdict = {}
+        with open(latticename, 'r') as fh:
+            for line in fh:
+                name = line.split(':')[0].replace('"', '')
+                if 'kquad' in line.lower():
+                    try:
+                        K1 = float(line.split('K1=')[1].split(',')[0])
+                    except:
+                        K1 = 0.0
+                    magdict[name] = K1
+                elif 'ksext' in line.lower():
+                    try:
+                        K2 = float(line.split('K2=')[1].split(',')[0])
+                    except:
+                        K2 = 0.0
+                    magdict[name] = K2
+                
+        print(magdict)
+                    
 
         if et == 'CSBEND':
             mypatch(ax, 'yellow', si, yl, dx, dy)
         elif et == 'KQUAD':
-            if data['ElementName'][i - li, 0][-2:] == '_F':
+            if magdict[data['ElementName'][i - li, 0]] < 0:
                 mypatch(ax, 'red', si, yl, dx, dy, typ='focus')
-            elif data['ElementName'][i - li, 0][-2:] == '_D':
+            else:
                 mypatch(ax, 'red', si, yl, dx, dy, typ='defocus')
-            else:
-                mypatch(ax, 'red', si, yl, dx, dy)
+#            if data['ElementName'][i - li, 0][-2:] == '_F':
+#                mypatch(ax, 'red', si, yl, dx, dy, typ='focus')
+#            elif data['ElementName'][i - li, 0][-2:] == '_D':
+#                mypatch(ax, 'red', si, yl, dx, dy, typ='defocus')
+#            else:
+#                mypatch(ax, 'red', si, yl, dx, dy)
         elif et == 'KSEXT':
-            if data['ElementName'][i - li, 0][-2:] == '_F':
-                mypatch(ax, 'green', si, yl, dx, dy, typ='sextfocus')
-            elif data['ElementName'][i - li, 0][-2:] == '_D':
-                mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
+            if magdict[data['ElementName'][i - li, 0]] < 0:
+                mypatch(ax, 'red', si, yl, dx, dy, typ='sextfocus')
             else:
-                mypatch(ax, 'green', si, yl, dx, dy)
+                mypatch(ax, 'red', si, yl, dx, dy, typ='sextdefocus')
+#            if data['ElementName'][i - li, 0][-2:] == '_F':
+#                mypatch(ax, 'green', si, yl, dx, dy, typ='sextfocus')
+#            elif data['ElementName'][i - li, 0][-2:] == '_D':
+#                mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
+#            else:
+#                mypatch(ax, 'green', si, yl, dx, dy)
 
 
 def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
@@ -368,6 +398,7 @@ def twissplot(data, zoom=False, fs=[16, 9]):
         clipdata = {}
         for clip in ['s', 'betax', 'betay', 'etax', 'ElementType', 'ElementName']:
             clipdata[clip] = data[clip][starti:endi]
+        clipdata['description'] = data['description']
         fig = drawtwiss(clipdata, fs)
         return fig
     fig = drawtwiss(data, fs)
