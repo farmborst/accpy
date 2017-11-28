@@ -193,7 +193,7 @@ def islandsplot(ax, data, showlost=False):
     return
 
 def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
-             clipint=True, showlost=False, QQ='Qx'):
+             clipint=True, showlost=False, QQ='Qx', ms=1):
     particleIDs = data[particleIDs]
     Q = addsub(integer, data[QQ][particleIDs])
     if clipint:
@@ -212,14 +212,14 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     colors = rainbow((Q - Qmin) / Qdif)
     if showlost:
         for i, ID in enumerate(particleIDs):
-            ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
+            ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i], ms=ms)
     else:
         lost = data['lost']
         if len(lost) > 0:
             lost = lost[:, 0]
         for i, ID in enumerate(particleIDs):
             if ID not in lost:
-                ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i])
+                ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i], ms=ms)
     sm = ScalarMappable(cmap=rainbow, norm=Normalize(vmin=Qmin, vmax=Qmax))
     sm._A = []
 #    cb = colorbar(sm, ax=ax2, format=fmt, ticks=[])
@@ -229,12 +229,12 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     ax1.set_ylabel('x\' / (mrad)')
     for i, ID in enumerate(particleIDs):
         initialamp = nanmax(data['x'][:, ID])
-        ax2.plot(initialamp*1e3, Q[i], 'o', c=colors[i])
+        ax2.plot(initialamp*1e3, Q[i], 'o', c=colors[i], ms=ms + 1)
 #    ax2.yaxis.set_ticklabels([])
     ax2.set_ylim([Qmin, Qmax])
     ax2.yaxis.tick_right()
-    ax2.set_ylabel('dQ / (a.u.)')
+    ax2.set_ylabel('dQ')
     ax2.yaxis.set_label_position("right")
-    ax2.set_xlabel('Initial amplitude x / (mm)')
+    ax2.set_xlabel('Initial x')
     tight_layout()
     return

@@ -315,10 +315,8 @@ def multicolorylab(ax, lablist, collist):
     ax.add_artist(anchored_ybox)
 
 
-def drawtwiss(data, fs):
-    fig = figure(figsize=fs)
-    ax1 = fig.add_subplot(111)
-    ax2 = twinx()
+def drawtwiss(data, ax1):
+    ax2 = ax1.twinx()
     ax1.plot(data['s'], data['betax'], '-g')
     ax1.plot(data['s'], data['betay'], '-b')
     ax1.set_xlabel('s')
@@ -328,7 +326,7 @@ def drawtwiss(data, fs):
     ax2.set_ylabel(r'$\eta_x$ / (m)', color='r')
     drawlatt(ax1, data)
     ax2.grid(None)
-    return fig
+    return
 
 
 def twissdata(data):
@@ -377,17 +375,17 @@ def tunechrom(line, data):
     return
 
 
-def twissplot(data, zoom=False, fs=[16, 9]):
+def twissplot(ax, data, zoom=False):
     if zoom:
         starti, endi = argmax(data['s'] >= zoom[0]), argmax(data['s'] >= zoom[1])
         clipdata = {}
         for clip in ['s', 'betax', 'betay', 'etax', 'ElementType', 'ElementName']:
             clipdata[clip] = data[clip][starti:endi]
         clipdata['description'] = data['description']
-        fig = drawtwiss(clipdata, fs)
-        return fig
-    fig = drawtwiss(data, fs)
-    return fig
+        drawtwiss(clipdata, ax)
+        return
+    drawtwiss(data, ax)
+    return
 
 #Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
 #Tnames = ['Landau + BAM WLS7','MPW','U41','UE49','UE46','CPMU17 + UE48 (EMIL)','PSF WLS7','Cavities']
