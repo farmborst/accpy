@@ -226,34 +226,19 @@ def drawlatt(ax, data):
                     except:
                         K2 = 0.0
                     magdict[name] = K2
-                
-        print(magdict)
-                    
 
         if et == 'CSBEND':
             mypatch(ax, 'yellow', si, yl, dx, dy)
         elif et == 'KQUAD':
-            if magdict[data['ElementName'][i - li, 0]] < 0:
+            if magdict[data['ElementName'][i - li, 0]] > 0:
                 mypatch(ax, 'red', si, yl, dx, dy, typ='focus')
             else:
                 mypatch(ax, 'red', si, yl, dx, dy, typ='defocus')
-#            if data['ElementName'][i - li, 0][-2:] == '_F':
-#                mypatch(ax, 'red', si, yl, dx, dy, typ='focus')
-#            elif data['ElementName'][i - li, 0][-2:] == '_D':
-#                mypatch(ax, 'red', si, yl, dx, dy, typ='defocus')
-#            else:
-#                mypatch(ax, 'red', si, yl, dx, dy)
         elif et == 'KSEXT':
-            if magdict[data['ElementName'][i - li, 0]] < 0:
-                mypatch(ax, 'red', si, yl, dx, dy, typ='sextfocus')
+            if magdict[data['ElementName'][i - li, 0]] > 0:
+                mypatch(ax, 'green', si, yl, dx, dy, typ='sextfocus')
             else:
-                mypatch(ax, 'red', si, yl, dx, dy, typ='sextdefocus')
-#            if data['ElementName'][i - li, 0][-2:] == '_F':
-#                mypatch(ax, 'green', si, yl, dx, dy, typ='sextfocus')
-#            elif data['ElementName'][i - li, 0][-2:] == '_D':
-#                mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
-#            else:
-#                mypatch(ax, 'green', si, yl, dx, dy)
+                mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
 
 
 def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
