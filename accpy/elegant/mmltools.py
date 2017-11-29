@@ -277,7 +277,7 @@ class ATRingWithAO():
             print('Method not implemented.')
 
 
-    def getArchiverScalar(self,var,t):
+    def getArchiverScalar(self,var,t, index):
         # from AS archiver.py module and modified
         from urllib2 import urlopen,quote
         import datetime
@@ -300,7 +300,7 @@ class ATRingWithAO():
             else:
                 if archive != 'master' :
                     print('WARNING unknown archive',archive)
-                bii="http://archiver.bessy.de/archive/cgi/CGIExport.cgi?INDEX=/opt/Archive/master_index&COMMAND=camonitor"
+                bii='http://archiver.bessy.de/archive/cgi/CGIExport.cgi?INDEX=/opt/Archive/' + index + '&COMMAND=camonitor'
         
             if self.ad.Machine == 'MLS':
                 bii="http://arc31c.trs.bessy.de/MLS/cgi/CGIExport.cgi?INDEX=%2Fopt%2FArchive%2Fmaster_index&COMMAND=camonitor"
@@ -323,7 +323,7 @@ class ATRingWithAO():
         return archiverScalar(var,t)
         
     
-    def getMagnetStrengthOnline(self, source='archiver', time='2016-07-28 11:00:00', ATtype='QUAD', method='byPowerSupply', outputstyle='visual'):
+    def getMagnetStrengthOnline(self, source='archiver', time='2016-07-28 11:00:00', ATtype='QUAD', method='byPowerSupply', outputstyle='visual', index='master_index'):
         if self.ad.Machine == 'MLS':
             suffix = ':setCur'
             suffixstat1 = ':stPower'
@@ -352,8 +352,8 @@ class ATRingWithAO():
                     print('Warning: Different conversion factors for a single power supply given! Taking average.')
 
                 if source=='archiver':
-                    Savg = cfac * self.getArchiverScalar(n+suffix, time)
-                    stat1 = self.getArchiverScalar(n+suffixstat1, time)
+                    Savg = cfac * self.getArchiverScalar(n+suffix, time, index)
+                    stat1 = self.getArchiverScalar(n+suffixstat1, time, index)
                     Savg *= stat1
                 elif source=='epics':
                     Savg = cfac * PV(n+suffix).get()
