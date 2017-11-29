@@ -91,11 +91,11 @@ def findlost(data):
     data['lostIDs'] = array(lostIDs, dtype=int32)
     return
 
-def evaltrackdat(data, resonance):
+def evaltrackdat(data, resonance, minsep=5e-3):
     L = data['PassLength'][0]
     Trev = L/299792458
     frev = 1/Trev
-    islandsloc(data, resonance)
+    islandsloc(data, resonance, minsep=minsep)
     tunes(data, frev)
     findlost(data)
     return
