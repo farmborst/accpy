@@ -164,8 +164,8 @@ def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
         i, f = everyxturn
         xdat, ydat = data[x][i::f, part], data[y][i::f, part]
         ax.plot(xdat*1e3, ydat*1e3, '.', color=col, ms=ms)
-    ax.set_xlabel('x / (mm)')
-    ax.set_ylabel('x\' / (mrad)')
+    ax.set_xlabel(r'$x$ / (mm)')
+    ax.set_ylabel(r'$x^\prime$ / (mrad)')
     return
 
 def islandsplot(ax, data, showlost=False):

@@ -182,12 +182,12 @@ def trackplot2(datadict, particles=8, abscissa='t'):
     eleplot(datadict, 'y', 'yp', '.', sel=range(particles))
 
 
-def drawlatt(ax, data):
+def drawlatt(ax, data, size=0.1):
     s = data['s']
     ax.set_xlim(npmin(s), npmax(s))
 
     yi, yf = ax.get_ylim()[0], ax.get_ylim()[1]
-    dy = abs(yf - yi)*0.1
+    dy = abs(yf - yi)*size
     ax.set_ylim(yi, yf + dy)
     dy = dy*.8
     yl = ax.get_ylim()[1] - dy/2  # lower edge of element
