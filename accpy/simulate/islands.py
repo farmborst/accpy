@@ -6,10 +6,11 @@ from __future__ import division, print_function
 from pyfftw import empty_aligned
 from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
-                   where, sort, diff, argmax, linspace, concatenate, isnan,
-                   logical_or, delete, nanmin, nanmax, add, nan, int32, arange)
+                   where, sort, diff, argmax, linspace, concatenate, isnan, pi,
+                   logical_or, delete, nanmin, nanmax, add, nan, int32, arange,
+                   arctan2, argsort)
 from matplotlib.mlab import dist, find
-from matplotlib.cm import rainbow, ScalarMappable
+from matplotlib.cm import rainbow, ScalarMappable, cool
 from matplotlib.pyplot import tight_layout
 from matplotlib.colors import Normalize
 
@@ -19,7 +20,14 @@ from matplotlib.colors import Normalize
 # POST PROCESSING
 ###############################################################################
 
-def PolyArea(x, y):
+def PolyArea(x, y, center):
+    # sort points given by x and y arrays clockwise around their center
+    theta = zeros(len(x))
+    for i, (xi, yi) in enumerate(zip(x, y)):
+        theta[i] = arctan2(xi, yi)
+    sortindices = argsort(theta)
+    x, y = x[sortindices], y[sortindices]
+        
     # shoelace formula from
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
     return npabs(dot(x, roll(y,1)) - dot(y, roll(x, 1)))/2
@@ -29,11 +37,11 @@ def islandsloc(data, resonance, minsep=5e-3):
     data['turns'], data['particles'] = shape(data['x'])
     data['allIDs'] = arange(data['particles'], dtype=int32)
     data['A'], C, T = zeros(data['particles']), empty([data['particles'], 2]), zeros(data['particles'])
-    for i in data['allIDs']:  # [0, 9, 21, 22, 92]
+    for i in data['allIDs']:
         x = data['x'][::3, i]
         xp = data['xp'][::3, i]
         C[i, :] = array([mean(x), mean(xp)])
-        data['A'][i] = PolyArea(x, xp)
+        data['A'][i] = PolyArea(x, xp, C[i, :])
         if dist(C[i], array([0, 0])) > minsep:  # minsep – distance island to center
             T[i] = 1  # 0=normal, 1=island
     data['islandIDs'], noislandIDs = where(T == 1)[0], where(T == 0)[0]
@@ -188,13 +196,15 @@ def islandsplot(ax, data, showlost=False):
         for ID in data['enclosingIDs']:
             if ID not in lost:
                 ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.g')
-    ax.set_xlabel('x / (mm)')
-    ax.set_ylabel('x\' / (mrad)')
+    ax.set_xlabel(r'$x$ / (mm)')
+    ax.set_ylabel(r'$x^\prime$ / (mrad)')
     return
 
 def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
-             clipint=True, showlost=False, QQ='Qx', ms=1):
+             clipint=True, showlost=False, QQ='Qx', ms=1, clip=[0]):
     particleIDs = data[particleIDs]
+    lost = data['lost'][:, 0]
+    particleIDs = delete(particleIDs, concatenate([clip, lost]))
     Q = addsub(integer, data[QQ][particleIDs])
     if clipint:
         zeroQ = find(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))
@@ -203,38 +213,29 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
             particleIDs = delete(particleIDs, zeroQ)
     Qmin, Qmax = nanmin(Q), nanmax(Q)
     Qdif = Qmax - Qmin
-#    fmt = '%.3f'
+    print(Qdif)
     if Qdif == 0.0:
         Qmin -= Qmin/1e4
         Qmax += Qmax/1e4
         Qdif = Qmax - Qmin
-#        fmt = '%.5f'
-    colors = rainbow((Q - Qmin) / Qdif)
+    colors = cool((Q - Qmin) / Qdif)
+    for i, ID in enumerate(particleIDs):
+        ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i], ms=ms)
     if showlost:
-        for i, ID in enumerate(particleIDs):
-            ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i], ms=ms)
-    else:
-        lost = data['lost']
-        if len(lost) > 0:
-            lost = lost[:, 0]
-        for i, ID in enumerate(particleIDs):
-            if ID not in lost:
-                ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c=colors[i], ms=ms)
+        for ID in lost:
+            ax1.plot(data['x'][:, ID]*1e3, data['xp'][:, ID]*1e3, '.', c='gray', ms=ms)
     sm = ScalarMappable(cmap=rainbow, norm=Normalize(vmin=Qmin, vmax=Qmax))
     sm._A = []
-#    cb = colorbar(sm, ax=ax2, format=fmt, ticks=[])
-#    cb = colorbar(sm, ax=ax2, ticks=[])
-#    cb.set_label('dQ')
-    ax1.set_xlabel('x / (mm)')
-    ax1.set_ylabel('x\' / (mrad)')
+    ax1.set_xlabel(r'Position $x$ / (mm)')
+    ax1.set_ylabel(r'Angle $x^\prime$ / (mrad)')
     for i, ID in enumerate(particleIDs):
-        initialamp = nanmax(data['x'][:, ID])
-        ax2.plot(initialamp*1e3, Q[i], 'o', c=colors[i], ms=ms + 1)
-#    ax2.yaxis.set_ticklabels([])
+        emittance = data['A']/pi
+        action = emittance/2
+        ax2.plot(action[i]*1e6, Q[i], 'o', c=colors[i], ms=ms + 1)
     ax2.set_ylim([Qmin, Qmax])
     ax2.yaxis.tick_right()
-    ax2.set_ylabel('dQ')
+    ax2.set_ylabel(r'Fractional Tune, $dQ$')
     ax2.yaxis.set_label_position("right")
-    ax2.set_xlabel('Initial x')
+    ax2.set_xlabel(r'Action $J_x$ / (mm$\cdot$mrad)')
     tight_layout()
     return
