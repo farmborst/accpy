@@ -21,8 +21,9 @@ from matplotlib.colors import Normalize
 # POST PROCESSING
 ###############################################################################
 
-def PolyArea(x, y):
-    # sort points given by x and y arrays by azimut angle
+def PolyArea(x, y, c):
+    # sort points given by x and y arrays by azimut anglr
+    x, y = x - c[0], y - c[1]
     indices = argsort(arctan2(x, y))
     x, y = x[indices], y[indices]
     # shoelace formula from
@@ -35,10 +36,10 @@ def islandsloc(data, resonance, minsep=5e-3):
     data['allIDs'] = arange(data['particles'], dtype=int32)
     data['A'], C, T = zeros(data['particles']), empty([data['particles'], 2]), zeros(data['particles'])
     for i in data['allIDs']:
-        x = data['x'][::3, i]
-        xp = data['xp'][::3, i]
+        x = data['x'][::resonance, i]
+        xp = data['xp'][::resonance, i]
         C[i, :] = array([mean(x), mean(xp)])
-        data['A'][i] = PolyArea(x, xp)
+        data['A'][i] = PolyArea(x, xp, C[i, :])
         if dist(C[i], array([0, 0])) > minsep:  # minsep – distance island to center
             T[i] = 1  # 0=normal, 1=island
     data['islandIDs'], noislandIDs = where(T == 1)[0], where(T == 0)[0]
@@ -198,10 +199,12 @@ def islandsplot(ax, data, showlost=False):
     return
 
 def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
-             clipint=True, showlost=False, QQ='Qx', ms=1, clip=[0]):
+             clipint=True, showlost=False, QQ='Qx', ms=1, clip=[0], showfit=False):
     particleIDs = data[particleIDs]
-    lost = data['lost'][:, 0]
-    particleIDs = delete(particleIDs, concatenate([clip, lost]))
+    if not showlost:
+	lost = data['lost'][:, 0]
+	clip = concatenate([clip, lost])
+    particleIDs = delete(particleIDs, clip)
     Q = addsub(integer, data[QQ][particleIDs])
     if clipint:
         zeroQ = find(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))
@@ -237,7 +240,8 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
 
     for i, ID in enumerate(particleIDs):
         ax2.plot(action[i]*1e6, Q[i], 'o', c=colors[i], ms=ms + 1)
-    ax2.plot(action2*1e6, fit1, '-k', lw=1, label=r'fit with $TSWA=${:.4}$\pm${:.1} (kHz mm$^-$$^2$mrad$^-$$^2$)'.format(popt[1]*1e-6*1250, perr[1]*1e-6*1250))
+    if showfit:
+	ax2.plot(action2*1e6, fit1, '-k', lw=1, label=r'fit with $TSWA=${:.4}$\pm${:.1} (kHz mm$^-$$^2$mrad$^-$$^2$)'.format(popt[1]*1e-6*1250, perr[1]*1e-6*1250))
 #    leg = ax2.legend()
 #    leg.get_frame().set_alpha(0)
     ax2.set_ylim([Qmin, Qmax])
