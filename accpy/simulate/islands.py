@@ -8,7 +8,8 @@ from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan, pi,
                    logical_or, delete, nanmin, nanmax, add, nan, int32, arange,
-                   arctan2, argsort)
+                   arctan2, argsort, sqrt, diag)
+from scipy.optimize import curve_fit
 from matplotlib.mlab import dist, find
 from matplotlib.cm import rainbow, ScalarMappable, cool
 from matplotlib.pyplot import tight_layout
@@ -20,14 +21,10 @@ from matplotlib.colors import Normalize
 # POST PROCESSING
 ###############################################################################
 
-def PolyArea(x, y, center):
-    # sort points given by x and y arrays clockwise around their center
-    theta = zeros(len(x))
-    for i, (xi, yi) in enumerate(zip(x, y)):
-        theta[i] = arctan2(xi, yi)
-    sortindices = argsort(theta)
-    x, y = x[sortindices], y[sortindices]
-        
+def PolyArea(x, y):
+    # sort points given by x and y arrays by azimut angle
+    indices = argsort(arctan2(x, y))
+    x, y = x[indices], y[indices]
     # shoelace formula from
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
     return npabs(dot(x, roll(y,1)) - dot(y, roll(x, 1)))/2
@@ -41,7 +38,7 @@ def islandsloc(data, resonance, minsep=5e-3):
         x = data['x'][::3, i]
         xp = data['xp'][::3, i]
         C[i, :] = array([mean(x), mean(xp)])
-        data['A'][i] = PolyArea(x, xp, C[i, :])
+        data['A'][i] = PolyArea(x, xp)
         if dist(C[i], array([0, 0])) > minsep:  # minsep – distance island to center
             T[i] = 1  # 0=normal, 1=island
     data['islandIDs'], noislandIDs = where(T == 1)[0], where(T == 0)[0]
@@ -213,7 +210,6 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
             particleIDs = delete(particleIDs, zeroQ)
     Qmin, Qmax = nanmin(Q), nanmax(Q)
     Qdif = Qmax - Qmin
-    print(Qdif)
     if Qdif == 0.0:
         Qmin -= Qmin/1e4
         Qmax += Qmax/1e4
@@ -228,14 +224,26 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     sm._A = []
     ax1.set_xlabel(r'Position $x$ / (mm)')
     ax1.set_ylabel(r'Angle $x^\prime$ / (mrad)')
+    emittance = data['A'][particleIDs]/pi
+    action = emittance/2
+    
+    # tune shift with action
+    fitfun = lambda x, a, b: a + b*x
+    popt, pcov = curve_fit(fitfun, action, Q)
+    perr = sqrt(diag(pcov))
+    action2 = linspace(nanmin(action), nanmax(action), 1000)
+    fit1 = fitfun(action2, *popt)
+    print(popt[1]*1e-6*1250)
+
     for i, ID in enumerate(particleIDs):
-        emittance = data['A']/pi
-        action = emittance/2
         ax2.plot(action[i]*1e6, Q[i], 'o', c=colors[i], ms=ms + 1)
+    ax2.plot(action2*1e6, fit1, '-k', lw=1, label=r'fit with $TSWA=${:.4}$\pm${:.1} (kHz mm$^-$$^2$mrad$^-$$^2$)'.format(popt[1]*1e-6*1250, perr[1]*1e-6*1250))
+#    leg = ax2.legend()
+#    leg.get_frame().set_alpha(0)
     ax2.set_ylim([Qmin, Qmax])
-    ax2.yaxis.tick_right()
-    ax2.set_ylabel(r'Fractional Tune, $dQ$')
-    ax2.yaxis.set_label_position("right")
+#    ax2.yaxis.tick_right()
+    ax2.set_ylabel(r'Fractional Tune $dQ$')
+#    ax2.yaxis.set_label_position('right')
     ax2.set_xlabel(r'Action $J_x$ / (mm$\cdot$mrad)')
     tight_layout()
     return
