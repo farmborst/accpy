@@ -202,8 +202,11 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
              clipint=True, showlost=False, QQ='Qx', ms=1, clip=[0], showfit=False):
     particleIDs = data[particleIDs]
     if not showlost:
-	lost = data['lost'][:, 0]
-	clip = concatenate([clip, lost])
+        try:
+            lost = data['lost'][:, 0]
+        except:
+            lost = data['lost']
+        clip = concatenate([clip, lost])
     particleIDs = delete(particleIDs, clip)
     Q = addsub(integer, data[QQ][particleIDs])
     if clipint:
@@ -241,7 +244,7 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     for i, ID in enumerate(particleIDs):
         ax2.plot(action[i]*1e6, Q[i], 'o', c=colors[i], ms=ms + 1)
     if showfit:
-	ax2.plot(action2*1e6, fit1, '-k', lw=1, label=r'fit with $TSWA=${:.4}$\pm${:.1} (kHz mm$^-$$^2$mrad$^-$$^2$)'.format(popt[1]*1e-6*1250, perr[1]*1e-6*1250))
+        ax2.plot(action2*1e6, fit1, '-k', lw=1, label=r'fit with $TSWA=${:.4}$\pm${:.1} (kHz mm$^-$$^2$mrad$^-$$^2$)'.format(popt[1]*1e-6*1250, perr[1]*1e-6*1250))
 #    leg = ax2.legend()
 #    leg.get_frame().set_alpha(0)
     ax2.set_ylim([Qmin, Qmax])
