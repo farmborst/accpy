@@ -57,21 +57,21 @@ def synchroints(N_UC, s, gamma, xtwissdip, disperdip, sdip, rho, E, E0, I,
     h_bar = const.hb                # reduced Planck constant / (Js)
     # spectrum
     T_rev = U/beta/const.cl         # total revolution time for particles
-    Tr = 2*pi*rho/beta/const.cl  # radiating rev time for particles
-    t_ph = 2*rho*sin(1/gamma)/c  # time for photons on straight
+    Tr = 2*pi*rho/beta/const.cl     # radiating rev time for particles
+    t_ph = 2*rho*sin(1/gamma)/c     # time for photons on straight
     t_e = (2/gamma)*rho/(beta*c)    # time for electron on arc
     dt = t_e-t_ph                   # time until electron and photon meet
     omega_c = 2/dt                  # critical wavenumber / (1/s)
-    lambda_c = 2*pi*c/omega_c    # critical wavelength / (m)
+    lambda_c = 2*pi*c/omega_c       # critical wavelength / (m)
     E_c = h_bar*omega_c/const.qe    # critical energy / (eV)
     # power per electron from Hinterberger / (W)
     P_rad = (c*q**2*E**4)/(2*pi*rho**2*3*e_0*E0**4)
     # energyloss per circumnavigation and electron / (Ws)
     U_rad = P_rad*Tr/const.qe
     # total radiated power
-    N_e = I*Tr/const.qe         # number of electrons in accelerator
-    U_ges = U_rad*const.qe*N_e  # radiated energy / circumnavigation / (Ws)
-    P_ges = U_ges/Tr            # total power / (W)
+    N_e = I*Tr/const.qe             # number of electrons in accelerator
+    U_ges = U_rad*const.qe*N_e      # radiated energy / circumnavigation / (Ws)
+    P_ges = U_ges/Tr                # total power / (W)
     # equilibrium emittances and damping times (!amplitude damping *2)
     Cq = (55*const.hb)/(32*sqrt(3)*m*const.cl)
     emiteqx = Cq*gamma*gamma*SYNIN5x/Jx/SYNIN2
