@@ -1,76 +1,68 @@
 # -*- coding: utf-8 -*-
-''' accpy.gui.menu
+''' accpy.gui.main
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division, print_function
 try:
-    from Tkinter import (Tk, PhotoImage, Menu, TOP, X, Button, LEFT,
-                         RIGHT, Label, StringVar, RAISED, FLAT)
-    from ttk import Frame
+    import Tkinter as tk
 except:
-    from tkinter import (Tk, PhotoImage, Menu, TOP, X, Button, LEFT,
-                         RIGHT, Label, StringVar, RAISED, FLAT)
-    from tkinter.ttk import Frame
-from .file import latticeeditor, settings, defaults
-from .simulate import (gui_twisstrack, gui_parttrack, gui_ramp,
-                       gui_quadscansim)
-from .measure import (tunes, chromaticity, quadscanmeas, achroscan)
-from .optimize import (emittex, twissmatch)
-from .help import (documentation, about)
-from ..visualize.figures import plotstandards
-from ..dataio.hdf5 import confload
+    import tkinter as tk
 
 
 class MainApp:
-    def __init__(self, parent, version, cwd):
+    def __init__(self, root, version, cwd):
         # add arguments to class attributes
-        self.parent = parent
+        self.root = root
         self.version = version
         self.cwd = cwd
 
         # style the root window
-        w = self.parent.winfo_screenwidth()
-        h = self.parent.winfo_screenheight()
-        icon = PhotoImage(file= self.cwd + '/accpy/icons/' + 'icon.gif')
-        self.parent.geometry('{}x{}'.format(w, h))
-        self.parent.tk.call('wm', 'iconphoto', self.parent._w, icon)
-        self.parent.wm_title("ACCPY gui {}".format(self.version))
+        w = self.root.winfo_screenwidth()
+        h = self.root.winfo_screenheight()
+        icon = tk.PhotoImage(file=self.cwd + '/accpy/icons/' + 'icon.gif')
+        self.root.geometry('{}x{}'.format(w, h))
+        self.root.tk.call('wm', 'iconphoto', self.root._w, icon)
+        self.root.wm_title("ACCPY gui {}".format(self.version))
 
         # create gui widgets
-        self.menubar = MenuBar(self.parent)
-#        self.toolbar = ToolBar(self.parent)
-#        self.mainwin = MainWindow(self.parent)
+        self.menubar = MenuBar(self.root)
+        self.toolbar = ToolBar(self.root, self.cwd )
+        self.mainwin = MainWindow(self.root)
 
         # add gui elements to root window
-        self.parent.config(menu=self.menubar.bar)
-#        self.toolbar.frame.pack()
-#        self.mainwin.frame.pack()
+        self.root.config(menu=self.menubar.bar)
+        self.toolbar.frame.pack(side=tk.TOP, fill=tk.X)
+        self.mainwin.frame.pack(expand=True)
 
 
 class MenuBar:
     def __init__(self, parent):
         self.parent = parent
-        self.bar = Menu(self.parent)
+        self.bar = tk.Menu(self.parent)
         self.FileMenu()
         self.SimulationMenu()
-        
-    def MenuMaker(self, menu, items, cmnds):
-        for i, c in zip(items, cmnds):
+        self.MeasureMenu()
+        self.OptimizeMenu()
+        self.HelpMenu()
+
+    def MenuMaker(self, menu, items, cmnds, name, seps=[]):
+        for n, (i, c) in enumerate(zip(items, cmnds)):
             menu.add_command(label=i, command=c)
-            menu.add_separator()
-        self.bar.add_cascade(label="File", menu=self.filemenu)
-        
+            if n in seps:
+                menu.add_separator()
+        self.bar.add_cascade(label=name, menu=menu)
+
     def FileMenu(self):
         items = ['Lattice editor',
                  'Settings',
                  'Quit']
         cmnds = [lambda: print(1),
                  lambda: print(2),
-                 lambda: print(3)]
-        self.filemenu = Menu(self.bar, tearoff=0)
-        self.MenuMaker(self.filemenu, items, cmnds)
-        
-    
+                 lambda: (self.parent.quit(),
+                          self.parent.destroy())]
+        filemenu = tk.Menu(self.bar, tearoff=0)
+        self.MenuMaker(filemenu, items, cmnds, 'File')
+
     def SimulationMenu(self):
         items = ['Betamatrix and dispersion tracking',
                  'Particle tracking',
@@ -80,27 +72,58 @@ class MenuBar:
                  lambda: print(2),
                  lambda: print(3),
                  lambda: print(4)]
-        self.simulationmenu = Menu(self.bar, tearoff=0)
-        self.MenuMaker(self.filemenu, items, cmnds)
+        simulationmenu = tk.Menu(self.bar, tearoff=0)
+        self.MenuMaker(simulationmenu, items, cmnds, 'Simulation')
+
+    def MeasureMenu(self):
+        items = ['Tunes',
+                 'Chromaticity',
+                 'Quadrupole scan',
+                 'Achromat scan']
+        cmnds = [lambda: print(1),
+                 lambda: print(2),
+                 lambda: print(3),
+                 lambda: print(4)]
+        simulationmenu = tk.Menu(self.bar, tearoff=0)
+        self.MenuMaker(simulationmenu, items, cmnds, 'Measurement')
+
+    def OptimizeMenu(self):
+        items = ['Find Transverse emittance exchange section',
+                 'Twiss matching']
+        cmnds = [lambda: print(1),
+                 lambda: print(2)]
+        simulationmenu = tk.Menu(self.bar, tearoff=0)
+        self.MenuMaker(simulationmenu, items, cmnds, 'Optimization')
+
+    def HelpMenu(self):
+        items = ['Documentation',
+                 'About ACCPY...']
+        cmnds = [lambda: print(1),
+                 lambda: print(2)]
+        simulationmenu = tk.Menu(self.bar, tearoff=0)
+        self.MenuMaker(simulationmenu, items, cmnds, 'Help')
+
 
 class ToolBar:
-    def __init__(self, parent):
+    def __init__(self, parent, cwd):
         self.parent = parent
-        self.frame = Frame(self.parent, relief=RAISED)
-        self.buttons()
+        self.frame = tk.Frame(self.parent, relief=tk.RAISED)
+        self.buttons(cwd)
         self.indicators()
-    
-    def buttons(self):
-        self.run = Button(self.parent, relief=FLAT)
-        self.run.pack(side=LEFT, padx=2, pady=2)
-    
+
+    def buttons(self, cwd):
+        path = cwd + '/accpy/icons/' + 'start.gif'
+        icon = tk.PhotoImage(file=path).subsample(10, 10)
+        self.run = tk.Button(self.parent, relief=tk.FLAT, image=icon)
+        self.run.pack(side=tk.LEFT, padx=2, pady=2)
+
     def indicators(self):
-        self.status = StringVar()
+        self.status = tk.StringVar()
         self.status.set('Status')
-        Label(self.parent, textvariable=self.status).pack(side=RIGHT)
+        tk.Label(self.parent, textvariable=self.status).pack(side=tk.RIGHT)
 
 
 class MainWindow:
     def __init__(self, parent):
         self.parent = parent
-        self.frame = Frame(self.parent)
+        self.frame = tk.Frame(self.parent)

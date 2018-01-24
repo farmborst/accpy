@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-''' accpy.gui.menu
+''' accpy.gui.mainwin
 author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
@@ -20,7 +20,7 @@ from .help import (documentation, about)
 from ..visualize.figures import plotstandards
 from ..dataio.hdf5 import confload
 
-  
+
 def mainwindow(root, version, icon_start, icon_stop):
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry('{}x{}'.format(w, h))
@@ -35,10 +35,10 @@ def menubar(root, version, w, h, icon_start, icon_stop):
         # destroy all widgets in fram/tab
         for widget in frame.winfo_children():
             widget.destroy()
-    
+
     ## MENUBAR
     bar = Menu(root)
-    
+
     ## TOOLBAR
     status = StringVar()
     status.set('Status')
