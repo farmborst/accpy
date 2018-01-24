@@ -11,21 +11,33 @@ grep checking:
     x: whole line match
     grep --include=\*.py -hrw '.' -e 'import'
 '''
+
 try:
-    from Tkinter import Tk, mainloop, PhotoImage
+   from Tkinter import Tk, PhotoImage
 except:
-    from tkinter import Tk, mainloop, PhotoImage
+   from tkinter import Tk, PhotoImage
 from accpy.gui.mainwin import mainwindow
+from accpy.gui.main import MainApp
 from gc import enable
+import os
 
 
 if __name__ == '__main__':
-    root = Tk()  # create window
-    icon = PhotoImage(file='accpy/icons/icon.gif')
-    icon_start = PhotoImage(file='accpy/icons/start.gif').subsample(10, 10)
-    icon_stop = PhotoImage(file='accpy/icons/stop.gif').subsample(10, 10)
-    root.tk.call('wm', 'iconphoto', root._w, icon)
+    root = Tk()
     version = 0.6
-    mainwindow(root, version, icon_start, icon_stop)
+    cwd = os.getcwd()
+    app = MainApp(root, version, cwd)
     enable()
-    mainloop()   # start Tk mainloop
+    root.mainloop()
+
+#    root = Tk()  # create window
+#    icon = PhotoImage(file='accpy/icons/icon.gif')
+#    icon_start = PhotoImage(file='accpy/icons/start.gif').subsample(10, 10)
+#    icon_stop = PhotoImage(file='accpy/icons/stop.gif').subsample(10, 10)
+#    root.tk.call('wm', 'iconphoto', root._w, icon)
+#    version = 0.6
+#    mainwindow(root, version, icon_start, icon_stop)
+#    enable()
+#    root.mainloop()   # start Tk mainloop
+
+    

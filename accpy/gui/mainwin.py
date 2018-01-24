@@ -4,12 +4,12 @@ author:     felix.kramer(at)physik.hu-berlin.de
 '''
 from __future__ import division
 try:
-    from Tkinter import (Menu, TOP, X, Button, LEFT, Label, StringVar, RAISED,
-                         FLAT)
+    from Tkinter import (Tk, PhotoImage, Menu, TOP, X, Button, LEFT,
+                         RIGHT, Label, StringVar, RAISED, FLAT)
     from ttk import Frame
 except:
-    from tkinter import (Menu, TOP, X, Button, LEFT, Label, StringVar, RAISED,
-                         FLAT)
+    from tkinter import (Tk, PhotoImage, Menu, TOP, X, Button, LEFT,
+                         RIGHT, Label, StringVar, RAISED, FLAT)
     from tkinter.ttk import Frame
 from .file import latticeeditor, settings, defaults
 from .simulate import (gui_twisstrack, gui_parttrack, gui_ramp,
@@ -20,7 +20,7 @@ from .help import (documentation, about)
 from ..visualize.figures import plotstandards
 from ..dataio.hdf5 import confload
 
-
+  
 def mainwindow(root, version, icon_start, icon_stop):
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry('{}x{}'.format(w, h))
@@ -35,8 +35,11 @@ def menubar(root, version, w, h, icon_start, icon_stop):
         # destroy all widgets in fram/tab
         for widget in frame.winfo_children():
             widget.destroy()
-
+    
+    ## MENUBAR
     bar = Menu(root)
+    
+    ## TOOLBAR
     status = StringVar()
     status.set('Status')
     # Start Stop Status toolbar

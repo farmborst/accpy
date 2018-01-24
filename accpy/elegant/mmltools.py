@@ -169,11 +169,15 @@ class ATRingWithAO():
              self.namemap.ATname[i] = r[i][0,0].FamName[0]
 
         # some consistency checks
+        broken = 0
         for i in range(self.NATelements):
             if self.namemap.ATname[i] == 'BEND':
                 if self.namemap.PSname[i] not in ('PB1ID6R','PB2ID6R','PB3ID6R', 'BPR','BPRP'):
-                    print('ERROR : BROKEN FILE!!! Probable cause: init and AT file incompatible!!!')
-                    sys.exit()
+                    print(self.namemap.PSname[i])
+                    broken = 1
+        if broken:
+            print('ERROR : BROKEN FILE!!! Probable cause: init and AT file incompatible!!!')
+            sys.exit()
 
     def printNamemap(self, Nmax=None):
         if Nmax == None:
@@ -346,14 +350,17 @@ class ATRingWithAO():
                 conversionfactors = getattr(self.ao, field)[0,0].Monitor[0,0].HW2PhysicsParams[:,0]
                 if self.ad.Machine == 'MLS':
                     # TODO: not understood why needed!?
-                    conversionfactors = conversionfactors[0][:,0]                    
+                    conversionfactors = conversionfactors[0][:,0]   
+                # print(conversionfactors)
                 cfac = np.mean(conversionfactors)
                 if not np.array_equal(conversionfactors, conversionfactors[0]*np.ones_like(conversionfactors)):
                     print('Warning: Different conversion factors for a single power supply given! Taking average.')
 
                 if source=='archiver':
-                    Savg = cfac * self.getArchiverScalar(n+suffix, time, index)
+                    Iarch = self.getArchiverScalar(n+suffix, time, index)
+                    Savg = cfac * Iarch
                     stat1 = self.getArchiverScalar(n+suffixstat1, time, index)
+                    print('cfac*Iarch*stat/L*2 = {}*{}*{}/L*2 = {}/L'.format(cfac, Iarch, stat1, cfac*Iarch*stat1*2))
                     Savg *= stat1
                 elif source=='epics':
                     Savg = cfac * PV(n+suffix).get()
