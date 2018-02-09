@@ -6,12 +6,18 @@ from numpy import exp, sqrt, pi, cos, linspace, logspace, log2
 
 
 def gauss(x, a, mu, sigma, offset):
-    ''' gauss(x, a, mu, sigma, offset)
-    x      -
-    a      -
-    mu     -
-    sigma  -
-    offset -
+    ''' gauss(x, a, mu, sigma, offset) = a*exp(-(((x-mu)/sigma)**2)/2)/sigma/sqrt(2*pi)+offset
+    x      - input variable
+    a      - (parameter)
+    mu     - expected value (parameter)
+    sigma  - standard deviation (parameter)
+    offset - (parameter)
+
+    infos:
+         full width at half maximum
+         FWHM = 2*sqrt(2*ln(2))*sigma
+         full width at tenth of maximum
+         FWTM = 2*sqrt(2*ln(10))*sigma
     '''
     return a*exp(-(((x-mu)/sigma)**2)/2)/sigma/sqrt(2*pi)+offset
 
