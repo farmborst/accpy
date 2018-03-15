@@ -39,8 +39,10 @@ def oneturn(UC, P_UC, N_UC, gamma):
     xtwiss0, ytwiss0, xdisp0 = initialtwiss(M)
     # one turn R matrix of ring
     M1T = eye(6)
+    # print(M)
     for i in range(N_UC):
         M1T = dot(M, M1T)
+    # print(M1T)
     return xtwiss0, ytwiss0, xdisp0, rho, D_UC, UD, LD
 
 
