@@ -307,11 +307,11 @@ def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
 
 
 def multicolorylab(ax, lablist, collist):
-    boxs = [TextArea(l, textprops=dict(color=c, rotation=90, ha='right', va='bottom')) for l, c in zip(lablist, collist)]
+    boxs = [TextArea(l, textprops=dict(color=c, rotation=90, ha='left', va='bottom', fontsize=8)) for l, c in zip(lablist, collist)]
     ybox = VPacker(children=boxs[::-1], pad=0, sep=5)
-    anchored_ybox = AnchoredOffsetbox(loc=6, child=ybox, pad=-2.4, frameon=False,
-                                      bbox_to_anchor=(.0, .5),
-                                      bbox_transform=ax.transAxes, borderpad=.4)
+    anchored_ybox = AnchoredOffsetbox(loc=6, child=ybox, pad=0., frameon=False,
+                                      bbox_to_anchor=(-.065, .5),
+                                      bbox_transform=ax.transAxes, borderpad=0.)
     ax.add_artist(anchored_ybox)
 
 
@@ -380,7 +380,7 @@ def twissplot(ax, data, zoom=False):
         starti, endi = argmax(data['s'] >= zoom[0]), argmax(data['s'] >= zoom[1])
         clipdata = {}
         for clip in ['s', 'betax', 'betay', 'etax', 'ElementType', 'ElementName']:
-            clipdata[clip] = data[clip][starti:endi]
+            clipdata[clip] = data[clip][starti:endi + 1]
         clipdata['description'] = data['description']
         drawtwiss(clipdata, ax)
         return
