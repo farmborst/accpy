@@ -320,7 +320,7 @@ def drawtwiss(data, ax1):
     ax1.plot(data['s'], data['betax'], '-g')
     ax1.plot(data['s'], data['betay'], '-b')
     ax1.set_xlabel('s')
-    ax1 = gca()
+    #ax1 = gca()
     multicolorylab(ax1, ['$\\beta_x$', ', ','$\\beta_y$', ' / (m)'], ['g', None, 'b', None])
     ax2.plot(data['s'], data['etax'], '-r')
     ax2.set_ylabel(r'$\eta_x$ / (m)', color='r')

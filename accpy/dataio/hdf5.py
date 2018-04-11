@@ -27,15 +27,17 @@ def h5save(filename, verbose=False, timestamp=True, **namesandvariables):
                             'c' : 1.337,
                             'd' : [1, 2, 'c']}
                 h5save(filename, True. **datadict)
-        2.  alternative 
+        2.  alternative
                 a=2, b='foo', c=1.337, d=[1, 2, 'c']
                 h5save(filename, True. a=a, b=b, c=c, d=d)
     '''
     if timestamp:
-        filename = strftime('%Y%m%d%H%M%S') + '_' + filename
+        path = '/'.join(filename.split('/')[:-1] + [''])
+        filename = strftime('%Y%m%d%H%M%S') + '_' + filename.split('/')[-1]
+        filename = path + filename
     if filename[-5:] != '.hdf5':
         filename += '.hdf5'
-    hdf5_fid = h5pyFile(filename, 'w')              
+    hdf5_fid = h5pyFile(filename, 'w')
     if verbose:
         print('\n==========================================================')
         print('Beginning to save to %s ...' % filename)
