@@ -4,7 +4,10 @@ author:
     Felix Kramer
 '''
 from h5py import File as h5pyFile
+from h5py._hl.group import Group
+from h5py._hl.dataset import Dataset
 from time import strftime
+from numpy import ndarray
 
 
 class struct(object):
@@ -12,83 +15,75 @@ class struct(object):
         self.__dict__.update(entries)
 
 
-def h5save(filename, verbose=False, timestamp=True, **namesandvariables):
-    ''' save dataset to hdf5 format
+def h5save(filename, datadict, timestamp=True):
+    ''' save dataset to hdf5 format (for load see print(h5load.__doc__))
     input:
-        - desired filename as string
-        - dictionary
+        - desired (path/)filename as string
+        - dictionary of data
     return:
-        - saves data to "timestamp_filename.hdf5 in working directory"
-        - complete filename is returned
-    usage:
-        1.  recommended
-                datadict = {'a' : 2,
-                            'b' : 'foo',
-                            'c' : 1.337,
-                            'd' : [1, 2, 'c']}
-                h5save(filename, True. **datadict)
-        2.  alternative 
-                a=2, b='foo', c=1.337, d=[1, 2, 'c']
-                h5save(filename, True. a=a, b=b, c=c, d=d)
+        - saves data to "(path/)timestamp_filename.hdf5"
+        - complete (path/)filename is returned
+    usage-example:
+                datadict = {'dataset1' : {'x': array(...), 'y': array(...)},
+                            'dataset2' : {'x': array(...), 'y': array(...), 'yerr': array(...)},
+                            'parameter1' : 1.337,
+                            'list1' : [1, 2, 'c']}
+                h5save(filename, True. datadict)
     '''
+    def dict2h5(datadict, h5id):
+        for key, val in datadict.items():
+            key = key.encode('utf8').replace('/', '|')
+            if isinstance(val, (list, tuple, str, float, ndarray)):
+                h5id.create_dataset(key, data=val)
+            elif isinstance(val, (dict)):
+                hdf5_subid = h5id.create_group(key)
+                dict2h5(val, hdf5_subid)
+            else:
+                raise Exception('Data of type {} is not yet supported, sorry for that!'.format(type(val)))
+        return
+
     if timestamp:
-        filename = strftime('%Y%m%d%H%M%S') + '_' + filename
+        path = '/'.join(filename.split('/')[:-1] + [''])
+        filename = strftime('%Y%m%d%H%M%S') + '_' + filename.split('/')[-1]
+        filename = path + filename
     if filename[-5:] != '.hdf5':
         filename += '.hdf5'
-    hdf5_fid = h5pyFile(filename, 'w')              
-    if verbose:
-        print('\n==========================================================')
-        print('Beginning to save to %s ...' % filename)
-        print('\n----------------------------------------------------------')
-    i = 0
-    for key, value in namesandvariables.iteritems():
-        i += 1
-        if verbose:
-            print('{1:0>3} Saving values in {0:} ... '.format(key, i))
-        hdf5_fid.create_dataset(key.encode('utf8').replace('/', '|'), data=value)
-    if verbose:
-        print('\n----------------------------------------------------------')
-        print('... finished saving to %s !' % filename)
-        print('\n==========================================================')
+    hdf5_fid = h5pyFile(filename, 'w')
+    dict2h5(datadict, hdf5_fid)
     hdf5_fid.close()
     return filename
 
 
-def h5load(filename, verbose=False):
+def h5load(filename):
     ''' h5load(filename, verbose)
     input:
-        - filename (as string)
+        - filename (as string) of h5save savedfile
         - desired verbosity
     return:
         - dictionary of saved data
-    notice:
-        use with files saved with accpy.dataio.h5save
+    ALTERNATIVE:
+        if the dataset is too large for memory it is also possible to work with it on disk:
+        >>> import h5py
+        >>> data = h5py.File(filename, 'r')
     '''
+    def h52dict(h5id, datadict):
+        for key, val in h5id.items():
+            if isinstance(val, (Dataset)):
+                datadict[key] = h5id[key].value
+            elif isinstance(val, (Group)):
+                datadict[key] = {}
+                h52dict(h5id[key], datadict[key])
+            else:
+                raise Exception('Data of type {} is not yet supported, sorry for that!'.format(type(val)))
+        return
+
     if filename[-5:] != '.hdf5':
         filename += '.hdf5'
-    fid = h5pyFile(filename, 'r')
+
     data = {}
-    if verbose:
-        print('\n==========================================================')
-        print('Beginning to load from %s ...' % filename)
-        print('\n----------------------------------------------------------')
-    i = 0
-    for key in fid:
-        i += 1
-        try:
-            data[key] = fid[key].value
-        except:
-            subdata = {}
-            for subkey in fid[key]:
-                subdata[subkey] = fid[key][subkey].value
-            data[key] = subdata
-        if verbose:
-            print('{2:0>3} Loading values from {0:} {1:} ... '.format(key, type(data[key]), i))
-    fid.close()
-    if verbose:
-        print('\n----------------------------------------------------------')
-        print('... finished loading from %s !' % filename)
-        print('\n==========================================================')
+    hdf5_fid = h5pyFile(filename, 'r')
+    h52dict(hdf5_fid, data)
+    hdf5_fid.close()
     return data
 
 

@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""accpy.elegant.mmltools
+author:     Martin Ruprecht
+edited:     felix.kramer(at)physik.hu-berlin.de
+"""
 from __future__ import print_function,division
 import numpy as np
 import sys
@@ -20,7 +25,7 @@ class Namemap():
             self.ATname[i] = ''
             self.AOname[i] = ''
             self.PSname[i] = ''
-            
+
     def getATindicesByAOname(self,name):
         return self.ATindex[self.AOname == name]
 
@@ -33,7 +38,7 @@ class Namemap():
     def getPSnames(self,ATtype = 'QUAD'):
         sel = self.ATtype == ATtype
         return np.unique(self.PSname[sel])
-    
+
     def getAOnames(self,ATtype = 'QUAD'):
         sel = self.ATtype == ATtype
         return np.unique(self.AOname[sel])
@@ -72,7 +77,7 @@ class PrintATRing():
             #     continue
             # if l == 0:
             #     continue
-            if i >= 0: # s <= 320 and 
+            if i >= 0: # s <= 320 and
                 extra = ''
                 if typename in ('StrMPoleSymplectic4Pass','StrMPoleSymplectic4RadPass'):
                     #K = r[i][0][0][2][0][0]
@@ -94,13 +99,13 @@ class PrintATRing():
                     ExitAngle = r[i][0,0].ExitAngle[0,0]
                     extra+=' BendingAngle = {0:11.8f} EntranceAngle = {1:11.8f} ExitAngle = {2:11.8f}'.format(BendingAngle, EntranceAngle, ExitAngle)
 
-                    
+
                 if extra == '' and details == 'default':
                     continue
                 print('start: {0:12.6f} - {1:10.6f}   length: {2:10.5f}   '.format(s-l,s,l), '{0:5n} {1:12}  {2:20}'.format(i,name,typename), extra)
                 #getstrings(r[i][0][0])
-                # r[i][0][0], 
-               #, typename 
+                # r[i][0][0],
+               #, typename
                 #, ' center last end to this start: {0:12.6f}'.format((s-l+slast)*0.5)
                 #r[i]
                 slast = s
@@ -117,7 +122,7 @@ class ATRingWithAO():
     rings = None
     namemap = None
     NATelements = None
-    
+
     def __init__(self, filename):
         # struct_as_record=False preserves nested dictionaries!
         self.d = io.loadmat(filename, struct_as_record=False, squeeze_me=False)
@@ -128,7 +133,7 @@ class ATRingWithAO():
         r = self.rings[0].ring[0,:]
 
         self.NATelements = len(r)
-        self.namemap = Namemap(self.NATelements)  
+        self.namemap = Namemap(self.NATelements)
 
         # loop over AO entries to fill namemap
         for field in self.ao._fieldnames:
@@ -149,14 +154,14 @@ class ATRingWithAO():
             #     continue
             # print field, len(ATindices), len(AOnames), len(PSnames)
             # if field == 'BEND':
-            #     print ATindices, AOnames, PSnames, ATindices[0] - 1 , ATindices[0] 
+            #     print ATindices, AOnames, PSnames, ATindices[0] - 1 , ATindices[0]
             if field == 'RF':
                 AOnames = np.repeat(AOnames, len(ATindices))
                 PSnames = np.repeat(PSnames, len(ATindices))
                 #print ATindices, AOnames, PSnames
             for isecond in range(Nsecond):
                 for i in range(Nfirst):
-                    j = ATindices[i,isecond] - 1 
+                    j = ATindices[i,isecond] - 1
                     self.namemap.ATindex[j] = j # note: start at zero (python style)
                     self.namemap.AOindex[j] = i # note: start at zero (python style)
                     self.namemap.ATtype[j] = ATtype
@@ -164,16 +169,20 @@ class ATRingWithAO():
                     self.namemap.PSname[j] = PSnames[i].split(':')[0]
                     #print isecond, j,  ATindices[i],  AOnames[i],  PSnames[i]
 
-        # loop over RING to fill additionally with AT ('familiy') name    
+        # loop over RING to fill additionally with AT ('familiy') name
         for i in range(self.NATelements):
              self.namemap.ATname[i] = r[i][0,0].FamName[0]
 
         # some consistency checks
+        broken = 0
         for i in range(self.NATelements):
             if self.namemap.ATname[i] == 'BEND':
                 if self.namemap.PSname[i] not in ('PB1ID6R','PB2ID6R','PB3ID6R', 'BPR','BPRP'):
-                    print('ERROR : BROKEN FILE!!! Probable cause: init and AT file incompatible!!!')
-                    sys.exit()
+                    print(self.namemap.PSname[i])
+                    broken = 1
+        if broken:
+            print('ERROR : BROKEN FILE!!! Probable cause: init and AT file incompatible!!!')
+            sys.exit()
 
     def printNamemap(self, Nmax=None):
         if Nmax == None:
@@ -242,9 +251,13 @@ class ATRingWithAO():
                 print('{0:12} K1 = {1:11.8f}'.format(name,strength))
             else:
                 print('Output style not implemented.')
-                
+
     def getMagnetStrength(self, ATtype='QUAD', fitIteration='last', method='byPowerSupply', outputstyle='visual'):
-        
+
+        try:
+            self.ad.Machine = self.ad.Maschine
+        except:
+            pass
         print('Locofile belongs to this machine =', self.ad.Machine)
         if fitIteration == 'last':
             fitIteration = len(self.rings)-1
@@ -258,7 +271,7 @@ class ATRingWithAO():
                 return r[i][0,0].PolynomB[0,2]
         else:
             print('ATtype not implemented.')
-            
+
         if  method == 'byPowerSupply':
             print('List magnet ({0}) strength by power supply.'.format(ATtype))
             PSn = self.namemap.getPSnames(ATtype = ATtype)
@@ -301,10 +314,10 @@ class ATRingWithAO():
                 if archive != 'master' :
                     print('WARNING unknown archive',archive)
                 bii='http://archiver.bessy.de/archive/cgi/CGIExport.cgi?INDEX=/opt/Archive/' + index + '&COMMAND=camonitor'
-        
+
             if self.ad.Machine == 'MLS':
                 bii="http://arc31c.trs.bessy.de/MLS/cgi/CGIExport.cgi?INDEX=%2Fopt%2FArchive%2Fmaster_index&COMMAND=camonitor"
-                
+
             if type(var) is list:
                 var='\n'.join(var)
 
@@ -321,8 +334,8 @@ class ATRingWithAO():
             return float(archiver(var,t,t)['value'])
 
         return archiverScalar(var,t)
-        
-    
+
+
     def getMagnetStrengthOnline(self, source='archiver', time='2016-07-28 11:00:00', ATtype='QUAD', method='byPowerSupply', outputstyle='visual', index='master_index'):
         if self.ad.Machine == 'MLS':
             suffix = ':setCur'
@@ -337,7 +350,7 @@ class ATRingWithAO():
 
         if  method == 'byPowerSupply':
             print('List magnet ({0}) strength by power supply. Source: {1} (time: {2}).'.format(ATtype, source,time))
-                
+
             PSn = self.namemap.getPSnames(ATtype = ATtype)
             print('Number of independent parameters:',len(PSn))
             for n in PSn:
@@ -346,20 +359,24 @@ class ATRingWithAO():
                 conversionfactors = getattr(self.ao, field)[0,0].Monitor[0,0].HW2PhysicsParams[:,0]
                 if self.ad.Machine == 'MLS':
                     # TODO: not understood why needed!?
-                    conversionfactors = conversionfactors[0][:,0]                    
+                    conversionfactors = conversionfactors[0][:,0]
                 cfac = np.mean(conversionfactors)
-                if not np.array_equal(conversionfactors, conversionfactors[0]*np.ones_like(conversionfactors)):
+                if np.var(conversionfactors) > 0:
                     print('Warning: Different conversion factors for a single power supply given! Taking average.')
+                    print(np.shape(conversionfactors))
+                    print(conversionfactors)
 
                 if source=='archiver':
-                    Savg = cfac * self.getArchiverScalar(n+suffix, time, index)
+                    Iarch = self.getArchiverScalar(n+suffix, time, index)
+                    Savg = cfac * Iarch
                     stat1 = self.getArchiverScalar(n+suffixstat1, time, index)
+                    #print('cfac*Iarch*stat/L*2 = {}*{}*{}/L*2 = {}/L'.format(cfac, Iarch, stat1, cfac*Iarch*stat1*2))
                     Savg *= stat1
                 elif source=='epics':
                     Savg = cfac * PV(n+suffix).get()
                 else:
                     print('Source not implemented.')
-                    
+
                 self._printMagnetStrength(n,Savg,ATtype,outputstyle)
         else:
             print('Method not implemented.')
