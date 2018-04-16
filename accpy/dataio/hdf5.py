@@ -33,7 +33,7 @@ def h5save(filename, datadict, timestamp=True):
     def dict2h5(datadict, h5id):
         for key, val in datadict.items():
             key = key.encode('utf8').replace('/', '|')
-            if isinstance(val, (list, tuple, str, float, ndarray)):
+            if isinstance(val, (list, tuple, str, unicode, int, float, ndarray)):
                 h5id.create_dataset(key, data=val)
             elif isinstance(val, (dict)):
                 hdf5_subid = h5id.create_group(key)
