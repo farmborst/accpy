@@ -192,25 +192,6 @@ def drawlatt(ax, data, size=0.1):
     dy = dy*.8
     yl = ax.get_ylim()[1] - dy/2  # lower edge of element
 
-    # get dict of magnets and strengths
-    latticename = data['description'][0].split('lattice: ')[1]
-    magdict = {}
-    with open(latticename, 'r') as fh:
-        for line in fh:
-            name = line.split(':')[0].replace('"', '').rstrip(' ')
-            if 'kquad' in line.lower():
-                try:
-                    K1 = float(line.split('K1=')[1].split(',')[0])
-                except:
-                    K1 = 0.0
-                magdict[name] = K1
-            elif 'ksext' in line.lower():
-                try:
-                    K2 = float(line.split('K2=')[1].split(',')[0])
-                except:
-                    K2 = 0.0
-                magdict[name] = K2
-
     i = 0
     while i < len(s):
         et = data['ElementType'][i]
@@ -226,6 +207,25 @@ def drawlatt(ax, data, size=0.1):
         sf = s[i + li - 1]
         dx = sf - si
         i += li
+        
+        # get dict of nagnets and strengths
+        latticename = data['description'][0].split('lattice: ')[1]
+        magdict = {}
+        with open(latticename, 'r') as fh:
+            for line in fh:
+                name = line.split(':')[0].replace('"', '')
+                if 'kquad' in line.lower():
+                    try:
+                        K1 = float(line.split('K1=')[1].split(',')[0])
+                    except:
+                        K1 = 0.0
+                    magdict[name] = K1
+                elif 'ksext' in line.lower():
+                    try:
+                        K2 = float(line.split('K2=')[1].split(',')[0])
+                    except:
+                        K2 = 0.0
+                    magdict[name] = K2
 
         if et == 'CSBEND':
             mypatch(ax, 'yellow', si, yl, dx, dy)
