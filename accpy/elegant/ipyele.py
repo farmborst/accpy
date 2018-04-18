@@ -59,15 +59,20 @@ def loadwpcols(filename):
     if filename[-3:] == 'coo':
         IDsindex = colkeys.index('particleID')
         colkeys.remove('particleID')
+
         IDs = colvals.pop(IDsindex)
         Nturns, Nparts = len(IDs), len(IDs[0])
+        IDs = array(IDs)
+        IDs[IDs == 16777216] = Nparts  # strange elegant BUG causes last Particles ID to jump to 16777216 ???!!!
+        IDs -= 1
+
         tmp = empty([Nturns, Nparts])
         tmp.fill(nan)
         newcolvals = []
         for i, val in enumerate(colvals):  # loop over x,xp,y,yp,...
             newcolvals.append(tmp.copy())
             for t in range(Nturns):
-                newcolvals[i][t, array(IDs[t]) - 1] = array(val[t])
+                newcolvals[i][t, IDs[t]] = array(val[t])
     else: # filename[-3:] == 'cen' or '.twiss'
         newcolvals = [array(val).T for val in colvals]
     return data, dict(zip(colkeys, newcolvals))
@@ -207,7 +212,7 @@ def drawlatt(ax, data, size=0.1):
         sf = s[i + li - 1]
         dx = sf - si
         i += li
-        
+
         # get dict of nagnets and strengths
         latticename = data['description'][0].split('lattice: ')[1]
         magdict = {}
