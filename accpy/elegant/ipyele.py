@@ -529,6 +529,29 @@ def mybunch(bunchname, ranges, E_mev):
         bunch.defineColumn(name, symbol, units, description, formatString, typ, fieldLength)
         bunch.setColumnValueLists(name, data)
 
-
     bunch.save(bunchname)
+    return
+
+
+def mybump(t, amp, filename):
+    bump = sdds.SDDS(0)  # what does the index mean?
+    bump.setDescription('my predefined BUMPER waveform', 'bunched-beam phase space')
+    bump.mode = 1  # 1 is binary, 2 is ascii
+
+    colnames = ['t', 'amp']
+    colsymbs = ['']*len(colnames)
+    colunits = ['S', '']
+    coldescr = ['']*len(colnames)
+    colforms = ['']*len(colnames)
+    coltypes = [bump.SDDS_DOUBLE]*len(colnames)
+    colfleng = [1]*len(colnames)
+    coldatas = [[list(t)],
+                [list(amp)]]
+    colstuff = zip(colnames, colsymbs, colunits, coldescr, colforms, coltypes, colfleng, coldatas)
+
+    for name, symbol, units, description, formatString, typ, fieldLength, data in colstuff:
+        bump.defineColumn(name, symbol, units, description, formatString, typ, fieldLength)
+        bump.setColumnValueLists(name, data)
+
+    bump.save(filename)
     return
