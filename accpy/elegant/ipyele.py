@@ -62,17 +62,20 @@ def loadwpcols(filename):
 
         IDs = colvals.pop(IDsindex)
         Nturns, Nparts = len(IDs), len(IDs[0])
-        IDs = array(IDs)
-        IDs[IDs == 16777216] = Nparts  # strange elegant BUG causes last Particles ID to jump to 16777216 ???!!!
-        IDs -= 1
+        #IDs = array(IDs) # not possible for lost particles as the nested lists the have different lengths
+        #IDs[IDs == 16777216] = Nparts  # strange elegant BUG causes last Particles ID to jump to 16777216 ???!!!
+        #IDs -= 1
 
         tmp = empty([Nturns, Nparts])
         tmp.fill(nan)
         newcolvals = []
-        for i, val in enumerate(colvals):  # loop over x,xp,y,yp,...
+        for i, val in enumerate(colvals):  # loop over x, xp, y,yp,...
             newcolvals.append(tmp.copy())
             for t in range(Nturns):
-                newcolvals[i][t, IDs[t]] = array(val[t])
+                ID = array(IDs[t])
+                ID[ID == 16777216] = Nparts
+                ID -= 1
+                newcolvals[i][t, ID] = array(val[t])
     else: # filename[-3:] == 'cen' or '.twiss'
         newcolvals = [array(val).T for val in colvals]
     return data, dict(zip(colkeys, newcolvals))
