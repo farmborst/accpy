@@ -538,7 +538,7 @@ def mybump(t, amp, filename):
     bump.setDescription('my predefined BUMPER waveform', 'bunched-beam phase space')
     bump.mode = 1  # 1 is binary, 2 is ascii
 
-    colnames = ['t', 'amp']
+    colnames = ['t', 'A']
     colsymbs = ['']*len(colnames)
     colunits = ['S', '']
     coldescr = ['']*len(colnames)
