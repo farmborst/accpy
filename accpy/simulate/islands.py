@@ -232,7 +232,7 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     ax1.set_ylabel(r'Angle $x^\prime$ / (mrad)')
     emittance = data['A'][particleIDs]/pi
     action = emittance/2
-    
+
     # tune shift with action
     fitfun = lambda x, a, b: a + b*x
     popt, pcov = curve_fit(fitfun, action, Q)
@@ -249,7 +249,7 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
 #    leg.get_frame().set_alpha(0)
     ax2.set_ylim([Qmin, Qmax])
 #    ax2.yaxis.tick_right()
-    ax2.set_ylabel(r'Fractional Tune $dQ$')
+    ax2.set_ylabel(r'Fractional Tune d$Q_x$')
 #    ax2.yaxis.set_label_position('right')
     ax2.set_xlabel(r'Action $J_x$ / (mm$\cdot$mrad)')
     tight_layout()
