@@ -603,6 +603,12 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     Mplot(ax[3], EAI, [NXemitequi]+NXemits, lss, xlab2, xunit2, '', '', '')
     legs.append(ax[0].legend(fancybox=True, loc=2))
 
+    for axi in ax:
+        ax.axvline(tt[0])  # Injection
+        ax.axvline(tt[1])  # Extraction
+        ax.axvline(tt[3])  # 2nd Extraction
+
+
     # Axial Emittance
     ax = [figs[8].add_subplot(2, 2, i) for i in range(1, 5)]
     labs = ['Limit']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Yemits]
