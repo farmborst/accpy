@@ -41,13 +41,13 @@ def showfigs(t0, status, figs, tabs):
         toolbar.pack()
         canvas.draw()
     timestring = time2str(time() - t0)
-    status.set('finished, elapsed time: ' + timestring)
+    status.set('Status: finished, elapsed time: ' + timestring)
 
 
 def runthread(status, tabs, f_simulate, argstuple):
     def run(*argstuple):
             t0 = time()
-            status.set('running...')
+            status.set('Status: running...')
             figs = f_simulate(*argstuple)
             showfigs(t0, status, figs, tabs[1:])
     # data plotting in new thread to keep gui (main thread&loop) responsive
@@ -58,7 +58,7 @@ def runthread(status, tabs, f_simulate, argstuple):
     t_run.start()
 
 
-def gui_twisstrack(frame, w, h, status, start, stop):
+def gui_twisstrack(frame, w, h, status, start):
     def _start():
         latt = latticemenu.get()
         if latt in closedlatts:
@@ -87,7 +87,7 @@ def gui_twisstrack(frame, w, h, status, start, stop):
     return
 
 
-def gui_parttrack(frame, w, h, status, start, stop):
+def gui_parttrack(frame, w, h, status, start):
     def _start():
         latt = latticemenu.get()
         slic = int(entry_slice.get())
@@ -131,7 +131,7 @@ def gui_parttrack(frame, w, h, status, start, stop):
     return
 
 
-def gui_ramp(frame, w, h, status, start, stop):
+def gui_ramp(frame, w, h, status, start):
     def _start():
         points = int(entry_pnts.get())
         T_per = float(entry_Tper.get())
@@ -196,7 +196,7 @@ def gui_ramp(frame, w, h, status, start, stop):
     return
 
 
-def gui_quadscansim(frame, w, h, status, start, stop):
+def gui_quadscansim(frame, w, h, status, start):
     def _start():
         lattice = latticemenu.get()
         if lattice == 'drift':

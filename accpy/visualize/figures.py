@@ -10,7 +10,7 @@ from matplotlib import rcdefaults, rcParams
 from time import strftime
 
 
-def plotstandards(varlist, vallist, w, h):
+def plotstandards(confdict):
     rcdefaults()
     '''
     a4: 210 x 297
@@ -19,15 +19,15 @@ def plotstandards(varlist, vallist, w, h):
     height = 9*width/16  = 3.792775234375
     '''
 
-    width = vallist[varlist.index('fig_width')]
-    height = vallist[varlist.index('fig_height')]
-    gridon = vallist[varlist.index('grid')]
-    dpi = vallist[varlist.index('dpi')]
-    fontfamily = vallist[varlist.index('fontfamily')]
-    fontsize = vallist[varlist.index('fontsize')]
-    markersize = float(vallist[varlist.index('markersize')])
-    linewidth = vallist[varlist.index('linewidth')]
-    axformatterlimits = vallist[varlist.index('axformatterlimits')]
+    width = confdict['fig_width']
+    height = confdict['fig_height']
+    gridon = confdict['grid']
+    dpi = confdict['dpi']
+    fontfamily = confdict['fontfamily']
+    fontsize = confdict['fontsize']
+    markersize = confdict['markersize']
+    linewidth = confdict['linewidth']
+    axformatterlimits = confdict['axformatterlimits']
 
     params = {'axes.labelsize': fontsize,
               'axes.titlesize': fontsize,
@@ -49,7 +49,8 @@ def plotstandards(varlist, vallist, w, h):
               'savefig.pad_inches': 0.05,
               'text.usetex': True,
               'xtick.labelsize': fontsize,
-              'ytick.labelsize': fontsize}
+              'ytick.labelsize': fontsize,
+              'errorbar.capsize': 3}
     rcParams.update(params)
     return
 

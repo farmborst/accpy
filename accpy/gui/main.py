@@ -5,8 +5,18 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division, print_function
 try:
     import Tkinter as tk
+    import ttk
 except:
     import tkinter as tk
+    import tkinter.ttk as ttk
+from .file import latticeeditor, settings, defaults
+from .simulate import (gui_twisstrack, gui_parttrack, gui_ramp,
+                       gui_quadscansim)
+from .measure import (tunes, chromaticity, quadscanmeas, achroscan)
+from .optimize import (emittex, twissmatch)
+from .help import (documentation, about)
+from ..visualize.figures import plotstandards
+from ..dataio.hdf5 import h5load, h5save
 
 
 class MainApp:
@@ -25,19 +35,34 @@ class MainApp:
         self.root.wm_title("ACCPY gui {}".format(self.version))
 
         # create gui widgets
-        self.menubar = MenuBar(self.root)
-        self.toolbar = ToolBar(self.root, self.cwd )
         self.mainwin = MainWindow(self.root)
+        self.toolbar = ToolBar(self.root, self.cwd)
+        self.menubar = MenuBar(self.root, self.mainwin, self.toolbar,
+                               self.version, w, h)
 
         # add gui elements to root window
         self.root.config(menu=self.menubar.bar)
         self.toolbar.frame.pack(side=tk.TOP, fill=tk.X)
         self.mainwin.frame.pack(expand=True)
 
+        # test load settings or set defaults
+        try:
+            confdict = h5load('./settings.hdf5')
+        except:
+            print('Loading Default Configuration...')
+            confdict = defaults('./settings.hdf5')
+            print('    ... done.')
+        plotstandards(confdict)
+
 
 class MenuBar:
-    def __init__(self, parent):
+    def __init__(self, parent, mainwin, toolbar, version, w, h):
         self.parent = parent
+        self.mainwin = mainwin
+        self.toolbar = toolbar
+        self.version = version
+        self.w = w
+        self.h = h
         self.bar = tk.Menu(self.parent)
         self.FileMenu()
         self.SimulationMenu()
@@ -52,12 +77,22 @@ class MenuBar:
                 menu.add_separator()
         self.bar.add_cascade(label=name, menu=menu)
 
+    def SubApp(self, name, app):
+        self.parent.wm_title('accpy gui - ' + name)
+        # destroy all widgets in fram/tab
+        for widget in self.mainwin.frame.winfo_children():
+            widget.destroy()
+        self.toolbar.status.set('Status: idle')
+        w = self.parent.winfo_screenwidth()
+        h = self.parent.winfo_screenheight()
+        app(self.mainwin.frame, w, h, self.toolbar.status, self.toolbar.run)
+
     def FileMenu(self):
-        items = ['Lattice editor',
+        items = ['Lattice Editor',
                  'Settings',
                  'Quit']
-        cmnds = [lambda: print(1),
-                 lambda: print(2),
+        cmnds = [lambda: self.SubApp(items[0], latticeeditor),
+                 lambda: settings(),
                  lambda: (self.parent.quit(),
                           self.parent.destroy())]
         filemenu = tk.Menu(self.bar, tearoff=0)
@@ -68,10 +103,10 @@ class MenuBar:
                  'Particle tracking',
                  'Ramp',
                  'Quadrupole scan']
-        cmnds = [lambda: print(1),
-                 lambda: print(2),
-                 lambda: print(3),
-                 lambda: print(4)]
+        cmnds = [lambda: self.SubApp(items[0], gui_twisstrack),
+                 lambda: self.SubApp(items[1], gui_parttrack),
+                 lambda: self.SubApp(items[2], gui_ramp),
+                 lambda: self.SubApp(items[3], gui_quadscansim)]
         simulationmenu = tk.Menu(self.bar, tearoff=0)
         self.MenuMaker(simulationmenu, items, cmnds, 'Simulation')
 
@@ -80,26 +115,26 @@ class MenuBar:
                  'Chromaticity',
                  'Quadrupole scan',
                  'Achromat scan']
-        cmnds = [lambda: print(1),
-                 lambda: print(2),
-                 lambda: print(3),
-                 lambda: print(4)]
+        cmnds = [lambda: self.SubApp(items[0], tunes),
+                 lambda: self.SubApp(items[1], chromaticity),
+                 lambda: self.SubApp(items[2], quadscanmeas),
+                 lambda: self.SubApp(items[3], achroscan)]
         simulationmenu = tk.Menu(self.bar, tearoff=0)
         self.MenuMaker(simulationmenu, items, cmnds, 'Measurement')
 
     def OptimizeMenu(self):
         items = ['Find Transverse emittance exchange section',
                  'Twiss matching']
-        cmnds = [lambda: print(1),
-                 lambda: print(2)]
+        cmnds = [lambda: self.SubApp(items[0], emittex),
+                 lambda: self.SubApp(items[0], twissmatch)]
         simulationmenu = tk.Menu(self.bar, tearoff=0)
         self.MenuMaker(simulationmenu, items, cmnds, 'Optimization')
 
     def HelpMenu(self):
         items = ['Documentation',
                  'About ACCPY...']
-        cmnds = [lambda: print(1),
-                 lambda: print(2)]
+        cmnds = [lambda: documentation(self.version, self.w, self.h),
+                 lambda: about(self.version),]
         simulationmenu = tk.Menu(self.bar, tearoff=0)
         self.MenuMaker(simulationmenu, items, cmnds, 'Help')
 
@@ -107,23 +142,23 @@ class MenuBar:
 class ToolBar:
     def __init__(self, parent, cwd):
         self.parent = parent
-        self.frame = tk.Frame(self.parent, relief=tk.RAISED)
+        self.frame = ttk.Frame(self.parent, relief=tk.RAISED)
         self.buttons(cwd)
         self.indicators()
 
     def buttons(self, cwd):
         path = cwd + '/accpy/icons/' + 'start.gif'
-        icon = tk.PhotoImage(file=path).subsample(10, 10)
-        self.run = tk.Button(self.parent, relief=tk.FLAT, image=icon)
+        self.icon = tk.PhotoImage(file=path).subsample(10, 10)
+        self.run = tk.Button(self.frame, relief=tk.FLAT, image=self.icon)
         self.run.pack(side=tk.LEFT, padx=2, pady=2)
 
     def indicators(self):
         self.status = tk.StringVar()
-        self.status.set('Status')
-        tk.Label(self.parent, textvariable=self.status).pack(side=tk.RIGHT)
+        self.status.set('Status: idle')
+        tk.Label(self.frame, textvariable=self.status).pack(side=tk.LEFT)
 
 
 class MainWindow:
     def __init__(self, parent):
         self.parent = parent
-        self.frame = tk.Frame(self.parent)
+        self.frame = ttk.Frame(self.parent)

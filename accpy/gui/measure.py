@@ -61,7 +61,7 @@ def runthread(status, f_simulate, argstuple):
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 
-def tunes(frame, w, h, status, start, stop):
+def tunes(frame, w, h, status, start):
     def _start():
         figs = initfigs(tabs[1:4])
         filename = filestr.get()
@@ -116,13 +116,13 @@ def tunes(frame, w, h, status, start, stop):
     return
 
 
-def chromaticity(frame, w, h, status, start, stop):
+def chromaticity(frame, w, h, status, start):
     txt = Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def quadscanmeas(frame, w, h, status, start, stop):
+def quadscanmeas(frame, w, h, status, start):
     def _start():
         figs = initfigs([lf_OUT])
         mode = modemenu.get()
@@ -284,7 +284,7 @@ def quadscanmeas(frame, w, h, status, start, stop):
     return
 
 
-def achroscan(frame, w, h, status, start, stop):
+def achroscan(frame, w, h, status, start):
     txt = Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return

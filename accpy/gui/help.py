@@ -23,9 +23,7 @@ def documentation(version, w, h):
         textfield.insert('1.0', docdic[doc])
         textfield.config(state=DISABLED)
     r = Toplevel()
-    w = int(w/2)
-    h = int(h/2)
-    r.geometry('{}x{}+{}+{}'.format(w, h, int(w/2), int(h/2)))
+    r.geometry('{}x{}'.format(int(w/4), int(h/2)))
     r.wm_title('Documentation accpy version {}'.format(version))
 
     lf = Frame(r)
@@ -47,7 +45,7 @@ def documentation(version, w, h):
     textfield.pack(fill=BOTH, expand=True)
 
 
-def about(version, w, h):
+def about(version):
     r = Toplevel()
     r.wm_title('About')
     r.option_add('*font', 'Helvetica -16 bold')

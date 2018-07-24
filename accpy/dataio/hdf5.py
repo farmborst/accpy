@@ -33,7 +33,7 @@ def h5save(filename, datadict, timestamp=True):
     def dict2h5(datadict, h5id):
         for key, val in datadict.items():
             key = key.encode('utf8').replace('/', '|')
-            if isinstance(val, (list, tuple, str, float, ndarray)):
+            if isinstance(val, (list, tuple, str, float, int, ndarray)):
                 h5id.create_dataset(key, data=val)
             elif isinstance(val, (dict)):
                 hdf5_subid = h5id.create_group(key)
@@ -85,22 +85,3 @@ def h5load(filename):
     h52dict(hdf5_fid, data)
     hdf5_fid.close()
     return data
-
-
-def confsave(filename, listofvars, listofvals):
-    # working with two lists as dictionarys do not accept numpy arrays
-    hdf5_fid = h5pyFile(filename, 'w')
-    hdf5_fid.create_dataset('listofvars', data=listofvars)
-    for var, val in zip(listofvars, listofvals):
-        hdf5_fid.create_dataset(var, data=val)
-    hdf5_fid.close()
-
-
-def confload(filename):
-    fid = h5pyFile(filename, 'r')
-    listofvars = list(fid['listofvars'].value)
-    listofvals = []
-    for var in listofvars:
-        listofvals.append(fid[var].value)
-    fid.close()
-    return listofvars, listofvals

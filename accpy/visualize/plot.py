@@ -578,8 +578,8 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     legs.append(ax.legend(fancybox=True, loc=1))
 
     # Bunchlength and duration
-    GS = GridSpec(3, 2)
-    GS = [GS[2, :], GS[0, :], GS[1, :]]
+    GS = GridSpec(2, 2)
+    GS = [GS[:, 1], GS[0, 0], GS[1, 0]]
     ax = [figs[6].add_subplot(gs) for gs in GS]
     labs = [r'$\delta_{{E,equilibrium}}$, $V_{{max}} = {0:g}$ kV'.format(V_HF/1e3) for V_HF in V_HFs]
     lss = ['-.' for x in range(len(bdurequis))]
@@ -616,9 +616,9 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
 
     # Longitudinal Emittance
     ax = [figs[9].add_subplot(1, 2, i) for i in range(1, 3)]
-    labs = ['Equilibrium']+[r'$\epsilon_0=$ {} \textperthousand'.format(y[0]) for y in Semits]
+    labs = ['Equilibrium'] + [r'$\epsilon_0=$ {} \textperthousand'.format(y[0]) for y in Semits]
     lss = ['-.']+['-' for x in range(len(Semits))]
-    ylab, yunit = r'$\delta_E=\frac{\sigma_E}{E_0}$', r' \textperthousand '
+    ylab, yunit = r'$\delta_E=\frac{\sigma_E}{E_0}$', r'$\alpha$'
     Mplot(ax[0], tAI, [Semitequi]+Semits, lss, xlab, xunit, ylab, yunit, labs, rescaleY=False)
     Mplot(ax[1], EAI, [Semitequi]+Semits, lss, xlab2, xunit2, '', '', '', rescaleY=False)
     legs.append(ax[0].legend(fancybox=True, loc=1))

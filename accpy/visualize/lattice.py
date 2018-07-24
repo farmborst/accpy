@@ -5,7 +5,7 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division
 from numpy import (size, cumsum, nanmin, nanmax)
 from matplotlib.pyplot import Figure
-from ..dataio.hdf5 import confload
+from ..dataio.hdf5 import h5load
 
 
 def latticeplot(optic, diagnostics, size=None):
@@ -40,11 +40,11 @@ def drawlattice(ax, optic, diagnostics, data, height, checkconf=True):
             height  0 to 1 where to place lattice (1 at top)
     '''
     if checkconf:
-        varlist, vallist = confload('./settings.conf')
-        showlattice = vallist[varlist.index('showlattice')]
-        showquadstrength = vallist[varlist.index('showquadstrength')]
-        showdiagnostic = vallist[varlist.index('showdiagnostic')]
-        showquadnr = vallist[varlist.index('showquadnr')]
+        confdict = h5load('./settings.hdf5')
+        showlattice = confdict['showlattice']
+        showquadstrength = confdict['showquadstrength']
+        showdiagnostic = confdict['showdiagnostic']
+        showquadnr = confdict['showquadnr']
     else:
         showlattice = 1
         showdiagnostic = 1

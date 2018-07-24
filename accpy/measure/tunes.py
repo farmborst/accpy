@@ -57,11 +57,11 @@ def updatefig(fig, ax, lines):
 
 
 def findpeaks(f, fft, f_cent, f_span, points, fig, ax, line1, line2):
-    center = round(points/2.)
-    region = round(points/8.)
+    center = int(round(points/2.))
+    region = int(round(points/8.))
     lc = center - region
     rc = center + region
-    region1 = round(points/6.)
+    region1 = int(round(points/6.))
     l = lc - region1
     r = rc + region1
     mu1 = nanargmax(fft[l:lc]) + l
@@ -102,14 +102,14 @@ def measure_tunes(figs, tunestr, mode, filename, f_rf, h, bunch, steps):
     ln1_fft = ax1.plot([], [], '.k')
     ln1_thresh = ax1.plot([], [], '-b')
     ln1_peak = ax1.plot([], [], 'or', mfc='none', mec='red', ms=20, linewidth=15)
-    ln1_avg = ax1.errorbar(nan, nan,yerr=nan, marker='.', mfc='b', ecolor='b', mec='b', ls='None')
+    ln1_avg = ax1.errorbar(nan, nan, yerr=nan, marker='.', mfc='b', ecolor='b', mec='b', ls='None')
     # synchrotron frequency
     ln2_fs = ax2.errorbar(nan, nan, yerr=nan, marker='.', mfc='b', ecolor='b', mec='b', ls='None')
     fig.canvas.draw()
 
     t = linspace(5, 90, steps)  # time in ms
     if mode == 'From File':
-        fftdata = h5load(filename, False)['fftdata']
+        fftdata = h5load(filename)['fftdata']
         points = shape(fftdata)[2]
     elif mode == 'Measurement':
         # test scope communication

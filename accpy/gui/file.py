@@ -25,7 +25,7 @@ from .layout import (cs_tabbar, cs_label, cs_Intentry, cs_Dblentry, cs_button,
 from ..lattices.reader import lattlist, latt2py, latt2txt, txt2latt, txt2py
 from ..visualize.lattice import latticeplot
 from ..visualize.figures import plotstandards
-from ..dataio.hdf5 import confload, confsave
+from ..dataio.hdf5 import h5load, h5save
 
 
 def clearfigs(tabs):
@@ -46,7 +46,7 @@ def showfigs(figs, tabs):
         canvas.draw()
 
 
-def latticeeditor(frame, w, h):
+def latticeeditor(frame, w, h, status, run):
     def _save():
         txt = (editor.get('1.0', END)).encode('utf-8')
         txt2latt(txt, name.get(), closedmenuval.get())
@@ -129,37 +129,35 @@ def latticeeditor(frame, w, h):
     return
 
 
-def settings(w, h):
+def settings():
     def _cancel():
         r.destroy()
 
     def _save():
-        vallist[0] = float(entry_width.get())
-        vallist[1] = float(entry_height.get())
-        vallist[2] = gridon.get()
-        vallist[3] = float(entry_dpi.get())
-        vallist[4] = dropd_fontfamily.get()
-        vallist[5] = dropd_fontsize.get()
-        vallist[6] = dropd_markersize.get()
-        vallist[7] = dropd_linewidth.get()
         n = dropd_laxpowerlimits.get()
         m = dropd_uaxpowerlimits.get()
-        vallist[8] = [n, m]
-        vallist[9] = showlat.get()
-        vallist[10] = showqk.get()
-        vallist[11] = showfom.get()
-        vallist[12] = showqn.get()
-        confsave(confpath, varlist, vallist)
-        plotstandards(varlist, vallist, w, h)
+        confdict = {
+            'fig_width'          : float(entry_width.get()),
+            'fig_height'         : float(entry_height.get()),
+            'grid'               : gridon.get(),
+            'dpi'                : float(entry_dpi.get()),
+            'fontfamily'         : dropd_fontfamily.get(),
+            'fontsize'           : dropd_fontsize.get(),
+            'markersize'         : dropd_markersize.get(),
+            'linewidth'          : dropd_linewidth.get(),
+            'axformatterlimits'  : [n, m],
+            'showlattice'        : showlat.get(),
+            'showquadstrength'   : showqk.get(),
+            'showdiagnostic'     : showfom.get(),
+            'showquadnr'         : showqn.get()
+        }
+        h5save('./settings.hdf5', confdict, timestamp=False)
+        plotstandards(confdict)
         r.destroy()
 
-    confpath = './settings.conf'
-    varlist, vallist = confload(confpath)
+    confdict = h5load('./settings.hdf5')
 
     r = Toplevel()
-    # w = int(w/2)
-    # h = int(h/2)
-    # r.geometry('{}x{}+{}+{}'.format(w, h, int(w/2), int(h/2)))
     r.wm_title('ACCPY Settings')
 
     uf = Frame(r, relief=RAISED)
@@ -170,41 +168,41 @@ def settings(w, h):
     lf_figures = LabelFrame(uf, text="Figure Settings", padx=5, pady=5)
     lf_figures.grid(row=1, column=0, sticky=W+E+N+S, padx=10, pady=10)
     cs_label(lf_figures, 1, 0, 'Width / inches (25.4mm)', sticky=W)
-    entry_width = cs_Dblentry(lf_figures, 2, 0, vallist[0], sticky=W+E)
+    entry_width = cs_Dblentry(lf_figures, 2, 0, confdict['fig_width'], sticky=W+E)
     cs_label(lf_figures, 3, 0, 'Height / inches (25.4mm)', sticky=W)
-    entry_height = cs_Dblentry(lf_figures, 4, 0, vallist[1], sticky=W+E)
+    entry_height = cs_Dblentry(lf_figures, 4, 0, confdict['fig_height'], sticky=W+E)
     cs_label(lf_figures, 5, 0, 'DPI', sticky=W)
-    entry_dpi = cs_Dblentry(lf_figures, 6, 0, vallist[3], sticky=W+E)
-    gridon = cs_checkbox(lf_figures, 7, 0, 'Show grid', vallist[2], sticky=W)
+    entry_dpi = cs_Dblentry(lf_figures, 6, 0, confdict['dpi'], sticky=W+E)
+    gridon = cs_checkbox(lf_figures, 7, 0, 'Show grid', confdict['grid'], sticky=W)
     fontfamilys = ['serif', 'sans-serif', 'cursive', 'fantasy', 'monospace']
     cs_label(lf_figures, 8, 0, 'Fontfamily', sticky=W)
     dropd_fontfamily = cs_dropd(lf_figures, 9, 0, fontfamilys, sticky=W)
-    dropd_fontfamily.set(vallist[4])
+    dropd_fontfamily.set(confdict['fontfamily'])
     fontsizes = range(1, 30)+range(30,80,2)
     cs_label(lf_figures, 10, 0, 'Main fontsize', sticky=W)
     dropd_fontsize = cs_dropd(lf_figures, 11, 0, fontsizes, sticky=W)
-    dropd_fontsize.set(vallist[5])
+    dropd_fontsize.set(confdict['fontsize'])
     markersizes = range(1, 30)
     cs_label(lf_figures, 12, 0, 'Markersize', sticky=W)
     dropd_markersize = cs_dropd(lf_figures, 13, 0, markersizes, sticky=W)
-    dropd_markersize.set(vallist[6])
+    dropd_markersize.set(confdict['markersize'])
     cs_label(lf_figures, 14, 0, 'Linewidth', sticky=W)
     dropd_linewidth = cs_dropd(lf_figures, 15, 0, markersizes, sticky=W)
-    dropd_linewidth.set(vallist[7])
+    dropd_linewidth.set(confdict['linewidth'])
     cs_label(lf_figures, 16, 0, 'Scientific notation for ax labels, so:\n10^-n < data < 10^m', sticky=W)
     cs_label(lf_figures, 17, 0, 'n', sticky=W)
     dropd_laxpowerlimits = cs_dropd(lf_figures, 18, 0, range(-9, 1), sticky=W)
-    dropd_laxpowerlimits.set(vallist[8][0])
+    dropd_laxpowerlimits.set(confdict['axformatterlimits'][0])
     cs_label(lf_figures, 19, 0, 'm', sticky=W)
     dropd_uaxpowerlimits = cs_dropd(lf_figures, 20, 0, range(1, 9), sticky=W)
-    dropd_uaxpowerlimits.set(vallist[8][1])
+    dropd_uaxpowerlimits.set(confdict['axformatterlimits'][1])
 
     lf_drawlattice = LabelFrame(uf, text="Lattice painter", padx=5, pady=5)
     lf_drawlattice.grid(row=1, column=1, sticky=W+E+N+S, padx=10, pady=10)
-    showlat = cs_checkbox(lf_drawlattice, 0, 0, 'Show Lattice', vallist[9], sticky=W)
-    showqk = cs_checkbox(lf_drawlattice, 1, 0, 'Show quad strengths', vallist[10], sticky=W)
-    showqn = cs_checkbox(lf_drawlattice, 2, 0, 'Show quad numbers', vallist[10], sticky=W)
-    showfom = cs_checkbox(lf_drawlattice, 3, 0, 'Show diagnostic elements', vallist[11], sticky=W)
+    showlat = cs_checkbox(lf_drawlattice, 0, 0, 'Show Lattice', confdict['showlattice'], sticky=W)
+    showqk = cs_checkbox(lf_drawlattice, 1, 0, 'Show quad strengths', confdict['showquadstrength'], sticky=W)
+    showqn = cs_checkbox(lf_drawlattice, 2, 0, 'Show quad numbers', confdict['showquadnr'], sticky=W)
+    showfom = cs_checkbox(lf_drawlattice, 3, 0, 'Show diagnostic elements', confdict['showdiagnostic'], sticky=W)
 
     cp_button(lf, 'Save and Close', _save, side=RIGHT, fill=BOTH, expand=True)
     cp_button(lf, 'Close', _cancel, side=RIGHT, fill=BOTH, expand=True)
@@ -212,31 +210,20 @@ def settings(w, h):
 
 
 def defaults(confpath):
-    varlist = ['fig_width',
-               'fig_height',
-               'grid',
-               'dpi',
-               'fontfamily',
-               'fontsize',
-               'markersize',
-               'linewidth',
-               'axformatterlimits',
-               'showlattice',
-               'showquadstrength',
-               'showdiagnostic',
-               'showquadnr']
-    vallist = [19.2,
-               10.8,
-               1,
-               100,
-               'serif',
-               28,
-               3,
-               2,
-               [-2, 3],
-               1,
-               1,
-               1,
-               1]
-    confsave(confpath, varlist, vallist)
-    return varlist, vallist
+    confdict = {
+            'fig_width'          : 19.2,
+            'fig_height'         : 10.8,
+            'grid'               : 1,
+            'dpi'                : 100,
+            'fontfamily'         : 'serif',
+            'fontsize'           : 28,
+            'markersize'         : 3,
+            'linewidth'          : 2,
+            'axformatterlimits'  : [-2, 3],
+            'showlattice'        : 1,
+            'showquadstrength'   : 1,
+            'showdiagnostic'     : 1,
+            'showquadnr'         : 1
+    }
+    h5save('./settings.hdf5', confdict, timestamp=False)
+    return confdict

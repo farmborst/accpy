@@ -11,13 +11,13 @@ except:
 oops = ('Ooops!\n Sorry, but this feature is not ready yet...')
 
 
-def emittex(frame, w, h, status, start, stop):
+def emittex(frame, w, h, status, start):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
 
 
-def twissmatch(frame, w, h, status, start, stop):
+def twissmatch(frame, w, h, status, start):
     txt = Tk.Label(frame, text=oops, font=("Helvetica", 20))
     txt.pack()
     return
