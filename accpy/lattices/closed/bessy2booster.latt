@@ -1,0 +1,26 @@
+# author:     felix.kramer(at)physik.hu-berlin.de
+
+###### general ######
+particle = 'electron'
+energy = 1.72e9
+HF_f = 499.667e6
+HF_V = 750e3
+I = 5e-3
+N_UC = 8             # number of unit cells
+###### drifts ######
+D1 = drift(1.160)
+D2 = drift(.23)
+D3 = drift(1.1607)
+###### dipoles ######
+LD = 2.6193          # orbit length of dipole
+UD = N_UC*LD*2       # total orbit length of all dipoles
+rho = UD/2/const.pi  # bending radius
+phi = LD/2/rho       # edge angle of dipole
+g = 36e-3            # dipoles gap
+K = 0.7              # ~0.7 for Rogowski pole
+B = uniformdipole(LD, rho, phi, K*g)
+###### quadrupoles ######
+QF = quad('rf', .3, 2.1082)
+QD = quad('af', .3, 1.4658)
+###### unit cell ######
+UC = line(D3, QD, D2, B, D2, QF, D1, D1, QD, D2, B, D2, QF, D3)

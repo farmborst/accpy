@@ -1,0 +1,104 @@
+# author:     felix.kramer(at)physik.hu-berlin.de
+
+'''===== general ====='''
+particle = 'electron'
+energy = 52e6
+I = 5e-3
+'''===== starting twiss parameters ====='''
+emit_x = 230e-9
+emit_y = 190e-9
+emit_s = 2e-3
+beta_x = 9
+alph_x = -.1
+beta_y = 3
+alph_y = 2
+disp_x = 0
+dipr_x = 0
+'''===== drifts ====='''
+D01 = drift(0)
+D02 = drift(.111)
+D03 = drift(.111)
+D04 = drift(.2542)
+D05 = drift(.46668)
+D06 = drift(.26168)
+D07 = drift(.205)
+D08 = drift(1.0255)
+D09 = drift(.181)
+D10 = drift(.4225)
+D11 = drift(1.02853)
+D12 = drift(.1)
+D13 = drift(.398)
+D14 = drift(1.302)
+D15 = drift(.1)
+D16 = drift(.101)
+D17 = drift(1.725)
+D18 = drift(1.575)
+D19 = drift(.1)
+D20 = drift(.1)
+D21 = drift(.8)
+D22 = drift(.1)
+D23 = drift(.25001)
+D24 = drift(.24979)
+D25 = drift(.45)
+D26 = drift(.05)
+D27 = drift(.25)
+D28 = drift(.29978)
+D29 = drift(.273)
+D30 = drift(.127)
+D31 = drift(.4)
+D32 = drift(.13378)
+D33 = drift(.31593)
+'''===== fluorescent screens ====='''
+F01 = F02 = F03 = F04 = F05 = F06 = diagnostic()
+diagnostics = ['FOMZ1LI', 'FOMZ2LI', 'FOMZ2I', 'FOMZ3I', 'FOMZ5I', 'FOMZ6I']
+'''===== dipoles ====='''
+B01 = uniformdipole(.143, .143/.4373, 0, .5*.03)  # B1P1LI 81.25 A   rbend
+B02 = uniformdipole(.143, .143/.43464, 0, .5*.03)  # B1P2LI 80.63 A   rbend
+B03 = uniformdipole(.1, .1/.02322, 0, .5*.03)  # B2PI 10.34 A         sbend
+B04 = uniformdipole(.1, .1/.02322, 0, .5*.03)  # HB2PI 0 A / B2PI 10.34 A ?  sbend
+'''===== quadrupoles ====='''
+q = const.qe
+E0 = const.Ee/q
+pc = sqrt(energy**2-E0**2)*q
+p = pc/const.cl
+R = p/q         # beam rigidity R = Bρ = p/q = 5.73730218421
+i2k1 = lambda I, R=R: (6.87/2.55 * I)/R  # gradient@2.55A = 6.87 T/m
+i2k2 = lambda I, R=R: (6.86/2.55 * I)/R
+i2k3 = lambda I, R=R: (1.5 * I)/R
+
+# linac injectionline : all quads are radial focus for I<0 (-)
+Q01 = quad('rf', .119, i2k1(-0.55230))  # Q1PLI  -
+Q02 = quad('rf', .119, i2k1(-0.11554))  # Q2PLI  -
+Q03 = quad('af', .119, i2k1(+0.60813))  # Q3PLI  -
+Q04 = quad('rf', .220, i2k2(-1.0145))   # Q4PLI  -  -1.11836 -1.0108
+Q05 = quad('af', .119, i2k1(+0.43473))  # Q5PLI  -
+Q06 = quad('rf', .119, i2k1(-1.48022))  # Q6PLI  -
+Q07 = quad('af', .119, i2k1(+1.36891))  # Q7PLI  -
+
+# microtron injectionline : + = radial focus for I>0, - = radial focus for I<0
+Q08 = quad('af', .100, i2k3(+3.64300))  # Q2P2I  -
+Q09 = quad('rf', .100, i2k3(+2.45640))  # Q1P2I  +
+Q10 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
+Q11 = quad('af', .100, i2k3(-0.47120))  # Q5PI   +
+Q12 = quad('af', .100, i2k3(+0.00000))  # Q4PI   -
+Q13 = quad('rf', .100, i2k3(+0.58900))  # Q6PI   +
+Q14 = quad('rf', .100, i2k3(-0.90010))  # Q7PI   -
+Q15 = quad('af', .100, i2k3(-1.15800))  # Q8PI   +
+Q16 = quad('rf', .100, i2k3(-0.00000))  # Q9PI   -
+Q17 = quad('af', .100, i2k3(-0.63380))  # Q10PI  +
+
+# rest are off
+Q18 = quad('rf', .100, i2k3(-0.00000))  # Q11PI  +
+Q19 = quad('af', .100, i2k3(-0.00000))  # Q12PI  -
+Q20 = quad('rf', .100, i2k3(-0.00000))  # Q13PI  -
+Q21 = quad('af', .100, i2k3(-0.00000))  # Q14PI  +
+Q22 = quad('af', .100, i2k3(-0.00000))  # Q15PI  -
+Q23 = quad('rf', .100, i2k3(-0.00000))  # Q16PI  -
+'''===== unit cell ====='''
+UC = line(D01, Q01, D02, Q02, D03, Q03, D04, B01, D05, Q04,
+          D06, F01, D07, B02, D08, Q05, D09, Q06, D10, Q07,
+          D10, F02, D11, Q08, D12, Q09, D13, F03, D14, Q10,
+          D15, Q11, D16, Q12, D17, F04, D18, Q13, D19, Q14,
+          D20, Q15, D21, Q16, D22, Q17, D23, B03, D24, Q18,
+          D25, Q19, D26, Q20, D27, B04, D28, Q21, D29, F05,
+          D30, Q22, D31, Q23, D32, F06, D33)
