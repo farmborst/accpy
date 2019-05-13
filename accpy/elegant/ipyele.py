@@ -19,10 +19,11 @@ from ..visualize.stringformat import uc
 from ..dataio.hdf5 import h5save
 
 
-def elegant(runfile, macro=None):
-    path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
-    path += '/defns.rpn'
-    processstring = "export RPN_DEFNS='" + path + "' && elegant " + runfile
+def elegant(runfile, macro=None, defns=False):
+	if not defns:
+		defns = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
+		defns += '/defns.rpn'
+    processstring = "export RPN_DEFNS='" + defns + "' && elegant " + runfile
     if macro:
         processstring += ' -macro=' + macro
     process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
@@ -31,9 +32,10 @@ def elegant(runfile, macro=None):
     return out
 
 
-def Pelegant(filename, Ncores=4, macro=None):
-    path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
-    path += '/defns.rpn'
+def Pelegant(filename, Ncores=4, macro=None, defns=False):
+    if not defns:
+		defns = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
+		defns += '/defns.rpn'
     processstring = "export RPN_DEFNS='" + path + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
     if macro:
         processstring += ' -macro=' + macro
