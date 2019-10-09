@@ -17,6 +17,7 @@ author:     felix.kramer(at)physik.hu-berlin.de
 from __future__ import division
 from numpy import (nanmax, nanmin, concatenate, empty, linspace, array, arange,
                    abs as npabs, sqrt, sin, cos, arccos as acos, nanmean)
+from bisect import bisect_left
 from itertools import product
 from matplotlib.figure import Figure
 from matplotlib.pyplot import cm
@@ -577,6 +578,14 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     [ax.plot(t3*1e3, x/1e3, '+k', markersize=24.0) for x in FF]
     legs.append(ax.legend(fancybox=True, loc=1))
 
+
+    def plotvline(axes):
+        for ax in axes:
+            # ax.axvline(tt[0]*1e3)  # Injection
+            ax.axvline(tt[1]*1e3)  # Extraction
+            ax.axvline(tt[3]*1e3)  # 2nd Extraction
+
+
     # Bunchlength and duration
     GS = GridSpec(2, 2)
     GS = [GS[:, 1], GS[0, 0], GS[1, 0]]
@@ -588,6 +597,10 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     legplot(ax[0], lss, labs, loc=6)
     Mplot(ax[1], tVgZ, bdurequis+bdurs, lss, '', '', 'Bunch duration', 's', '')
     Mplot(ax[2], tVgZ, blenequis+blens, lss, xlab, xunit, 'Bunch length', 'm', '')
+    ####
+    plotvline([ax[1], ax[2]])
+    ax[1].set_ylim([0, 75])
+    ax[2].set_ylim([0, 25])
 
     # Emittance
     yunit = r'm $\pi$ rad'
@@ -597,28 +610,49 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     labs = ['Equilibrium']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Xemits]
     lss = ['-.']+['-' for x in range(len(Xemits))]
     ylab, ylab2 = r'$\epsilon_x$', r'$\epsilon_x^*$'
-    Mplot(ax[0], tAI, [Xemitequi]+Xemits, lss, '', '', ylab, yunit, labs)
-    Mplot(ax[1], EAI, [Xemitequi]+Xemits, lss, '', '', '', '', '')
+#    Mplot(ax[0], tAI, [Xemitequi]+Xemits, lss, '', '', ylab, yunit, labs)
+    #Mplot(ax[1], EAI, [Xemitequi]+Xemits, lss, '', '', '', '', '')
+    Mplot(ax[0], tAI, [Xemitequi]+Xemits, lss, '', '', ylab, yunit, '')
+    legplot(ax[1], lss, labs, loc=6)
     Mplot(ax[2], tAI, [NXemitequi]+NXemits, lss, xlab, xunit, ylab2, yunit, '')
     Mplot(ax[3], EAI, [NXemitequi]+NXemits, lss, xlab2, xunit2, '', '', '')
-    legs.append(ax[0].legend(fancybox=True, loc=2))
-
-    for axi in ax:
-        ax.axvline(tt[0])  # Injection
-        ax.axvline(tt[1])  # Extraction
-        ax.axvline(tt[3])  # 2nd Extraction
+    legs.append(ax[1].legend(fancybox=True, loc=2))
+    ####
+    plotvline([ax[0]])
+    ax[0].set_ylim([0, 100])
+    #ax[1].set_ylim([0, 100])
+    ax[2].set_ylim([0, 400])
+    ax[3].set_ylim([0, 400])
 
 
     # Axial Emittance
+#    ax = [figs[8].add_subplot(2, 2, i) for i in range(1, 5)]
+#    labs = ['Limit']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Yemits]
+#    lss = ['-.']+['-' for x in range(len(Yemits))]
+#    ylab, ylab2 = r'$\epsilon_y$', r'$\epsilon_y^*$'
+#    Mplot(ax[0], tAI, [Yemitequi]+Yemits, lss, '', '', ylab, yunit, labs)
+#    Mplot(ax[1], EAI, [Yemitequi]+Yemits, lss, '', '', '', '', '')
+#    Mplot(ax[2], tAI, [NYemitequi]+NYemits, lss, xlab, xunit, ylab2, yunit, '')
+#    Mplot(ax[3], EAI, [NYemitequi]+NYemits, lss, xlab2, xunit2, '', '', '')
+#    legs.append(ax[0].legend(fancybox=True, loc=1))
     ax = [figs[8].add_subplot(2, 2, i) for i in range(1, 5)]
-    labs = ['Limit']+[r'$\epsilon_0=$ {0:g} nm rad'.format(y[0]*1e9) for y in Yemits]
-    lss = ['-.']+['-' for x in range(len(Yemits))]
-    ylab, ylab2 = r'$\epsilon_y$', r'$\epsilon_y^*$'
-    Mplot(ax[0], tAI, [Yemitequi]+Yemits, lss, '', '', ylab, yunit, labs)
-    Mplot(ax[1], EAI, [Yemitequi]+Yemits, lss, '', '', '', '', '')
-    Mplot(ax[2], tAI, [NYemitequi]+NYemits, lss, xlab, xunit, ylab2, yunit, '')
-    Mplot(ax[3], EAI, [NYemitequi]+NYemits, lss, xlab2, xunit2, '', '', '')
-    legs.append(ax[0].legend(fancybox=True, loc=1))
+
+    ite1 = bisect_left(tAI, tt[1])
+    ite2 = bisect_left(tAI, tt[3])
+    def extractplot(ax, emits, xlab, ylab, scale, leg):
+        sv = array([emit[0] for emit in emits])
+        ev1 = array([emit[ite1] for emit in emits])
+        ev2 = array([emit[ite2] for emit in emits])
+        ax.semilogx(sv*scale, ev1*scale, 'x-', label='first extraction', ms=5)
+        ax.semilogx(sv*scale, ev2*scale, 'x-', label='second extraction', ms=5)
+        if leg:
+            ax.legend()
+        ax.set_xlabel(xlab)
+        ax.set_ylabel(ylab)
+    extractplot(ax[0], Xemits, r'$\epsilon_{x,inject}$ / (nm rad)', r'$\epsilon_{x,extract}$ / (nm rad)', 1e9, 1)
+    extractplot(ax[1], Semits, r'$\delta_{E,inject}$ / (\textperthousand)', r'$\delta_{E,extract}$ / (\textperthousand)', 1, 0)
+    extractplot(ax[2], bdurs, r'$\sigma_s$ @ injection / (ps) ', r'$\sigma_s$ @ extraction / (ps)', 1e12, 0)
+    ax[3].axis('off')
 
     # Longitudinal Emittance
     ax = [figs[9].add_subplot(1, 2, i) for i in range(1, 3)]
@@ -628,6 +662,10 @@ def plotramp(T, t, tt, tt2, tEgZ, tAI, tVgZ, E, EE, EEgZ, EAI, EVgZ, B, BB, loss
     Mplot(ax[0], tAI, [Semitequi]+Semits, lss, xlab, xunit, ylab, yunit, labs, rescaleY=False)
     Mplot(ax[1], EAI, [Semitequi]+Semits, lss, xlab2, xunit2, '', '', '', rescaleY=False)
     legs.append(ax[0].legend(fancybox=True, loc=1))
+    ####
+    plotvline([ax[0]])
+    ax[0].set_ylim([0, 0.7])
+    ax[1].set_ylim([0, 0.7])
 
     [leg.get_frame().set_alpha(0.5) for leg in legs]
     return figs
