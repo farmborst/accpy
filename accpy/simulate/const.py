@@ -5,7 +5,7 @@ Felix Kramer (felix.kramer@physik.hu-berlin.de)
 '''
 
 # ratio of circumference to diameter of circle
-pi = 3.141592653589793115997963468544185161590576171875
+pi = 3.14159 26535 89793 23846
 # speed of light----------------------------------------/ (m/s)
 cl = 299792458.
 # elementary charge-------------------------------------/ (e)=(As)=(C)
