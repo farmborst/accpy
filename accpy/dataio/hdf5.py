@@ -69,7 +69,7 @@ def h5load(filename):
     def h52dict(h5id, datadict):
         for key, val in h5id.items():
             if isinstance(val, (Dataset)):
-                datadict[key] = h5id[key].value
+                datadict[key] = h5id[key][()]
             elif isinstance(val, (Group)):
                 datadict[key] = {}
                 h52dict(h5id[key], datadict[key])
@@ -98,9 +98,9 @@ def confsave(filename, listofvars, listofvals):
 
 def confload(filename):
     fid = h5pyFile(filename, 'r')
-    listofvars = list(fid['listofvars'].value)
+    listofvars = list(fid['listofvars'][()])
     listofvals = []
     for var in listofvars:
-        listofvals.append(fid[var].value)
+        listofvals.append(fid[var][()])
     fid.close()
     return listofvars, listofvals
