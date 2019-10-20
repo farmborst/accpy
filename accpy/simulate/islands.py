@@ -8,9 +8,9 @@ from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan, pi,
                    logical_or, delete, nanmin, nanmax, add, nan, int32, arange,
-                   arctan2, argsort, sqrt, diag)
+                   arctan2, argsort, sqrt, diag, sum)
 from scipy.optimize import curve_fit
-from matplotlib.mlab import dist, find
+from matplotlib.mlab import find
 from matplotlib.cm import rainbow, ScalarMappable, cool
 from matplotlib.pyplot import tight_layout
 from matplotlib.colors import Normalize
@@ -29,6 +29,10 @@ def PolyArea(x, y, c):
     # shoelace formula from
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
     return npabs(dot(x, roll(y,1)) - dot(y, roll(x, 1)))/2
+
+
+def dist(a, b):
+    return sqrt(sum((a - b)**2))
 
 
 def islandsloc(data, resonance, minsep=5e-3):
