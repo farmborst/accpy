@@ -8,9 +8,8 @@ from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan, pi,
                    logical_or, delete, nanmin, nanmax, add, nan, int32, arange,
-                   arctan2, argsort, sqrt, diag, sum)
+                   arctan2, argsort, sqrt, diag, sum as npsum)
 from scipy.optimize import curve_fit
-from matplotlib.mlab import find
 from matplotlib.cm import rainbow, ScalarMappable, cool
 from matplotlib.pyplot import tight_layout
 from matplotlib.colors import Normalize
@@ -32,7 +31,7 @@ def PolyArea(x, y, c):
 
 
 def dist(a, b):
-    return sqrt(sum((a - b)**2))
+    return sqrt(npsum((a - b)**2))
 
 
 def islandsloc(data, resonance, minsep=5e-3):
@@ -214,7 +213,7 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
     particleIDs = delete(particleIDs, clip)
     Q = addsub(integer, data[QQ][particleIDs])
     if clipint:
-        zeroQ = find(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))
+        zeroQ = where(logical_or(logical_or(Q == 0.0, Q == 1.0), Q == 0.5))[0]
         if len(zeroQ) > 0:  # trim reference particle with zero tune
             Q = delete(Q, zeroQ)
             particleIDs = delete(particleIDs, zeroQ)
