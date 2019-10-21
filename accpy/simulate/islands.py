@@ -143,6 +143,7 @@ def getquadsext(lines, latticename):
     lines[1].set_text(sextstr.rstrip('\n'))
     return
 
+
 def getrdts(line, twissdat):
 #    props=dict(boxstyle='round', alpha=1)
 #    line = ax.text(1.02, .55, string.rstrip('\n'), va='top', ha='left', fontproperties='monospace', bbox=props, color='y', transform=ax.transAxes)
@@ -162,6 +163,7 @@ def getrdts(line, twissdat):
     line.set_text(string.rstrip('\n'))
     return
 
+
 def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
               everyxturn=[0, 1], ms=1):
     x, y = xy
@@ -176,6 +178,7 @@ def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
     ax.set_xlabel(r'$x$ / (mm)')
     ax.set_ylabel(r'$x^\prime$ / (mrad)')
     return
+
 
 def islandsplot(ax, data, showlost=False):
     datx, daty = data['x'].copy(), data['xp'].copy()
@@ -200,6 +203,7 @@ def islandsplot(ax, data, showlost=False):
     ax.set_xlabel(r'$x$ / (mm)')
     ax.set_ylabel(r'$x^\prime$ / (mrad)')
     return
+
 
 def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
              clipint=True, showlost=False, QQ='Qx', ms=1, clip=[0], showfit=False):
