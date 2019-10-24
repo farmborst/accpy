@@ -256,7 +256,7 @@ def tuneplot(ax1, ax2, data, particleIDs='allIDs', integer=1, addsub=add,
 #    leg.get_frame().set_alpha(0)
     ax2.set_ylim([Qmin, Qmax])
 #    ax2.yaxis.tick_right()
-    ax2.set_ylabel(r'Fractional Tune $dQ$')
+    ax2.set_ylabel(r'Fractional Tune d$Q$')
 #    ax2.yaxis.set_label_position('right')
     ax2.set_xlabel(r'Action $J_x$ / (mm$\cdot$mrad)')
     tight_layout()
