@@ -4,58 +4,76 @@ author:
     Felix Armborst
 '''
 import ipywidgets as widgets
-from .hdf5 import h5load
 from subprocess import check_output
+from .hdf5 import h5load
+from ..elegant.ipyele import sddsload
 
 
 def loaddirs(paths, data, datapath):
     for i, path in enumerate(paths):
         print(i, path.lstrip(datapath))
+        fcoos, fcens, ftwisss, fbuns, flogs = [[] for i in range(5)]
         data[path] = {
             'data_coo' : [],
             'data_cen' : [],
             'data_twi' : [],
             'data_log' : [],
+            'data_bun' : [],
         }
+        print('  Loaded Data Files:')
         try:
             fcoos = check_output('ls -tr ' + path + '*.coo', shell=True).decode().split('\n')[:-1]
             for fcoo in fcoos:
                 trackdat = h5load(fcoo)
                 data[path]['data_coo'].append(trackdat)
-            print('    Loaded Coordinate Tracking Data Files: {}'.format(len(fcoos)))
+            print('    Coordinate Tracking: {}'.format(len(fcoos)))
         except:
             data[path]['data_coo'].append([])
-            print('    Loaded Coordinate Tracking Data Files: 0')
+            print('    Coordinate Tracking: 0')
 
         try:
             fcens = check_output('ls -tr ' + path + '*.cen', shell=True).decode().split('\n')[:-1]
             for fcen in fcens:
                 trackdat = h5load(fcen)
                 data[path]['data_cen'].append(trackdat)
-            print('    Loaded Centroid Tracking Data Files: {}'.format(len(fcens)))
+            print('    Centroid Tracking: {}'.format(len(fcens)))
         except:
             data[path]['data_cen'].append([])
-            print('    Loaded Centroid Tracking Data Files: 0')
+            print('    Centroid Tracking: 0')
 
         try:
             ftwisss = check_output('ls -tr ' + path + '*.twiss', shell=True).decode().split('\n')[:-1]
             for ftwiss in ftwisss:
                 twissdat = h5load(ftwiss)
                 data[path]['data_twi'].append(twissdat)
-            print('    Loaded Twiss Data Files: {}'.format(len(ftwisss)))
+            print('    Twiss: {}'.format(len(ftwisss)))
         except:
             data[path]['data_twi'].append([])
-            print('    Loaded Twiss Data Files: 0')
+            print('    Twiss: 0')
+        
+        try:
+            fbuns = check_output('ls -tr ' + path + '*.bun', shell=True).decode().split('\n')[:-1]
+            for fbun in fbuns:
+                bun = sddsload(fbun)
+                data[path]['data_bun'].append(bun)
+            print('    Bunch: {}'.format(len(fbuns)))
+        except:
+            data[path]['data_bun'].append([])
+            print('    Bunch: 0')
 
         try:
-            flog = check_output('ls -tr ' + path + '*.log', shell=True).decode().split('\n')[:-1][0]
-            with open(flog, 'r') as flog_h:
-                log = flog_h.read()
+            flogs = check_output('ls -tr ' + path + '*.log.*', shell=True).decode().split('\n')[:-1]
+            for flog in flogs:
+                if flog[-4:] == 'hdf5':
+                    log = h5load(flog)
+                else:
+                    with open(flog, 'r') as flog_h:
+                        log = flog_h.read()
                 data[path]['data_log'].append(log)
-            print('    Added Log Data!')
+            print('    Log: {}'.format(len(flogs)))
         except:
             data[path]['data_log'].append([])
-            print('    No Log Data found!')
+            print('    Log: 0')
     return
 
 
