@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-''' accpy.dataio.h
+''' accpy.dataio.hdf5
 author:
     Felix Kramer
 '''

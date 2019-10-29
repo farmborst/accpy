@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""accpy.elegant.jupyter
-author:     felix.kramer(at)physik.hu-berlin.de
+"""accpy.jupyter.visual
+author:     Felix Armborst
 """
 from __future__ import print_function, division
 from IPython.display import display, Javascript
