@@ -17,6 +17,7 @@ from . import sdds
 from ..simulate import const
 from ..visualize.stringformat import uc
 from ..dataio.hdf5 import h5save
+import numpy as np
 
 
 def elegant(runfile, macro=None):
@@ -401,27 +402,27 @@ def biizoom(sectyp, num):
         return list(array([240/32, 3*240/32]) + (num - 1)*240/8)
 
 
-def trackplot(datadict, turns=False, xy=False, fs=[16, 9], ax=False):
-    if not ax:
-        fig = figure(figsize=fs)
+def trackplot(ax, data, xy=False, exclude=False, fs=[16, 9], showlost=False,
+              turns=None, everyxturn=[0, 1], ms=1, color=False, lab=''):
     if xy:
-        if not ax:
-            ax = fig.add_subplot(111)
         x, y = xy
-        colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
-        if turns:
-            [ax.plot(datadict[x][:turns, part], datadict[y][:turns, part], '.', color=col) for part, col in enumerate(colors)]
+        
+        IDs = data['allIDs'].copy()
+        if exclude:
+            IDs = np.delete(IDs, exclude)
+        if not showlost:
+            IDs = np.delete(IDs, data['lostIDs'])
+        
+        if not color:
+            colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
         else:
-            for part, col in enumerate(colors):
-                missing = []
-                try:
-                    ax.plot(datadict[x][:, part], datadict[y][:, part], '.', color=col)
-                except:
-                    missing.append(part)
-            print('missing particles: ', missing)
-        ax.set_xlabel(x)
-        ax.set_ylabel(y)
-        #tight_layout()
+            colors = np.repeat(color, len(IDs))
+        
+        for part, col in zip(IDs, colors):
+            i, f = everyxturn
+            xdat, ydat = data[x][:turns, part][i::f], data[y][:turns, part][i::f]
+            ax.plot(xdat*1e3, ydat*1e3, '.', color=col, ms=ms)
+        ax.plot([], [], '.', color=col, ms=ms, label=lab)
         return
     try:  # centroid watch point
         x = ['Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Pass', 'Cx', 'Cy', 'dCt']
