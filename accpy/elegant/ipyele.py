@@ -210,7 +210,7 @@ def drawlatt(ax, data, size=0.1):
         i += li
         
         # get dict of nagnets and strengths
-        latticename = data['description'][0].split('lattice: ')[1]
+        latticename = str(data['description'][0]).split('lattice: ')[1]
         magdict = {}
         with open(latticename, 'r') as fh:
             for line in fh:
