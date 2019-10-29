@@ -22,30 +22,30 @@ def loaddirs(paths, data, datapath):
             for fcoo in fcoos:
                 trackdat = h5load(fcoo)
                 data[path]['data_coo'].append(trackdat)
-            print('    Added Coordinate Tracking Data!')
+            print('    Loaded Coordinate Tracking Data Files: {}'.format(len(fcoos)))
         except:
             data[path]['data_coo'].append([])
-            print('    No Coordinate Tracking Data found!')
+            print('    Loaded Coordinate Tracking Data Files: 0')
 
         try:
             fcens = check_output('ls -tr ' + path + '*.cen', shell=True).decode().split('\n')[:-1]
             for fcen in fcens:
                 trackdat = h5load(fcen)
                 data[path]['data_cen'].append(trackdat)
-            print('    Added Centroid Tracking Data!')
+            print('    Loaded Centroid Tracking Data Files: {}'.format(len(fcens)))
         except:
             data[path]['data_cen'].append([])
-            print('    No Centroid Tracking Data found!')
+            print('    Loaded Centroid Tracking Data Files: 0')
 
         try:
             ftwisss = check_output('ls -tr ' + path + '*.twiss', shell=True).decode().split('\n')[:-1]
             for ftwiss in ftwisss:
                 twissdat = h5load(ftwiss)
                 data[path]['data_twi'].append(twissdat)
-            print('    Added Twiss Data!')
+            print('    Loaded Twiss Data Files: {}'.format(len(ftwisss)))
         except:
             data[path]['data_twi'].append([])
-            print('    No Twiss Data found!')        
+            print('    Loaded Twiss Data Files: 0')
 
         try:
             flog = check_output('ls -tr ' + path + '*.log', shell=True).decode().split('\n')[:-1][0]
@@ -56,7 +56,6 @@ def loaddirs(paths, data, datapath):
         except:
             data[path]['data_log'].append([])
             print('    No Log Data found!')
-    
     return
 
 
