@@ -402,16 +402,16 @@ def biizoom(sectyp, num):
         return list(array([240/32, 3*240/32]) + (num - 1)*240/8)
 
 
-def trackplot(ax, data, xy=False, exclude=False, fs=[16, 9], showlost=False,
+def trackplot(ax, datadict, xy=False, exclude=False, fs=[16, 9], showlost=False,
               turns=None, everyxturn=[0, 1], ms=1, color=False, lab=''):
     if xy:
         x, y = xy
         
-        IDs = data['allIDs'].copy()
+        IDs = datadict['allIDs'].copy()
         if exclude:
             IDs = np.delete(IDs, exclude)
         if not showlost:
-            IDs = np.delete(IDs, data['lostIDs'])
+            IDs = np.delete(IDs, datadict['lostIDs'])
         
         if not color:
             colors = cm.rainbow(linspace(0, 1, datadict['Particles'][0]))
@@ -420,7 +420,7 @@ def trackplot(ax, data, xy=False, exclude=False, fs=[16, 9], showlost=False,
         
         for part, col in zip(IDs, colors):
             i, f = everyxturn
-            xdat, ydat = data[x][:turns, part][i::f], data[y][:turns, part][i::f]
+            xdat, ydat = datadict[x][:turns, part][i::f], datadict[y][:turns, part][i::f]
             ax.plot(xdat*1e3, ydat*1e3, '.', color=col, ms=ms)
         ax.plot([], [], '.', color=col, ms=ms, label=lab)
         return
