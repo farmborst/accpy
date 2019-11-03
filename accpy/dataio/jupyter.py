@@ -12,68 +12,35 @@ from ..elegant.ipyele import sddsload
 def loaddirs(paths, data, datapath):
     for i, path in enumerate(paths):
         print(i, path.lstrip(datapath))
-        fcoos, fcens, ftwisss, fbuns, flogs = [[] for i in range(5)]
-        data[path] = {
-            'data_coo' : [],
-            'data_cen' : [],
-            'data_twi' : [],
-            'data_log' : [],
-            'data_bun' : [],
-        }
         print('  Loaded Data Files:')
-        try:
-            fcoos = check_output('ls -tr ' + path + '*.coo', shell=True).decode().split('\n')[:-1]
-            for fcoo in fcoos:
-                trackdat = h5load(fcoo)
-                data[path]['data_coo'].append(trackdat)
-            print('    Coordinate Tracking: {}'.format(len(fcoos)))
-        except:
-            data[path]['data_coo'].append([])
-            print('    Coordinate Tracking: 0')
+        data[path] = {}
+        for datatype in ['coo', 'cen', 'twi', 'log', 'bun', 'lte']:
+            data[path][datatype] = []
+            
+            # CHECK FOR CORRESPONDING FILES
+            try:
+                files = check_output('ls -tr ' + path + '*.' + datatype + '*', shell=True).decode().split('\n')[:-1]
+            except:
+                print('    *.{}: 0'.format(datatype))
+                continue
+                
+            # REMOVE "DUPLICATE" HDF5 FILES (coo, cen, twi, log)
+            hdf5 = [f[:-5] for f in files if f[-5:] == '.hdf5']
+            files = [f for f in files if f not in hdf5]
+            
+            # LOAD FILES
+            for f in files:
+                ftype = f.split('.')[-1]
+                if ftype in ['hdf5']:
+                    data[path][datatype].append(h5load(f))
+                elif ftype in ['bun']:
+                    data[path][datatype].append(sddsload(f))
+                elif ftype in ['log', 'lte']:
+                    with open(f, 'r') as f_h:
+                        data[path][datatype].append(f_h.read())
 
-        try:
-            fcens = check_output('ls -tr ' + path + '*.cen', shell=True).decode().split('\n')[:-1]
-            for fcen in fcens:
-                trackdat = h5load(fcen)
-                data[path]['data_cen'].append(trackdat)
-            print('    Centroid Tracking: {}'.format(len(fcens)))
-        except:
-            data[path]['data_cen'].append([])
-            print('    Centroid Tracking: 0')
+            print('    *.{}: {}'.format(datatype, len(files)))
 
-        try:
-            ftwisss = check_output('ls -tr ' + path + '*.twiss', shell=True).decode().split('\n')[:-1]
-            for ftwiss in ftwisss:
-                twissdat = h5load(ftwiss)
-                data[path]['data_twi'].append(twissdat)
-            print('    Twiss: {}'.format(len(ftwisss)))
-        except:
-            data[path]['data_twi'].append([])
-            print('    Twiss: 0')
-        
-        try:
-            fbuns = check_output('ls -tr ' + path + '*.bun', shell=True).decode().split('\n')[:-1]
-            for fbun in fbuns:
-                bun = sddsload(fbun)
-                data[path]['data_bun'].append(bun)
-            print('    Bunch: {}'.format(len(fbuns)))
-        except:
-            data[path]['data_bun'].append([])
-            print('    Bunch: 0')
-
-        try:
-            flogs = check_output('ls -tr ' + path + '*.log.*', shell=True).decode().split('\n')[:-1]
-            for flog in flogs:
-                if flog[-4:] == 'hdf5':
-                    log = h5load(flog)
-                else:
-                    with open(flog, 'r') as flog_h:
-                        log = flog_h.read()
-                data[path]['data_log'].append(log)
-            print('    Log: {}'.format(len(flogs)))
-        except:
-            data[path]['data_log'].append([])
-            print('    Log: 0')
     return
 
 
