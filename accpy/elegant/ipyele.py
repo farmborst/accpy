@@ -183,7 +183,7 @@ def trackplot2(datadict, particles=8, abscissa='t'):
     eleplot(datadict, 'y', 'yp', '.', sel=range(particles))
 
 
-def drawlatt(ax, data, size=0.1):
+def drawlatt(ax, data, lattice, size=0.1):
     s = data['s']
     ax.set_xlim(npmin(s), npmax(s))
 
@@ -210,23 +210,20 @@ def drawlatt(ax, data, size=0.1):
         i += li
         
         # get dict of nagnets and strengths
-        latticename = bytes(data['description'][0]).decode('utf-8').split('lattice: ')[1]
-        magdict = {}
-        with open(latticename, 'r') as fh:
-            for line in fh:
-                name = line.split(':')[0].replace('"', '')
-                if 'kquad' in line.lower():
-                    try:
-                        K1 = float(line.split('K1=')[1].split(',')[0])
-                    except:
-                        K1 = 0.0
-                    magdict[name] = K1
-                elif 'ksext' in line.lower():
-                    try:
-                        K2 = float(line.split('K2=')[1].split(',')[0])
-                    except:
-                        K2 = 0.0
-                    magdict[name] = K2
+        for line in lattice:
+            name = line.split(':')[0].replace('"', '')
+            if 'kquad' in line.lower():
+                try:
+                    K1 = float(line.split('K1=')[1].split(',')[0])
+                except:
+                    K1 = 0.0
+                magdict[name] = K1
+            elif 'ksext' in line.lower():
+                try:
+                    K2 = float(line.split('K2=')[1].split(',')[0])
+                except:
+                    K2 = 0.0
+                magdict[name] = K2
 
         if et == 'CSBEND':
             mypatch(ax, 'yellow', si, yl, dx, dy)
@@ -316,16 +313,15 @@ def multicolorylab(ax, lablist, collist):
     ax.add_artist(anchored_ybox)
 
 
-def drawtwiss(data, ax1):
+def drawtwiss(data, lattice, ax1):
     ax2 = ax1.twinx()
     ax1.plot(data['s'], data['betax'], '-g')
     ax1.plot(data['s'], data['betay'], '-b')
     ax1.set_xlabel('s')
-    #ax1 = gca()
     multicolorylab(ax1, ['$\\beta_x$', ', ','$\\beta_y$', ' / (m)'], ['g', None, 'b', None])
     ax2.plot(data['s'], data['etax'], '-r')
     ax2.set_ylabel(r'$\eta_x$ / (m)', color='r')
-    drawlatt(ax1, data)
+    drawlatt(ax1, data, lattice)
     ax2.grid(None)
     return
 
@@ -376,16 +372,16 @@ def tunechrom(line, data):
     return
 
 
-def twissplot(ax, data, zoom=False):
+def twissplot(ax, data, lattice, zoom=False):
     if zoom:
         starti, endi = argmax(data['s'] >= zoom[0]), argmax(data['s'] >= zoom[1])
         clipdata = {}
         for clip in ['s', 'betax', 'betay', 'etax', 'ElementType', 'ElementName']:
             clipdata[clip] = data[clip][starti:endi]
         clipdata['description'] = data['description']
-        drawtwiss(clipdata, ax)
+        drawtwiss(clipdata, lattice, ax)
         return
-    drawtwiss(data, ax)
+    drawtwiss(data, lattice, ax)
     return
 
 #Dnames = ['Injection','U125','UE56','U49','UE52','UE56 + U139 (slicing)','UE112','UE49']
