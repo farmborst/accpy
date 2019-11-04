@@ -202,11 +202,11 @@ def drawlatt(ax, data, lattice, size=0.1):
                 K2 = 0.0
             magdict[name] = K2
 
-    s = dat['s']
+    s = data['s']
     ax.set_xlim(npmin(s), npmax(s))
 
-    ElementTypes = dat['ElementType'].astype('U13')
-    ElementNames = dat['ElementName'].astype('U13')
+    ElementTypes = data['ElementType'].astype('U13')
+    ElementNames = data['ElementName'].astype('U13')
 
     yi, yf = ax.get_ylim()[0], ax.get_ylim()[1]
     dy = abs(yf - yi)*size
