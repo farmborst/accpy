@@ -371,10 +371,10 @@ def twissdata(data):
 def tunechrom(line, data):
     # props=dict(boxstyle='round', alpha=0.5)
     # line = ax.text(9/16*0.02, 0.98, '', bbox=bboxprops, **lineprops)
-    string = 'Qx = {:.6}'.format(data['nux'][0])
-    string += '\nQy = {:.6}'.format(data['nuy'][0])
-    string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux|dp'][0])
-    string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy|dp'][0])
+    string = 'Qx = {:.4f}'.format(data['nux'][0])
+    string += '\nQy = {:.4f}'.format(data['nuy'][0])
+    string += '\n' + uc.greek.xi + 'x = {:.4f}'.format(data['dnux|dp'][0])
+    string += '\n' + uc.greek.xi + 'y = {:.4f}'.format(data['dnuy|dp'][0])
     line.set_text(string)
     return
 
