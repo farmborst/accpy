@@ -2,7 +2,7 @@
 """accpy.elegant.ipyele
 author:     felix.kramer(at)physik.hu-berlin.de
 """
-from __future__ import print_function, division
+from __future__ import print_function, division, unicode_literals
 from subprocess import Popen, PIPE, STDOUT
 from numpy import (shape, array, max as npmax, argmax, roll, float64, core,
                    min as npmin, linspace, where, empty, nan)
@@ -184,8 +184,29 @@ def trackplot2(datadict, particles=8, abscissa='t'):
 
 
 def drawlatt(ax, data, lattice, size=0.1):
-    s = data['s']
+    
+    # get dict of nagnets and strengths
+    magdict = {}
+    for line in lattice.split('\n'):
+        name = line.split(':')[0].replace('"', '')
+        if 'kquad' in line.lower():
+            try:
+                K1 = float(line.split('K1=')[1].split(',')[0])
+            except:
+                K1 = 0.0
+            magdict[name] = K1
+        elif 'ksext' in line.lower():
+            try:
+                K2 = float(line.split('K2=')[1].split(',')[0])
+            except:
+                K2 = 0.0
+            magdict[name] = K2
+
+    s = dat['s']
     ax.set_xlim(npmin(s), npmax(s))
+
+    ElementTypes = dat['ElementType'].astype('U13')
+    ElementNames = dat['ElementName'].astype('U13')
 
     yi, yf = ax.get_ylim()[0], ax.get_ylim()[1]
     dy = abs(yf - yi)*size
@@ -195,11 +216,12 @@ def drawlatt(ax, data, lattice, size=0.1):
 
     i = 0
     while i < len(s):
-        et = data['ElementType'][i]
+        et = ElementTypes[i]
+
         try:
-            li = where(data['ElementType'][i:] != et)[0][0]
+            li = where(ElementTypes[i:] != et)[0][0]
         except:
-            li = len(data['ElementType'][i:])
+            li = len(ElementTypes[i:])
 
         if i == 0:
             si = s[i]
@@ -208,35 +230,20 @@ def drawlatt(ax, data, lattice, size=0.1):
         sf = s[i + li - 1]
         dx = sf - si
         i += li
-        
-        # get dict of nagnets and strengths
-        for line in lattice:
-            name = line.split(':')[0].replace('"', '')
-            if 'kquad' in line.lower():
-                try:
-                    K1 = float(line.split('K1=')[1].split(',')[0])
-                except:
-                    K1 = 0.0
-                magdict[name] = K1
-            elif 'ksext' in line.lower():
-                try:
-                    K2 = float(line.split('K2=')[1].split(',')[0])
-                except:
-                    K2 = 0.0
-                magdict[name] = K2
 
         if et == 'CSBEND':
             mypatch(ax, 'yellow', si, yl, dx, dy)
         elif et == 'KQUAD':
-            if magdict[data['ElementName'][i - li, 0]] > 0:
+            if magdict[ElementNames[i - li, 0]] > 0:
                 mypatch(ax, 'red', si, yl, dx, dy, typ='focus')
             else:
                 mypatch(ax, 'red', si, yl, dx, dy, typ='defocus')
         elif et == 'KSEXT':
-            if magdict[data['ElementName'][i - li, 0]] > 0:
+            if magdict[ElementNames[i - li, 0]] > 0:
                 mypatch(ax, 'green', si, yl, dx, dy, typ='sextfocus')
             else:
                 mypatch(ax, 'green', si, yl, dx, dy, typ='sextdefocus')
+    return
 
 
 def mypatch(ax, col, si, yl, dx, dy, typ='rectangle'):
