@@ -44,7 +44,7 @@ def loaddirs(paths, data, datapath):
     return
 
 
-def dataloadmenu(datapath):
+def dataloadmenu(datapath, loadtoram=True):
     dirs = check_output('ls -d ' + datapath + '*/', shell=True).decode().split('\n')[:-1][:-1]
     dirs_short = ['{:03}:  '.format(i) + d.lstrip(datapath) for i, d in enumerate(dirs)]
     
@@ -70,7 +70,8 @@ def dataloadmenu(datapath):
         with out:
             out.clear_output()
             paths += [datapath + p.split(':  ')[-1] for p in selector.value]
-            loaddirs(paths, data, datapath)
+            if loadtoram:
+                loaddirs(paths, data, datapath)
 
     button = widgets.Button(description="Load Data")
     out = widgets.Output()
