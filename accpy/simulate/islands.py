@@ -35,7 +35,7 @@ def PolyArea(x, y):
     correction = x[-1] * y[0] - y[-1] * x[0]
     main_area = dot(x[:-1], y[1:]) - dot(y[:-1], x[1:])
     total_area = 0.5*npabs(main_area + correction)
-    return np.array([cx, cy]), total_area
+    return array([cx, cy]), total_area
 
 
 def dist(a, b):
