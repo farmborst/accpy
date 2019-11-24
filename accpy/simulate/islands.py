@@ -67,9 +67,9 @@ def islandsloc(data, PPdata, resonance, minsep=3e-3):
             T[noislandIDs[PPdata['A'][noislandIDs] > Amaxcent]] = 2
             PPdata['IDs_core'], PPdata['IDs_encl'] = where(T == 0)[0], where(T == 2)[0]
                       
-    PPdata['IDs_core'] = np.array(PPdata['IDs_core'], dtype=int32)
-    PPdata['IDs_isla'] = np.array(PPdata['IDs_isla'], dtype=int32)
-    PPdata['IDs_encl'] = np.array(PPdata['IDs_encl'], dtype=int32)
+    PPdata['IDs_core'] = array(PPdata['IDs_core'], dtype=int32)
+    PPdata['IDs_isla'] = array(PPdata['IDs_isla'], dtype=int32)
+    PPdata['IDs_encl'] = array(PPdata['IDs_encl'], dtype=int32)
     
     PPdata['A_isla'] = resonance * PPdata['A'] + max(PPdata['A'][PPdata['IDs_core']])
     return
