@@ -20,51 +20,65 @@ from matplotlib.colors import Normalize
 # POST PROCESSING
 ###############################################################################
 
-def PolyArea(x, y, c):
+def PolyArea(x, y):
+    # find "quick and dirty" center to enable angle calculation
+    # cx, cy = np.mean(x), np.mean(y)  # Not so good an approximation, since points not equally spaced
+    cx = np.nanmax(x) - np.abs(np.nanmax(x) - np.nanmin(x)) / 2
+    cy = np.nanmax(y) - np.abs(np.nanmax(y) - np.nanmin(y)) / 2
+    x, y = x - cx, y - cy
     # sort points given by x and y arrays by azimut anglr
-    x, y = x - c[0], y - c[1]
-    indices = argsort(arctan2(x, y))
+    indices = np.argsort(np.arctan2(x, y))
     x, y = x[indices], y[indices]
-    # shoelace formula from
+    # calculate area using shoelace formula
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
-    return npabs(dot(x, roll(y,1)) - dot(y, roll(x, 1)))/2
+    # total_area = np.abs(np.dot(x, np.roll(y,1)) - np.dot(y, np.roll(x, 1)))/2
+    correction = x[-1] * y[0] - y[-1] * x[0]
+    main_area = np.dot(x[:-1], y[1:]) - np.dot(y[:-1], x[1:])
+    total_area = 0.5 * np.abs(np.dot(x, np.roll(y, 1))-np.dot(y, np.roll(x, 1)))
+    return np.array([cx, cy]), total_area
 
 
 def dist(a, b):
     return sqrt(npsum((a - b)**2))
 
 
-def islandsloc(data, resonance, minsep=5e-3):
-    data['turns'], data['particles'] = shape(data['x'])
-    data['allIDs'] = arange(data['particles'], dtype=int32)
-    data['A'], C, T = zeros(data['particles']), empty([data['particles'], 2]), zeros(data['particles'])
-    for i in data['allIDs']:
-        x = data['x'][::resonance, i]
-        xp = data['xp'][::resonance, i]
-        C[i, :] = array([mean(x), mean(xp)])
-        data['A'][i] = PolyArea(x, xp, C[i, :])
-        if dist(C[i], array([0, 0])) > minsep:  # minsep – distance island to center
+def islandsloc(data, PPdata, resonance, minsep=3e-3):
+    PPdata['Nturns'], PPdata['Nparticles'] = shape(data['x'])
+    PPdata['IDs_all'] = arange(PPdata['Nparticles'], dtype=int32)
+    PPdata['A'], PPdata['C'], T = zeros(PPdata['Nparticles']), empty([PPdata['Nparticles'], 2]), zeros(PPdata['Nparticles'])
+    
+    for i in PPdata['IDs_all']:
+        PPdata['C'][i, :], PPdata['A'][i] = PolyArea(data['x'][::resonance, i], data['xp'][::resonance, i])
+        if dist(PPdata['C'][i, :], array([0, 0])) > minsep:  # minsep – distance island to center
             T[i] = 1  # 0=normal, 1=island
-    data['islandIDs'], noislandIDs = where(T == 1)[0], where(T == 0)[0]
-    if len(data['islandIDs']) == 0:
-        data['centerIDs'], data['enclosingIDs'] = noislandIDs, []
+    
+    PPdata['IDs_isla'], noislandIDs = where(T == 1)[0], where(T == 0)[0]
+    if len(PPdata['IDs_isla']) == 0:
+        PPdata['IDs_core'], PPdata['IDs_encl'] = noislandIDs, []
     else:
-        Asort = sort(data['A'][noislandIDs])
+        Asort = sort(PPdata['A'][noislandIDs])
         Astep = diff(Asort)
-        gtisteps = Astep > max(data['A'][data['islandIDs']])
+        gtisteps = Astep > max(PPdata['A'][PPdata['IDs_isla']])
         if not gtisteps.any():
-            data['centerIDs'], data['enclosingIDs'] = noislandIDs, []
+            PPdata['IDs_core'], PPdata['IDs_encl'] = noislandIDs, []
         else:
             imaxstep = argmax(gtisteps)
             Amaxcent = Asort[imaxstep]
-            T[noislandIDs[data['A'][noislandIDs] > Amaxcent]] = 2
-            data['centerIDs'], data['enclosingIDs'] = where(T == 0)[0], where(T == 2)[0]
+            T[noislandIDs[PPdata['A'][noislandIDs] > Amaxcent]] = 2
+            PPdata['IDs_core'], PPdata['IDs_encl'] = where(T == 0)[0], where(T == 2)[0]
+                      
+    PPdata['IDs_core'] = np.array(PPdata['IDs_core'], dtype=int32)
+    PPdata['IDs_isla'] = np.array(PPdata['IDs_isla'], dtype=int32)
+    PPdata['IDs_encl'] = np.array(PPdata['IDs_encl'], dtype=int32)
+    
+    PPdata['A_isla'] = resonance * PPdata['A'] + max(PPdata['A'][PPdata['IDs_core']])
     return
 
 
 def getmyfft(turns, frev):
     fd = linspace(0, frev/2/1e3, int(turns/2))
     dQ = linspace(0, 1/2, int(turns/2))
+    # get frequency vector with negative frequencies
     fdn = concatenate((fd, -fd[::-1]))
     a = empty_aligned(turns, dtype='complex128')
     b = empty_aligned(turns, dtype='complex128')
@@ -74,20 +88,20 @@ def getmyfft(turns, frev):
 def getfreq(data, myfft, clip):
     return npabs(myfft(data)[1:clip])
 
-def tunes(data, frev):
-    dQ, fd, fdn, myfft = getmyfft(data['turns'], frev)
-    clip = int(data['turns']/2)
-    data['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in data['allIDs']])
-    data['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in data['allIDs']])
+def tunes(data, PPdata, frev):
+    dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], frev)
+    clip = int(PPdata['Nturns']/2)
+    PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['allIDs']])
+    PPdata['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in PPdata['allIDs']])
 #    for res in [3]:
-#        N = int(data['turns']/res)
+#        N = int(data['Nturns']/res)
 #        dQ, fd, fdn, myfft = getmyfft(N, frev)
 #        for island in range(res):
 #            Qstr = 'Q{}_{}'.format(res, island + 1)
 #            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in data['allIDs']])
     return
 
-def findlost(data):
+def findlost(data, PPdata):
     lost = []
     lostIDs = []
     for part in range(data['Particles'][0]):
@@ -96,17 +110,22 @@ def findlost(data):
             lostat = where(nansat)[0][0]
             lost.append(array([part, lostat], dtype=int32))
             lostIDs.append(part)
-    data['lost'] = array(lost, dtype=int32)
-    data['lostIDs'] = array(lostIDs, dtype=int32)
+    PPdata['lost'] = array(lost, dtype=int32)
+    PPdata['IDs_lost'] = array(lostIDs, dtype=int32)
     return
 
 def evaltrackdat(data, resonance, minsep=5e-3):
     L = data['PassLength'][0]
     Trev = L/299792458
     frev = 1/Trev
-    islandsloc(data, resonance, minsep=minsep)
-    tunes(data, frev)
-    findlost(data)
+    
+    # new dict for Post Processing Results
+    data['myPP'] = {}
+    PPdata = data['myPP']
+    
+    islandsloc(data, PPdata, resonance, minsep=minsep)
+    tunes(data, PPdata, frev)
+    findlost(data, PPdata)
     return
 
 
@@ -181,23 +200,24 @@ def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
 
 
 def islandsplot(ax, data, showlost=False):
+    PPdata = data['myPP']
     datx, daty = data['x'].copy(), data['xp'].copy()
     if showlost:
-        for ID in data['islandIDs']:
+        for ID in PPdata['IDs_isla']:
             ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.r')
-        for ID in data['centerIDs']:
+        for ID in PPdata['IDs_core']:
             ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.b')
-        for ID in data['enclosingIDs']:
+        for ID in PPdata['IDs_encl']:
             ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.g')
     else:
         lost = data['lostIDs']
-        for ID in data['islandIDs']:
+        for ID in PPdata['IDs_isla']:
             if ID not in lost:
                 ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.r')
-        for ID in data['centerIDs']:
+        for ID in PPdata['IDs_core']:
             if ID not in lost:
                 ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.b')
-        for ID in data['enclosingIDs']:
+        for ID in PPdata['IDs_encl']:
             if ID not in lost:
                 ax.plot(datx[:, ID]*1e3, daty[:, ID]*1e3, '.g')
     ax.set_xlabel(r'$x$ / (mm)')

@@ -65,7 +65,7 @@ def dataloadmenu(datapath, loadtoram=True):
     
     def ClickFun(_, data=data, paths=paths, datapath=datapath):
         data.clear()
-        paths.clear()
+        paths[:] = []  # paths.clear() only for python 3.3+
         # "linking function with output"
         with out:
             out.clear_output()

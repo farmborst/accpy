@@ -20,28 +20,54 @@ from ..dataio.hdf5 import h5save
 import numpy as np
 
 
-def elegant(runfile, macro=None):
-    path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
-    path += '/defns.rpn'
-    processstring = "export RPN_DEFNS='" + path + "' && elegant " + runfile
+def Pelegant(filename, macro=None, verbose=False, defns=None, Ncores=4):
+    if not defns:
+        defns = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
+        defns += '/defns.rpn'
+    processstring = "export RPN_DEFNS='" + defns + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
     if macro:
         processstring += ' -macro=' + macro
-    process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
-    stdout, stderr = process.communicate()
-    out = '-- STDOUT --\n\n{0}\n\n-- STDERR --\n\n{1}'.format(stdout, stderr)
-    return out
+    process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+    if verbose:
+        print(processstring)
+        stdout = []
+        for line in process.stdout:
+            stdout.append(line)
+            print(line)
+            sys.stdout.flush()
+    else:
+        stdout, stderr = process.communicate()
+        if not str(stderr).strip() == 'None':
+            print(stderr)
+        for i, line in enumerate(stdout.split('\n')):
+            if 'error: ' in line:
+                print('\n'.join(stdout.split('\n')[i:]))
+    return stdout
 
 
-def Pelegant(filename, Ncores=4, macro=None):
-    path = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
-    path += '/defns.rpn'
-    processstring = "export RPN_DEFNS='" + path + "' && mpiexec.hydra -n " + str(Ncores) + " Pelegant " + filename
+def elegant(filename, macro=None, verbose=False, defns=None):
+    if not defns:
+        defns = Popen('echo $HOME', shell=True, stdout=PIPE).stdout.read().rstrip()
+        defns += '/defns.rpn'
+    processstring = "export RPN_DEFNS='" + defns + "' && elegant " + filename
     if macro:
         processstring += ' -macro=' + macro
-    process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT)
-    stdout, stderr = process.communicate()
-    out = '-- STDOUT --\n\n{0}\n\n-- STDERR --\n\n{1}'.format(stdout, stderr)
-    return out
+    process = Popen(processstring, shell=True, stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+    if verbose:
+        print(processstring)
+        stdout = []
+        for line in process.stdout:
+            stdout.append(line)
+            print(line)
+            sys.stdout.flush()
+    else:
+        stdout, stderr = process.communicate()
+        if not str(stderr).strip() == 'None':
+            print(stderr)
+        for i, line in enumerate(stdout.split('\n')):
+            if 'error: ' in line:
+                print('\n'.join(stdout.split('\n')[i:]))
+    return stdout
 
 
 def loadwpcols(filename):
