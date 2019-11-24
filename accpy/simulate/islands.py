@@ -91,14 +91,14 @@ def getfreq(data, myfft, clip):
 def tunes(data, PPdata, frev):
     dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], frev)
     clip = int(PPdata['Nturns']/2)
-    PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['allIDs']])
-    PPdata['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in PPdata['allIDs']])
+    PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
+    PPdata['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
 #    for res in [3]:
 #        N = int(data['Nturns']/res)
 #        dQ, fd, fdn, myfft = getmyfft(N, frev)
 #        for island in range(res):
 #            Qstr = 'Q{}_{}'.format(res, island + 1)
-#            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in data['allIDs']])
+#            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in PPdata['IDs_all']])
     return
 
 def findlost(data, PPdata):
@@ -187,7 +187,7 @@ def trackplot(ax, data, turns=False, xy=False, fs=[16, 9], showlost=False,
               everyxturn=[0, 1], ms=1):
     x, y = xy
     colors = rainbow(linspace(0, 1, data['Particles'][0]))
-    IDs = data['allIDs'].copy()
+    IDs = data['IDs_all'].copy()
     if not showlost:
         IDs = delete(IDs, data['lostIDs'])
     for part, col in zip(IDs, colors):
