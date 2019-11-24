@@ -132,7 +132,7 @@ def sddsload(filename, verbose=False):
         print()
 
     data = pardict
-    data['description'] = description
+    data[b'description'] = description
     data.update(coldict)
     return data
 

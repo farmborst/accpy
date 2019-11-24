@@ -23,18 +23,18 @@ from matplotlib.colors import Normalize
 def PolyArea(x, y):
     # find "quick and dirty" center to enable angle calculation
     # cx, cy = np.mean(x), np.mean(y)  # Not so good an approximation, since points not equally spaced
-    cx = np.nanmax(x) - np.abs(np.nanmax(x) - np.nanmin(x)) / 2
-    cy = np.nanmax(y) - np.abs(np.nanmax(y) - np.nanmin(y)) / 2
+    cx = nanmax(x) - npabs(nanmax(x) - nanmin(x)) / 2
+    cy = nanmax(y) - npabs(nanmax(y) - nanmin(y)) / 2
     x, y = x - cx, y - cy
     # sort points given by x and y arrays by azimut anglr
-    indices = np.argsort(np.arctan2(x, y))
+    indices = argsort(arctan2(x, y))
     x, y = x[indices], y[indices]
     # calculate area using shoelace formula
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
     # total_area = np.abs(np.dot(x, np.roll(y,1)) - np.dot(y, np.roll(x, 1)))/2
     correction = x[-1] * y[0] - y[-1] * x[0]
-    main_area = np.dot(x[:-1], y[1:]) - np.dot(y[:-1], x[1:])
-    total_area = 0.5 * np.abs(np.dot(x, np.roll(y, 1))-np.dot(y, np.roll(x, 1)))
+    main_area = dot(x[:-1], y[1:]) - dot(y[:-1], x[1:])
+    total_area = 0.5*npabs(main_area + correction)
     return np.array([cx, cy]), total_area
 
 
