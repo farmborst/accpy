@@ -42,14 +42,18 @@ def dist(a, b):
     return sqrt(npsum((a - b)**2))
 
 
-def islandsloc(data, PPdata, resonance, minsep=3e-3):
+def islandsloc(data, PPdata):
     PPdata['Nturns'], PPdata['Nparticles'] = shape(data['x'])
     PPdata['IDs_all'] = arange(PPdata['Nparticles'], dtype=int32)
-    PPdata['A'], PPdata['C'], T = zeros(PPdata['Nparticles']), empty([PPdata['Nparticles'], 2]), zeros(PPdata['Nparticles'])
+    PPdata['C'] = empty([PPdata['Nparticles'], 2])
     
+    for s in ['A', 'Qx', 'QxTRIBs', 'fx']:
+        PPdata[s] = zeros(PPdata['Nparticles'])
+    
+    T = zeros(PPdata['Nparticles'])
     for i in PPdata['IDs_all']:
-        PPdata['C'][i, :], PPdata['A'][i] = PolyArea(data['x'][::resonance, i], data['xp'][::resonance, i])
-        if dist(PPdata['C'][i, :], array([0, 0])) > minsep:  # minsep – distance island to center
+        PPdata['C'][i, :], PPdata['A'][i] = PolyArea(data['x'][::PPdata['resonance'], i], data['xp'][::PPdata['resonance'], i])
+        if dist(PPdata['C'][i, :], array([0, 0])) > PPdata['minsep']:  # minsep – distance island to center
             T[i] = 1  # 0=normal, 1=island
     
     PPdata['IDs_isla'], noislandIDs = where(T == 1)[0], where(T == 0)[0]
@@ -94,8 +98,8 @@ def getmyfft(turns, frev):
 def getfreq(data, myfft, clip):
     return npabs(myfft(data)[1:clip])
 
-def tunes(data, PPdata, frev, resonance):
-    dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], frev)
+def tunes(data, PPdata):
+    dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], PPdata['frev'])
     clip = int(PPdata['Nturns']/2)
     PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
     PPdata['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
@@ -120,18 +124,21 @@ def findlost(data, PPdata):
     PPdata['IDs_lost'] = array(lostIDs, dtype=int32)
     return
 
-def evaltrackdat(data, resonance, minsep=5e-3):
-    L = data['PassLength'][0]
-    Trev = L/299792458
-    frev = 1/Trev
-    
+def evaltrackdat(data, resonance, minsep=5e-3):  
     # new dict for Post Processing Results
-    data['myPP'] = {}
-    PPdata = data['myPP']
+    PPdata = {}
     
-    islandsloc(data, PPdata, resonance, minsep=minsep)
-    tunes(data, PPdata, frev, resonance)
+    L = data['PassLength'][0]
+    PPdata['Trev'] = L/299792458
+    PPdata['frev'] = 1/Trev
+    PPdata['resonance'] = resonance
+    PPdata['minsep'] = minsep
+    
+    islandsloc(data, PPdata)
+    tunes(data, PPdata)
     findlost(data, PPdata)
+    
+    data['myPP'] = PPdata
     return
 
 
