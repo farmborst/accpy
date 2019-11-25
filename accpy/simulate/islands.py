@@ -86,7 +86,7 @@ def islandsloc(data, PPdata):
 
 
 def getmyfft(turns, frev):
-    fd = linspace(0, frev/2/1e3, int(turns/2))
+    fd = linspace(0, frev/2, int(turns/2))
     dQ = linspace(0, 1/2, int(turns/2))
     # get frequency vector with negative frequencies
     fdn = concatenate((fd, -fd[::-1]))
@@ -200,7 +200,7 @@ def evaltrackdat(data, resonance=0, minsep=5e-3):
     
     L = data['PassLength'][0]
     PPdata['Trev'] = L/299792458
-    PPdata['frev'] = 1/PPdata['Trev']
+    PPdata['frev'] = 1/PPdata['Trev']/1e3   # kHz
     PPdata['resonance'] = resonance
     PPdata['minsep'] = minsep
     
