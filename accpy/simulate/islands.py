@@ -81,7 +81,7 @@ def islandsloc(data, PPdata):
     PPdata['IDs_encl'] = PPdata['IDs_encl'][argsort(PPdata['A'][PPdata['IDs_encl']])]
     
     PPdata['JxCoreMax'] = nanmax(PPdata['A'][PPdata['IDs_core']])
-    PPdata['3Jx+JxCore'] = resonance * PPdata['A'] + PPdata['JxCoreMax']
+    PPdata['3Jx+JxCore'] = PPdata['resonance'] * PPdata['A'] + PPdata['JxCoreMax']
     return
 
 
