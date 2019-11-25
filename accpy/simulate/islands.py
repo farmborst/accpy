@@ -71,7 +71,13 @@ def islandsloc(data, PPdata, resonance, minsep=3e-3):
     PPdata['IDs_isla'] = array(PPdata['IDs_isla'], dtype=int32)
     PPdata['IDs_encl'] = array(PPdata['IDs_encl'], dtype=int32)
     
-    PPdata['A_isla'] = resonance * PPdata['A'] + max(PPdata['A'][PPdata['IDs_core']])
+    # sort according to action
+    PPdata['IDs_core'] = PPdata['IDs_core'][argsort(PPdata['A'][PPdata['IDs_core']])]
+    PPdata['IDs_isla'] = PPdata['IDs_isla'][argsort(PPdata['A'][PPdata['IDs_isla']])]
+    PPdata['IDs_encl'] = PPdata['IDs_encl'][argsort(PPdata['A'][PPdata['IDs_encl']])]
+    
+    PPdata['JxCoreMax'] = nanmax(PPdata['A'][PPdata['IDs_core']])
+    PPdata['3Jx+JxCore'] = resonance * PPdata['A'] + PPdata['JxCoreMax']
     return
 
 
@@ -88,7 +94,7 @@ def getmyfft(turns, frev):
 def getfreq(data, myfft, clip):
     return npabs(myfft(data)[1:clip])
 
-def tunes(data, PPdata, frev):
+def tunes(data, PPdata, frev, resonance):
     dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], frev)
     clip = int(PPdata['Nturns']/2)
     PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
@@ -124,7 +130,7 @@ def evaltrackdat(data, resonance, minsep=5e-3):
     PPdata = data['myPP']
     
     islandsloc(data, PPdata, resonance, minsep=minsep)
-    tunes(data, PPdata, frev)
+    tunes(data, PPdata, frev, resonance)
     findlost(data, PPdata)
     return
 
