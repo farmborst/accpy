@@ -8,7 +8,7 @@ from pyfftw.pyfftw import FFTW
 from numpy import (abs as npabs, dot, roll, shape, zeros, empty, array, mean,
                    where, sort, diff, argmax, linspace, concatenate, isnan, pi,
                    logical_or, delete, nanmin, nanmax, add, nan, int32, arange,
-                   arctan2, argsort, sqrt, diag, sum as npsum)
+                   arctan2, argsort, sqrt, diag, sum as npsum, log2)
 from scipy.optimize import curve_fit
 from matplotlib.cm import rainbow, ScalarMappable, cool
 from matplotlib.pyplot import tight_layout
@@ -110,15 +110,27 @@ def tunes(data, PPdata):
 #            Qstr = 'Q{}_{}'.format(res, island + 1)
 #            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in PPdata['IDs_all']])
     
+#     PPdata['pow2max'] = int(log2(PPdata['Nturns']))
+#     PPdata['Nturns_pow2max'] = int(2**PPdata['pow2max'])
+#     PPdata['Nturns_pow2max_half'] = int(PPdata['Nturns_pow2max']/2)
+
+    Nturns = int(PPdata['Nturns'])
+    if (Nturns % 2) == 0:
+        # Nturns is even
+        pass
+    else:
+        Nturns = Nturns - 1
+    Nturns2 = int(Nturns / 2)
+    
     fsamp = PPdata['frev']
-    dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], fsamp)
+    dQ, fd, fdn, myfft = getmyfft(Nturns, fsamp)
     for u in ['x', 'y']:
         fcalc = 'f' + u
         fmeas = fcalc + '_meas'
         Qcalc = 'Q' + u
         for p in concatenate([PPdata['IDs_core'], PPdata['IDs_encl']]):
             # calculate FFT
-            fftn = npabs(myfft(data[u][:, p]))
+            fftn = npabs(myfft(data[u][:, p][:Nturns]))
 
             # cancel DC part
             fftn[0] = 0
@@ -134,8 +146,17 @@ def tunes(data, PPdata):
     
     
     if PPdata['resonance'] > 0:
+        
+        Nturns = int(PPdata['Nturns'] / PPdata['resonance'])
+        if (Nturns % 2) == 0:
+            # Nturns is even
+            pass
+        else:
+            Nturns = Nturns - 1
+        Nturns2 = int(Nturns / 2)
+    
         fsamp = PPdata['frev'] / PPdata['resonance']
-        dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], fsamp)
+        dQ, fd, fdn, myfft = getmyfft(Nturns, fsamp)
         for u in ['x', 'y']:
             fcalc = 'f' + u
             fmeas = fcalc + '_meas'
@@ -143,7 +164,7 @@ def tunes(data, PPdata):
             Qtribs = Qcalc + 'TRIBs'
             for p in PPdata['IDs_isla']:
                 # calculate FFT
-                fftn = npabs(myfft(data['x'][::PPdata['resonance'], p]))
+                fftn = npabs(myfft(data['x'][::PPdata['resonance'], p][:Nturns]))
 
                 # cancel DC part
                 fftn[0] = 0
