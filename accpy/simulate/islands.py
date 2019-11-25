@@ -177,7 +177,7 @@ def tunes(data, PPdata):
                 PPdata[fmeas][p] = fd[ipeak]
                 PPdata[fcalc][p] = fsamp - PPdata[fmeas][p]
                 PPdata[Qcalc][p] = PPdata[fcalc][p] / fsamp
-                PPdata[Qtribs][p] = (2 * fsamp + fmeas) / PPdata['frev']
+                PPdata[Qtribs][p] = (2 * fsamp + PPdata[fmeas][p]) / PPdata['frev']
 
     return
 
