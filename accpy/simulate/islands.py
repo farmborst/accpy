@@ -47,7 +47,7 @@ def islandsloc(data, PPdata):
     PPdata['IDs_all'] = arange(PPdata['Nparticles'], dtype=int32)
     PPdata['C'] = empty([PPdata['Nparticles'], 2])
     
-    for s in ['A', 'Qx', 'QxTRIBs', 'fx']:
+    for s in ['A', 'fx_meas', 'fx', 'Qx', 'QxTRIBs', 'fy_meas', 'fy', 'Qy', 'QyTRIBs']:
         PPdata[s] = zeros(PPdata['Nparticles'])
     
     T = zeros(PPdata['Nparticles'])
@@ -99,16 +99,65 @@ def getfreq(data, myfft, clip):
     return npabs(myfft(data)[1:clip])
 
 def tunes(data, PPdata):
-    dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], PPdata['frev'])
-    clip = int(PPdata['Nturns']/2)
-    PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
-    PPdata['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
+#     dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], PPdata['frev'])
+#     clip = int(PPdata['Nturns']/2)
+#     PPdata['Qx'] = array([dQ[argmax(getfreq(data['x'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
+#     PPdata['Qy'] = array([dQ[argmax(getfreq(data['y'][:, i], myfft, clip))] for i in PPdata['IDs_all']])
 #    for res in [3]:
 #        N = int(data['Nturns']/res)
 #        dQ, fd, fdn, myfft = getmyfft(N, frev)
 #        for island in range(res):
 #            Qstr = 'Q{}_{}'.format(res, island + 1)
 #            data[Qstr] = array([dQ[argmax(getfreq(data['x'][:N, i][island::res], myfft, N))] for i in PPdata['IDs_all']])
+    
+    fsamp = PPdata['frev']
+    dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], fsamp)
+    for u in ['x', 'y']:
+        fcalc = 'f' + u
+        fmeas = fcalc + '_meas'
+        Qcalc = 'Q' + u
+        for p in np.concatenate([PPdata['IDs_core'], PPdata['IDs_encl']]):
+            # calculate FFT
+            fftn = npabs(myfft(data[u][:, p]))
+
+            # cancel DC part
+            fftn[0] = 0
+
+            # only positive frequencies
+            fft = fftn[:Nturns2]
+
+            # calculate peaks frequency
+            ipeak = argmax(fft)
+            PPdata[fmeas][p] = fd[ipeak]
+            PPdata[fcalc][p] = fsamp - Pdata[fmeas][p]
+            PPdata[Qcalc][p] = PPdata[fcalc][p] / fsamp
+    
+    
+    if PPdata['resonance'] > 0:
+        fsamp = PPdata['frev'] / PPdata['resonance']
+        dQ, fd, fdn, myfft = getmyfft(PPdata['Nturns'], fsamp)
+        for u in ['x', 'y']:
+            fcalc = 'f' + u
+            fmeas = fcalc + '_meas'
+            Qcalc = 'Q' + u
+            Qtribs = Qcalc + 'TRIBs'
+            for p in PPdata['IDs_isla']:
+                # calculate FFT
+                fftn = npabs(myfft(data['x'][::PPdata['resonance'], p]))
+
+                # cancel DC part
+                fftn[0] = 0
+
+                # only positive frequencies
+                fft = fftn[:Nturns2]
+
+                # calculate peaks frequency
+                ipeak = argmax(fft)
+                PPdata[fmeas][p] = fd[ipeak]
+                PPdata[fcalc][p] = fsamp - Pdata[fmeas][p]
+                PPdata[Qcalc][p] = PPdata[fcalc][p] / fsamp
+                PPdata[Qtribs][p] = (2 * fsamp + fmeas) / PPdata['frev']
+
     return
 
 def findlost(data, PPdata):
@@ -124,13 +173,13 @@ def findlost(data, PPdata):
     PPdata['IDs_lost'] = array(lostIDs, dtype=int32)
     return
 
-def evaltrackdat(data, resonance, minsep=5e-3):  
+def evaltrackdat(data, resonance=0, minsep=5e-3):  
     # new dict for Post Processing Results
     PPdata = {}
     
     L = data['PassLength'][0]
     PPdata['Trev'] = L/299792458
-    PPdata['frev'] = 1/Trev
+    PPdata['frev'] = 1/PPdata['Trev']
     PPdata['resonance'] = resonance
     PPdata['minsep'] = minsep
     
