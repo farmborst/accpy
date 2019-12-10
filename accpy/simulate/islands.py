@@ -170,7 +170,7 @@ def tunes(data, PPdata):
         for j in range(PPdata['resonance']):
             for u in ['x', 'y']:
                 fcalc = 'f' + u + str(j)
-                fmeas = fcalc + '_meas' + str(j)
+                fmeas = 'f' + u + '_meas' + str(j)
                 Qcalc = 'Q' + u + str(j)
                 Qtribs = Qcalc + 'TRIBs' + str(j)
                 for p in PPdata['IDs_isla']:
@@ -192,7 +192,7 @@ def tunes(data, PPdata):
                     
         for u in ['x', 'y']:
             fcalc = 'f' + u
-            fmeas = fcalc + '_meas'
+            fmeas = 'f' + u + '_meas'
             Qcalc = 'Q' + u
             Qtribs = Qcalc + 'TRIBs'
             PPdata[fmeas] = PPdata[fmeas + str(0)]
