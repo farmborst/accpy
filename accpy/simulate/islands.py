@@ -172,7 +172,7 @@ def tunes(data, PPdata):
                 fcalc = 'f' + u + str(j)
                 fmeas = 'f' + u + '_meas' + str(j)
                 Qcalc = 'Q' + u + str(j)
-                Qtribs = Qcalc + 'TRIBs' + str(j)
+                Qtribs = 'Q' + u + 'TRIBs' + str(j)
                 for p in PPdata['IDs_isla']:
                     # calculate FFT
                     fftn = npabs(myfft(data['x'][::PPdata['resonance'], p][:Nturns]))
@@ -194,7 +194,7 @@ def tunes(data, PPdata):
             fcalc = 'f' + u
             fmeas = 'f' + u + '_meas'
             Qcalc = 'Q' + u
-            Qtribs = Qcalc + 'TRIBs'
+            Qtribs = 'Q' + u + 'TRIBs'
             PPdata[fmeas] = PPdata[fmeas + str(0)]
             PPdata[fcalc] = PPdata[fcalc + str(0)]
             PPdata[Qcalc] = PPdata[Qcalc + str(0)]
