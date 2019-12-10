@@ -198,7 +198,7 @@ def tunes(data, PPdata):
             PPdata[fmeas] = PPdata[fmeas + str(0)]
             PPdata[fcalc] = PPdata[fcalc + str(0)]
             PPdata[Qcalc] = PPdata[Qcalc + str(0)]
-            PPdata[Qtribs][= PPdata[Qtribs + str(0)]
+            PPdata[Qtribs] = PPdata[Qtribs + str(0)]
         
 
     return
