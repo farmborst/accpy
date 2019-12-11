@@ -47,7 +47,7 @@ def islandsloc(data, PPdata):
     PPdata['IDs_all'] = arange(PPdata['Nparticles'], dtype=int32)
     
     
-    for sub in [''] + [str(i) for i in range(PPdata['resonance'])]:
+    for sub in [''] + ['_rev' + str(i) for i in range(PPdata['resonance'])]:
         PPdata['C' + sub] = empty([PPdata['Nparticles'], 2])
         
         for s in ['A', 'fx_meas', 'fx', 'Qx', 'QxTRIBs', 'fy_meas', 'fy', 'Qy', 'QyTRIBs']:
@@ -85,14 +85,18 @@ def islandsloc(data, PPdata):
     PPdata['IDs_encl'] = PPdata['IDs_encl'][argsort(PPdata['A'][PPdata['IDs_encl']])]
     
     PPdata['JxCoreMax'] = nanmax(PPdata['A'][PPdata['IDs_core']])
-    PPdata['3Jx+JxCore'] = PPdata['resonance'] * PPdata['A'] + PPdata['JxCoreMax']
+#     PPdata['3Jx+JxCore'] = PPdata['resonance'] * PPdata['A'] + PPdata['JxCoreMax']
+    PPdata['3Jx+JxCore'] = PPdata['JxCoreMax']
     
     # add data for each island bucket
     for j in range(PPdata['resonance']):
+        rev = '_rev' + str(j)
         for i in PPdata['IDs_isla']:
-            PPdata['C' + str(j)][i, :], PPdata['A' + str(j)][i] = PolyArea(data['x'][j::PPdata['resonance'], i], data['xp'][j::PPdata['resonance'], i])
-        PPdata['3Jx+JxCore' + str(j)] = PPdata['resonance'] * PPdata['A' + str(j)] + PPdata['JxCoreMax']
-            
+            PPdata['C' + rev][i, :], PPdata['A' + rev][i] = PolyArea(data['x'][j::PPdata['resonance'], i], data['xp'][j::PPdata['resonance'], i])
+#         PPdata['3Jx+JxCore' + rev] = PPdata['resonance'] * PPdata['A' + str(j)] + PPdata['JxCoreMax']
+        PPdata['3Jx+JxCore'] += PPdata['A' + rev]
+        
+    
     return
 
 
@@ -168,14 +172,15 @@ def tunes(data, PPdata):
         fsamp = PPdata['frev'] / PPdata['resonance']
         dQ, fd, fdn, myfft = getmyfft(Nturns, fsamp)
         for j in range(PPdata['resonance']):
+            rev = '_rev' + str(j)
             for u in ['x', 'y']:
-                fcalc = 'f' + u + str(j)
-                fmeas = 'f' + u + '_meas' + str(j)
-                Qcalc = 'Q' + u + str(j)
-                Qtribs = 'Q' + u + 'TRIBs' + str(j)
+                fcalc = 'f' + u + rev
+                fmeas = 'f' + u + '_meas' + rev
+                Qcalc = 'Q' + u + rev
+                Qtribs = 'Q' + u + 'TRIBs' + rev
                 for p in PPdata['IDs_isla']:
                     # calculate FFT
-                    fftn = npabs(myfft(data['x'][::PPdata['resonance'], p][:Nturns]))
+                    fftn = npabs(myfft(data['x'][j::PPdata['resonance'], p][:Nturns]))
 
                     # cancel DC part
                     fftn[0] = 0
@@ -189,17 +194,6 @@ def tunes(data, PPdata):
                     PPdata[fcalc][p] = fsamp - PPdata[fmeas][p]
                     PPdata[Qcalc][p] = PPdata[fcalc][p] / fsamp
                     PPdata[Qtribs][p] = (2 * fsamp + PPdata[fmeas][p]) / PPdata['frev']
-                    
-        for u in ['x', 'y']:
-            fcalc = 'f' + u
-            fmeas = 'f' + u + '_meas'
-            Qcalc = 'Q' + u
-            Qtribs = 'Q' + u + 'TRIBs'
-            PPdata[fmeas] = PPdata[fmeas + str(0)]
-            PPdata[fcalc] = PPdata[fcalc + str(0)]
-            PPdata[Qcalc] = PPdata[Qcalc + str(0)]
-            PPdata[Qtribs] = PPdata[Qtribs + str(0)]
-        
 
     return
 
