@@ -191,9 +191,9 @@ def tunes(data, PPdata):
                     # calculate peaks frequency
                     ipeak = argmax(fft)
                     PPdata[fmeas][p] = fd[ipeak]
-                    PPdata[fcalc][p] = fsamp - PPdata[fmeas][p]
-                    PPdata[Qcalc][p] = PPdata[fcalc][p] / fsamp
-                    PPdata[Qtribs][p] = fd[ipeak] / PPdata['frev']
+                    PPdata[fcalc][p] = fsamp - fd[ipeak]
+                    PPdata[Qcalc][p] = fd[ipeak] / fsamp
+                    PPdata[Qtribs][p] = (2 * fsamp + fd[ipeak]) / fsamp
 
     return
 
