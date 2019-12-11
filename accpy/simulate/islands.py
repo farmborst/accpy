@@ -193,7 +193,7 @@ def tunes(data, PPdata):
                     PPdata[fmeas][p] = fd[ipeak]
                     PPdata[fcalc][p] = fsamp - fd[ipeak]
                     PPdata[Qcalc][p] = fd[ipeak] / fsamp
-                    PPdata[Qtribs][p] = (2 * fsamp + fd[ipeak]) / fsamp
+                    PPdata[Qtribs][p] = (2 * fsamp + fd[ipeak]) / PPdata['frev']
 
     return
 
