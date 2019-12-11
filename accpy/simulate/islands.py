@@ -143,7 +143,7 @@ def tunes(data, PPdata):
         fcalc = 'f' + u
         fmeas = fcalc + '_meas'
         Qcalc = 'Q' + u
-        for p in concatenate([PPdata['IDs_core'], PPdata['IDs_encl']]):
+        for p in PPdata['IDs_all']:
             # calculate FFT
             fftn = npabs(myfft(data[u][:, p][:Nturns]))
 
