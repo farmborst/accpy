@@ -66,7 +66,7 @@ def islandsloc(data, PPdata):
     else:
         Asort = sort(PPdata['A'][noislandIDs])
         Astep = diff(Asort)
-        gtisteps = Astep > max(PPdata['A'][PPdata['IDs_isla']])
+        gtisteps = Astep > max(PPdata['resonance'] * PPdata['A'][PPdata['IDs_isla']])
         if not gtisteps.any():
             PPdata['IDs_core'], PPdata['IDs_encl'] = noislandIDs, []
         else:
