@@ -360,6 +360,11 @@ def drawtwiss(data, lattice, ax1):
 
 
 def twissdata(data):
+    if '|' in ''.join(['{}'.format(key) for key in data.keys()]):
+        slash = '|'
+    else:
+        slash = '/'
+        
     print('General:')
     print('    L = {:}'.format(npmax(data['s'])))
     print('    E = {:}'.format(data['pCentral'][0]))
@@ -368,8 +373,8 @@ def twissdata(data):
     print('    Qx = {:.6}'.format(data['nux'][0]))
     print('    Qy = {:.6}'.format(data['nuy'][0]))
     print('\nChromaticities:')
-    print('    ' + uc.greek.xi + 'x = {:.6}'.format(data['dnux|dp'][0]))
-    print('    ' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy|dp'][0]))
+    print('    ' + uc.greek.xi + 'x = {:.6}'.format(data['dnux' + slash + 'dp'][0]))
+    print('    ' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy' + slash + 'dp'][0]))
     print('\nMomentum Compaction Factor:')
     print('    ' + uc.greek.alpha + 'p = {:.5e}'.format(data['alphac'][0]))
     print('\nRadiation Damping times:')
@@ -386,21 +391,26 @@ def twissdata(data):
     print('\nEquilibrium fractional rms energy spread:')
     print('    ' + uc.greek.epsilon + uc.greek.delta + ' = {:.6e}'.format(data['Sdelta0'][0]))
     print('\nHigher Order::')
-    print('    ' + uc.greek.xi + 'x2 = {:}'.format(data['dnux|dp2'][0]))
-    print('    ' + uc.greek.xi + 'y2 = {:}'.format(data['dnuy|dp2'][0]))
-    print('    ' + uc.greek.xi + 'x3 = {:}'.format(data['dnux|dp3'][0]))
-    print('    ' + uc.greek.xi + 'y3 = {:}'.format(data['dnuy|dp3'][0]))
+    print('    ' + uc.greek.xi + 'x2 = {:}'.format(data['dnux' + slash + 'dp2'][0]))
+    print('    ' + uc.greek.xi + 'y2 = {:}'.format(data['dnuy' + slash + 'dp2'][0]))
+    print('    ' + uc.greek.xi + 'x3 = {:}'.format(data['dnux' + slash + 'dp3'][0]))
+    print('    ' + uc.greek.xi + 'y3 = {:}'.format(data['dnuy' + slash + 'dp3'][0]))
     print('    ' + uc.greek.alpha + 'p2 = {:e}'.format(data['alphac2'][0]))
     return
 
 
 def tunechrom(line, data):
+    if '|' in ''.join(['{}'.format(key) for key in data.keys()]):
+        slash = '|'
+    else:
+        slash = '/'
+        
     # props=dict(boxstyle='round', alpha=0.5)
     # line = ax.text(9/16*0.02, 0.98, '', bbox=bboxprops, **lineprops)
-    string = 'Qx = {:.4f}'.format(data['nux'][0])
-    string += '\nQy = {:.4f}'.format(data['nuy'][0])
-    string += '\n' + uc.greek.xi + 'x = {:.4f}'.format(data['dnux|dp'][0])
-    string += '\n' + uc.greek.xi + 'y = {:.4f}'.format(data['dnuy|dp'][0])
+    string = 'Qx = {:.6}'.format(data['nux'][0])
+    string += '\nQy = {:.6}'.format(data['nuy'][0])
+    string += '\n' + uc.greek.xi + 'x = {:.6}'.format(data['dnux' + slash + 'dp'][0])
+    string += '\n' + uc.greek.xi + 'y = {:.6}'.format(data['dnuy' + slash + 'dp'][0])
     line.set_text(string)
     return
 
