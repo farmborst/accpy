@@ -109,9 +109,7 @@ def dataloadmenu(datapath, loadtoram=True, reverse=True, selected=False):
             dirs.remove('atic')
         selector.options = ['{:03}:  '.format(i) + d + '/' for i, d in enumerate(dirs)]
         if selected:
-            sel = '{:03}:  '.format(dirs.index(selected)) + selected + '/'
-            print(sel)
-            selector.value = [sel]
+            selector.value = ['{:03}:  '.format(dirs.index(selected)) + selected + '/']
         return
     
     reload_path(selector, reverse=reverse, selected=selected)
