@@ -23,7 +23,7 @@ def gauss(x, amp, mu, sigma, offset):
     return amp * exp( -(((x-mu)/sigma)**2)/2 ) / sigma/sqrt(2*pi) + offset
 
 
-def gauss2D((x, y), amp, (mux, muy), (sigx, sigy), offset, theta=0):
+def gauss2D([x, y], amp, [mux, muy], [sigx, sigy], offset, theta=0):
     ''' gauss2D(x, a, mu, sigma, offset) =
         amp*exp(-(((x-x0)/sigma)**2)/2)/sigma/sqrt(2*pi) + offset
     x, y       - input variables
